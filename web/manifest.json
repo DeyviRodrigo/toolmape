@@ -1,0 +1,35 @@
+{
+    "name": "toolmape",
+    "short_name": "toolmape",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "ToolMAPE es tu app aliada en el día a día minero. Calcula precios de oro y minerales, accede a herramientas gratuitas, infórmate con resúmenes y blogs actualizados, y conecta con consultores expertos para impulsar tu actividad minera. Todo desde una sola plataforma, diseñada para el pequeño productor minero.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
