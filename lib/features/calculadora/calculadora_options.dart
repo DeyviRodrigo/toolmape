@@ -8,28 +8,15 @@ class MenuOption<T> {
 }
 
 enum GeneralAction { actualizar, avanzadas, personalizados }
-enum DescuentoAction { ayuda, desdePrecio, predeterminado } // ← NUEVO valor
+enum DescuentoAction { ayuda, desdePrecio, predeterminado }
 enum LeyAction { ayuda, predeterminado }
 
 const generalMenuOptions = <MenuOption<GeneralAction>>[
-  MenuOption(
-      value: GeneralAction.actualizar,
-      label: 'Actualizar datos',
-      icon: Icons.sync
-  ),
-  MenuOption(
-      value: GeneralAction.avanzadas,
-      label: 'Opciones avanzadas',
-      icon: Icons.tune
-  ),
-  MenuOption(
-      value: GeneralAction.personalizados,
-      label: 'Valores personalizados',
-      icon: Icons.edit
-  ),
+  MenuOption(value: GeneralAction.actualizar,    label: 'Actualizar datos',       icon: Icons.sync),
+  MenuOption(value: GeneralAction.avanzadas,     label: 'Opciones avanzadas',     icon: Icons.tune),
+  MenuOption(value: GeneralAction.personalizados,label: 'Valores personalizados', icon: Icons.edit),
 ];
 
-// ↓↓↓ AQUÍ están los nuevos textos e íconos ↓↓↓
 const descuentoMenuOptions = <MenuOption<DescuentoAction>>[
   MenuOption(
     value: DescuentoAction.ayuda,
@@ -39,24 +26,24 @@ const descuentoMenuOptions = <MenuOption<DescuentoAction>>[
   MenuOption(
     value: DescuentoAction.desdePrecio,
     label: 'Tengo el precio, calcular descuento',
-    icon: Icons.price_change, // icono acorde a “precio”
+    icon: Icons.price_change,
   ),
   MenuOption(
     value: DescuentoAction.predeterminado,
     label: 'Usar valores por defecto',
-    icon: Icons.settings_suggest, // ya no “percent”
+    icon: Icons.settings_suggest,
   ),
 ];
 
 const leyMenuOptions = <MenuOption<LeyAction>>[
   MenuOption(
-      value: LeyAction.ayuda,
-      label: 'Ayúdame a calcular la ley',
-      icon: Icons.live_help_outlined
+    value: LeyAction.ayuda,
+    label: 'Ayúdame a calcular la ley',
+    icon: Icons.live_help_outlined,
   ),
   MenuOption(
-      value: LeyAction.predeterminado,
-      label: 'Usar valores por defecto',
-      icon: Icons.verified_outlined
+    value: LeyAction.predeterminado,
+    label: 'Usar valores por defecto',
+    icon: Icons.verified_outlined,
   ),
 ];

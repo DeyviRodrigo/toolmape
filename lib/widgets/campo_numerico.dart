@@ -5,19 +5,20 @@ class CampoNumerico extends StatelessWidget {
   final String etiqueta;
 
   const CampoNumerico({
-    Key? key,
+    super.key,
     required this.controller,
     required this.etiqueta,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
         labelText: etiqueta,
+        isDense: true,
       ),
     );
   }
