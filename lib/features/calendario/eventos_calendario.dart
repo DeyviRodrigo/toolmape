@@ -1,6 +1,5 @@
 class EventoCalendar {
   final String id;
-  final int anio;
   final String titulo;
   final String? descripcion;
   final String? categoria;
@@ -12,7 +11,6 @@ class EventoCalendar {
 
   EventoCalendar({
     required this.id,
-    required this.anio,
     required this.titulo,
     required this.descripcion,
     required this.categoria,
@@ -25,7 +23,6 @@ class EventoCalendar {
 
   factory EventoCalendar.fromMap(Map<String, dynamic> m) => EventoCalendar(
     id: m['id'] as String,
-    anio: m['anio'] as int,
     titulo: m['titulo'] as String,
     descripcion: m['descripcion'] as String?,
     categoria: m['categoria'] as String?,

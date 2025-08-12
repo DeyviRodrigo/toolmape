@@ -6,34 +6,33 @@ import '../../core/notifications/calendario_notifications.dart';
 import 'calendario_repo.dart';
 import 'eventos_calendario.dart';
 
-// Providers globales
-final supabaseClientProvider = Provider<SupabaseClient>((ref) => Supabase.instance.client);
+// --- Providers base ---
+final supabaseClientProvider =
+Provider<SupabaseClient>((ref) => Supabase.instance.client);
 
 final calendarioRepoProvider = Provider<CalendarioRepo>((ref) {
   return CalendarioRepo(ref.read(supabaseClientProvider));
 });
 
-final aniosProvider = FutureProvider<List<int>>((ref) async {
-  return ref.read(calendarioRepoProvider).aniosDisponibles();
+/// Eventos del MES visible (usa rango 1..último día)
+final eventosMesProvider =
+FutureProvider.family<List<EventoCalendar>, DateTime>((ref, focused) async {
+  final repo = ref.read(calendarioRepoProvider);
+  final start = DateTime(focused.year, focused.month, 1);
+  final end   = DateTime(focused.year, focused.month + 1, 0);
+  return repo.eventosEnRango(start: start, end: end);
 });
 
-final eventosProvider = FutureProvider.family<List<EventoCalendar>, int>((ref, anio) async {
-  return ref.read(calendarioRepoProvider).eventosPorAnio(anio: anio);
-});
-
-// Programar notificaciones: recordatorio + inicio + fin (09:00)
+// --- Notificaciones locales (recordatorio + inicio + fin a las 09:00) ---
 Future<void> programarNotificacionesPara({
   required List<EventoCalendar> eventos,
   required int? rucLastDigit,
   required String? regimen,
 }) async {
-  if (kIsWeb) {
-    // En web, el plugin no existe; no programes nada.
-    return;
-  }
+  if (kIsWeb) return; // en web no hay plugin
+
   await CalendarioNotifications.cancelAll();
   int id = 3000;
-
   DateTime at0900(DateTime d) => DateTime(d.year, d.month, d.day, 9);
 
   for (final e in eventos) {

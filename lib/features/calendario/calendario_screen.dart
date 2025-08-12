@@ -28,6 +28,8 @@ class CalendarioMineroScreen extends ConsumerStatefulWidget {
 
 class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen> {
 
+  DateTime get _mesClave => DateTime(_focused.year, _focused.month, 1);
+
   // Estado del calendario
   DateTime _focused = DateTime.now();
   DateTime _selected = DateTime.now();
@@ -71,7 +73,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
   }
 
   // ¿Es feriado?
-  bool _esFeriado(EventoCalendar e) => (e.categoria ?? '').toLowerCase() == 'feriado';
+  bool _esFeriado(EventoCalendar e) => (e.categoria ?? '').toLowerCase() == 'fechas festivas';
 
   // Icono por categoría/título
   IconData _iconoPara(EventoCalendar e) {
@@ -89,7 +91,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
   @override
   Widget build(BuildContext context) {
-    final eventosAsync = ref.watch(eventosProvider(_focused.year));
+    final eventosAsync = ref.watch(eventosMesProvider(_mesClave));
 
     final userEventosAsync = ref.watch(misEventosRangoProvider(_mesRango));
 
@@ -111,7 +113,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           tooltip: 'Programar recordatorios',
           icon: const Icon(Icons.notifications_active_outlined),
           onPressed: () async {
-            final events = await ref.read(eventosProvider(_focused.year).future);
+            final events = await ref.read(eventosMesProvider(_focused).future);
             await programarNotificacionesPara(
               eventos: events,
               rucLastDigit: null,
@@ -153,6 +155,22 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
             }
           },
         ),
+
+        IconButton(
+          tooltip: 'Actualizar calendario',
+          icon: const Icon(Icons.sync),
+          onPressed: () async {
+            final mes = DateTime(_focused.year, _focused.month, 1);
+            ref.invalidate(eventosMesProvider(mes));
+            await ref.read(eventosMesProvider(mes).future);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Calendario actualizado')),
+              );
+            }
+          },
+        ),
+
       ],
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -179,7 +197,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                         headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
                         calendarFormat: CalendarFormat.month,
                         selectedDayPredicate: (d) => isSameDay(d, _selected),
-                        onDaySelected: (sel, foc) => setState(() { _selected = sel; _focused = foc; }),
+                        onDaySelected: (sel, foc) => setState(() { _selected = sel;}),
                         onPageChanged: (foc) => setState(() { _focused = foc; }),
 
                         // feriados en rojo (usa fecha de vencimiento)
@@ -190,7 +208,6 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
                         // cuadriculado
                         calendarStyle: CalendarStyle(
-                          // Opcional: celdas más “pegadas” (si tu versión de table_calendar soporta cellMargin)
                           cellMargin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
 
                           outsideDaysVisible: true,
@@ -201,10 +218,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                           weekendDecoration: _cellRectBorder(context),
                           outsideDecoration: _cellRectBorder(context, color: Colors.grey.shade200),
 
-                          // 👇 “Hoy” cuando NO está seleccionado: misma celda, fondo un poco más oscuro y texto en negrita
+                          // "Hoy" cuando no está seleccionado
                           todayDecoration: _cellRectFilled(
                             context,
-                            bg: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.18),
+                            bg: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.18),
                             border: Colors.grey.shade400,
                           ),
                           todayTextStyle: const TextStyle(fontWeight: FontWeight.w700),
@@ -240,13 +257,13 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                             final f = _fechaVenc(e);
                             return f != null && isSameDay(f, day) && !_esFeriado(e);
                           })
-                              .map((e) => _Marker(_iconoPara(e), Colors.amber[800]!));
+                              .map((e) => _Marker(_iconoPara(e), Colors.amber.shade800));
 
                           final propios = (userEventosAsync.value ?? [])
                               .where((e) => isSameDay(e.inicio, day))
                               .map((_) => const _Marker(Icons.event, Colors.blue));
 
-                          final list = <_Marker>[];
+                          final List<_Marker> list = [];
                           if (_filtro == EventFilter.all || _filtro == EventFilter.general) list.addAll(generales);
                           if (_filtro == EventFilter.all || _filtro == EventFilter.personal) list.addAll(propios);
                           return list;
@@ -255,17 +272,20 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                         calendarBuilders: CalendarBuilders(
                           // iconitos abajo
                           markerBuilder: (context, day, events) {
-                            if (events.isEmpty) return const SizedBox.shrink();
-                            final items = events.cast<_Marker>().take(4).map(
-                                  (m) => Icon(m.icon, size: 12, color: m.color),
-                            );
+                            final items = events
+                                .whereType<_Marker>()
+                                .take(4)
+                                .map<Widget>((m) => Icon(m.icon, size: 12, color: m.color))
+                                .toList();
+
+                            if (items.isEmpty) return const SizedBox.shrink();
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Wrap(
                                 spacing: 2,
                                 runSpacing: 2,
                                 alignment: WrapAlignment.center,
-                                children: items.toList(),
+                                children: items,
                               ),
                             );
                           },
@@ -320,7 +340,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                             if (generales.isNotEmpty)
                               const Padding(
                                 padding: EdgeInsets.only(left: 4, top: 6),
-                                child: Text('Obligaciones', style: TextStyle(fontWeight: FontWeight.w600)),
+                                child: Text('Eventos para hoy', style: TextStyle(fontWeight: FontWeight.w600)),
                               ),
                             ...generales.map((e) {
                               final f = _fechaVenc(e)!; // vencimiento
