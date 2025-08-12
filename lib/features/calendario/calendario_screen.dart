@@ -112,6 +112,24 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
             _itemFiltro(EventFilter.personal, 'Mis eventos', Icons.event, _filtro),
           ],
         ),
+        IconButton(
+          tooltip: 'Programar recordatorios',
+          icon: const Icon(Icons.notifications_active_outlined),
+          onPressed: () async {
+            if (_anioSel == null) return;
+            final events = await ref.read(eventosProvider(_anioSel!).future);
+            await programarNotificacionesPara(
+              eventos: events,
+              rucLastDigit: null,
+              regimen: null,
+            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notificaciones programadas')),
+              );
+            }
+          },
+        ),
         // Nuevo evento (privado)
         IconButton(
           icon: const Icon(Icons.add),
@@ -146,7 +164,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Selector de año + notificaciones
+            // Selector de año
             anios.when(
               data: (list) {
                 _anioSel ??= list.isNotEmpty ? list.last : null;
@@ -160,24 +178,6 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                       onChanged: (y) => setState(() => _anioSel = y),
                     ),
                     const Spacer(),
-                    TextButton.icon(
-                      onPressed: () async {
-                        if (_anioSel == null) return;
-                        final events = await ref.read(eventosProvider(_anioSel!).future);
-                        await programarNotificacionesPara(
-                          eventos: events,
-                          rucLastDigit: null,
-                          regimen: null,
-                        );
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Notificaciones programadas')),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.notifications_active_outlined),
-                      label: const Text('Activar recordatorios'),
-                    )
                   ],
                 );
               },
