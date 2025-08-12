@@ -26,15 +26,4 @@ class MiEvento {
     fin: m['fin'] != null ? DateTime.parse(m['fin'] as String).toLocal() : null,
     allDay: (m['all_day'] ?? false) as bool,
   );
-
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'user_id': userId,
-    'titulo': titulo,
-    'descripcion': descripcion,
-    // Enviamos en UTC; Supabase lo almacena en timestamptz
-    'inicio': inicio.toUtc().toIso8601String(),
-    'fin': fin?.toUtc().toIso8601String(),
-    'all_day': allDay,
-  };
 }

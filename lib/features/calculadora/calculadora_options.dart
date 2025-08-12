@@ -12,9 +12,21 @@ enum DescuentoAction { ayuda, desdePrecio, predeterminado }
 enum LeyAction { ayuda, predeterminado }
 
 const generalMenuOptions = <MenuOption<GeneralAction>>[
-  MenuOption(value: GeneralAction.actualizar,    label: 'Actualizar datos',       icon: Icons.sync),
-  MenuOption(value: GeneralAction.avanzadas,     label: 'Opciones avanzadas',     icon: Icons.tune),
-  MenuOption(value: GeneralAction.personalizados,label: 'Valores personalizados', icon: Icons.edit),
+  MenuOption(
+      value: GeneralAction.actualizar,
+      label: 'Actualizar datos',
+      icon: Icons.sync
+  ),
+  MenuOption(
+      value: GeneralAction.avanzadas,
+      label: 'Opciones avanzadas',
+      icon: Icons.tune
+  ),
+  MenuOption(
+      value: GeneralAction.personalizados,
+      label: 'Valores personalizados',
+      icon: Icons.edit
+  ),
 ];
 
 const descuentoMenuOptions = <MenuOption<DescuentoAction>>[

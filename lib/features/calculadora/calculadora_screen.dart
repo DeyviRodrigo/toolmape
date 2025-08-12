@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app_shell.dart';
+import '../../state/parametros.dart';
 import 'calculadora_controller.dart';
 import 'calculadora_options.dart';
-import 'calculadora_constants.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/dialogs.dart';
 import '../../widgets/campo_numerico.dart';
 
-class ScreenCalculadora extends StatefulWidget {
+class ScreenCalculadora extends ConsumerStatefulWidget {
   const ScreenCalculadora({super.key});
   @override
-  State<ScreenCalculadora> createState() => _ScreenCalculadoraState();
+  ConsumerState<ScreenCalculadora> createState() => _ScreenCalculadoraState();
 }
 
-class _ScreenCalculadoraState extends State<ScreenCalculadora> {
+class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   final precioOroCtrl = TextEditingController();
   final tipoCambioCtrl = TextEditingController();
   final descuentoCtrl = TextEditingController();
@@ -30,15 +32,13 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
   @override
   void initState() {
     super.initState();
-    _controller
-        .cargarPreferenciasInto(
+    _controller.cargarPreferenciasInto(
       precioOro: precioOroCtrl,
       tipoCambio: tipoCambioCtrl,
       descuento: descuentoCtrl,
       ley: leyCtrl,
       cantidad: cantidadCtrl,
-    )
-        .then((_) => setState(() {}));
+    ).then((_) => setState(() {}));
   }
 
   PopupMenuButton<T> buildMenu<T>({
@@ -52,13 +52,11 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
       itemBuilder: (_) => options
           .map((o) => PopupMenuItem<T>(
         value: o.value,
-        child: Row(
-          children: [
-            Icon(o.icon, size: 20),
-            const SizedBox(width: 10),
-            Text(o.label),
-          ],
-        ),
+        child: Row(children: [
+          Icon(o.icon, size: 20),
+          const SizedBox(width: 10),
+          Text(o.label),
+        ]),
       ))
           .toList(),
       onSelected: onSelected,
@@ -66,8 +64,10 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
   }
 
   Future<void> calcular() async {
-    if (precioOroCtrl.text.trim().isEmpty) precioOroCtrl.text = kPrecioOroDefault.toString();
-    if (tipoCambioCtrl.text.trim().isEmpty) tipoCambioCtrl.text = kTipoCambioDefault.toString();
+    final sugeridos = ref.read(parametrosProvider).value ?? ParametrosRecomendados.defaults();
+
+    if (precioOroCtrl.text.trim().isEmpty) precioOroCtrl.text = sugeridos.precioOroUsdOnza.toString();
+    if (tipoCambioCtrl.text.trim().isEmpty) tipoCambioCtrl.text = sugeridos.tipoCambio.toString();
 
     if (descuentoCtrl.text.trim().isEmpty) {
       final sel = await choiceDialog(
@@ -77,7 +77,7 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
         options: const ['Requiero ayuda', 'Utilizar predeterminado'],
       );
       if (sel == 'Utilizar predeterminado') {
-        descuentoCtrl.text = kDescuentoDefault.toString();
+        descuentoCtrl.text = sugeridos.descuentoSugerido.toString();
       } else {
         return;
       }
@@ -90,21 +90,21 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
         options: const ['Requiero ayuda', 'Utilizar predeterminado'],
       );
       if (sel == 'Utilizar predeterminado') {
-        leyCtrl.text = kLeyDefault.toString();
+        leyCtrl.text = sugeridos.leySugerida.toString();
       } else {
         return;
       }
     }
     if (cantidadCtrl.text.trim().isEmpty) cantidadCtrl.text = '1';
 
-    double _p(String s) => double.parse(s.replaceAll(',', '.'));
+    double parseNum(String s) => double.parse(s.replaceAll(',', '.'));
 
     final r = _controller.calcular(
-      precioOro: _p(precioOroCtrl.text),
-      tipoCambio: _p(tipoCambioCtrl.text),
-      descuento: _p(descuentoCtrl.text),
-      ley: _p(leyCtrl.text),
-      cantidad: _p(cantidadCtrl.text),
+      precioOro: parseNum(precioOroCtrl.text),
+      tipoCambio: parseNum(tipoCambioCtrl.text),
+      descuento: parseNum(descuentoCtrl.text),
+      ley: parseNum(leyCtrl.text),
+      cantidad: parseNum(cantidadCtrl.text),
     );
 
     setState(() {
@@ -123,52 +123,11 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Drawer IZQUIERDO (restaurado)
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const ListTile(
-                title: Text('Calcular precio del oro'),
-                leading: Icon(Icons.calculate_outlined),
-              ),
-              ListTile(
-                leading: const Icon(Icons.calendar_month),
-                title: const Text('Calendario de obligaciones'),
-                onTap: () {/* TODO: navegar */},
-              ),
-              ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
-                title: const Text('Biblioteca Minera'),
-                onTap: () {/* TODO: navegar */},
-              ),
-              ListTile(
-                leading: const Icon(Icons.support_agent),
-                title: const Text('Consultoría personalizada'),
-                onTap: () {/* TODO: navegar */},
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Configuración de la cuenta'),
-                onTap: () {/* TODO: navegar */},
-              ),
-              ListTile(
-                leading: const Icon(Icons.feedback_outlined),
-                title: const Text('Dejar feedback sobre la app'),
-                onTap: () {/* TODO: navegar */},
-              ),
-            ],
-          ),
-        ),
-      ),
+    final asyncParams = ref.watch(parametrosProvider);
+    final sugeridos = asyncParams.value ?? ParametrosRecomendados.defaults();
 
-      appBar: AppBar(
-        title: const Text('Calcular precio del oro'),
-      ),
-
+    return AppShell(
+      title: 'Calcular precio del oro',
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -189,8 +148,10 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
                     final changed = _controller.onGeneralAction(
                       a,
                       precioOroCtrl,
-                      precioOro: precioOroCtrl,
-                      tipoCambio: tipoCambioCtrl,
+                      precioOroSugerido: sugeridos.precioOroUsdOnza,
+                      tipoCambioSugerido: sugeridos.tipoCambio,
+                      precioOroCtrl: precioOroCtrl,
+                      tipoCambioCtrl: tipoCambioCtrl,
                     );
                     if (changed) setState(() {});
                   },
@@ -215,8 +176,10 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
                     final changed = _controller.onGeneralAction(
                       a,
                       tipoCambioCtrl,
-                      precioOro: precioOroCtrl,
-                      tipoCambio: tipoCambioCtrl,
+                      precioOroSugerido: sugeridos.precioOroUsdOnza,
+                      tipoCambioSugerido: sugeridos.tipoCambio,
+                      precioOroCtrl: precioOroCtrl,
+                      tipoCambioCtrl: tipoCambioCtrl,
                     );
                     if (changed) setState(() {});
                   },
@@ -241,18 +204,11 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
                     switch (a) {
                       case DescuentoAction.ayuda:
                       case DescuentoAction.desdePrecio:
-                        final applied = await _controller.dialogoCalcularDescuentoConLey(
-                          context: context,
-                          leyMenuOptions: leyMenuOptions,
-                          descuentoCtrl: descuentoCtrl,
-                          leyCtrl: leyCtrl,
-                          precioOroCtrl: precioOroCtrl,
-                          tipoCambioCtrl: tipoCambioCtrl,
-                        );
-                        if (applied) setState(() {});
+                        final ok = await _dialogoCalcularDescuentoConLey(sugeridos);
+                        if (ok) setState(() {});
                         break;
                       case DescuentoAction.predeterminado:
-                        descuentoCtrl.text = kDescuentoDefault.toString();
+                        descuentoCtrl.text = sugeridos.descuentoSugerido.toString();
                         setState(() {});
                         break;
                     }
@@ -280,7 +236,7 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
                       // TODO: flujo de ayuda de ley
                         break;
                       case LeyAction.predeterminado:
-                        leyCtrl.text = kLeyDefault.toString();
+                        leyCtrl.text = sugeridos.leySugerida.toString();
                         setState(() {});
                         break;
                     }
@@ -317,15 +273,130 @@ class _ScreenCalculadoraState extends State<ScreenCalculadora> {
             const SizedBox(height: 24),
 
             if (precioPorGramo != null)
-              Text('Precio por gramo: ${soles(precioPorGramo!)}',
-                  style: const TextStyle(fontSize: 18)),
+              Text('Precio por gramo: ${soles(precioPorGramo!)}', style: const TextStyle(fontSize: 18)),
             if (resultado != null)
-              Text('Precio total: ${soles(resultado!)}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text('Precio total: ${soles(resultado!)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
     );
+  }
+
+  // Diálogo de ayuda (usa sugeridos del provider)
+  Future<bool> _dialogoCalcularDescuentoConLey(ParametrosRecomendados sugeridos) async {
+    final precioOfrecidoCtrl = TextEditingController();
+    final leyInputCtrl = TextEditingController(
+      text: leyCtrl.text.isNotEmpty ? leyCtrl.text : sugeridos.leySugerida.toString(),
+    );
+
+    while (true) {
+      final ok = await showDialog<bool>(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => StatefulBuilder(
+          builder: (context, setLocal) {
+            return AlertDialog(
+              title: const Text('Calcular descuento'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Precio ofrecido por gramo (S/):'),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: precioOfrecidoCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Ej: 300.00',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Ley (%)'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: leyInputCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: 'Ej: 93',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PopupMenuButton<LeyAction>(
+                        icon: const Icon(Icons.help_outline),
+                        offset: const Offset(0, -12),
+                        itemBuilder: (_) => leyMenuOptions
+                            .map((o) => PopupMenuItem<LeyAction>(
+                          value: o.value,
+                          child: Row(children: [
+                            Icon(o.icon, size: 18),
+                            const SizedBox(width: 8),
+                            Text(o.label),
+                          ]),
+                        ))
+                            .toList(),
+                        onSelected: (act) {
+                          if (act == LeyAction.predeterminado) {
+                            leyInputCtrl.text = sugeridos.leySugerida.toString();
+                            setLocal(() {});
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Calcular')),
+              ],
+            );
+          },
+        ),
+      );
+
+      if (ok != true) return false;
+
+      final ofrecido = double.tryParse(precioOfrecidoCtrl.text.replaceAll(',', '.'));
+      final leyUsada = double.tryParse(leyInputCtrl.text.replaceAll(',', '.')) ?? sugeridos.leySugerida;
+      if (ofrecido == null || ofrecido <= 0) return false;
+
+      final base = _controller.baseSolesPorGramo(
+        precioOroUsdOnza: double.tryParse(precioOroCtrl.text.replaceAll(',', '.')) ?? sugeridos.precioOroUsdOnza,
+        tipoCambio: double.tryParse(tipoCambioCtrl.text.replaceAll(',', '.')) ?? sugeridos.tipoCambio,
+        leyPct: leyUsada,
+      );
+
+      double d = 100 * (1 - (ofrecido / base));
+      if (d < 0) d = 0;
+      if (d > 100) d = 100;
+
+      final next = await showDialog<String>(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => AlertDialog(
+          title: const Text('Resultado'),
+          content: Text('El descuento aplicado es ${d.toStringAsFixed(2)}%'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, 'recalcular'), child: const Text('Recalcular')),
+            FilledButton(onPressed: () => Navigator.pop(context, 'continuar'), child: const Text('Continuar')),
+          ],
+        ),
+      );
+
+      if (next == 'recalcular') {
+        continue;
+      } else {
+        descuentoCtrl.text = d.toStringAsFixed(2);
+        leyCtrl.text = leyUsada.toStringAsFixed(2);
+        return true;
+      }
+    }
   }
 
   @override

@@ -1,13 +1,13 @@
-class CalculadoraService {
-  static const double _gramosPorOnza = 31.1034768;
+import '../core/constants.dart';
 
+class CalculadoraService {
   static double precioPorGramoEnSoles({
     required double precioOro,   // USD/onza
     required double tipoCambio,  // S/ por USD
     required double descuento,   // %
     required double ley,         // %
   }) {
-    final precioGramoUsd = precioOro / _gramosPorOnza;
+    final precioGramoUsd = precioOro / kGramosPorOnza;
     final ajustadoUsd = precioGramoUsd * (ley / 100) * (1 - descuento / 100);
     return ajustadoUsd * tipoCambio;
   }

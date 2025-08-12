@@ -1,9 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'core/notifications/calendario_notifications.dart';
 import 'features/calculadora/calculadora_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ToolMAPEApp());
+
+  // 1) Cargar variables de entorno (.env). No detiene la app si no existe.
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (_) {
+    // Ignorar si el asset no está disponible (p. ej., en web sin .env)
+  }
+
+  // 2) Inicializar Supabase solo si hay claves válidas.
+  final supaUrl = dotenv.env['SUPABASE_URL'];
+  final supaKey = dotenv.env['SUPABASE_ANON_KEY'];
+  if (supaUrl != null && supaKey != null && supaUrl.isNotEmpty && supaKey.isNotEmpty) {
+    await Supabase.initialize(url: supaUrl, anonKey: supaKey);
+
+    // 2.1) Asegurar sesión anónima para poder guardar eventos privados por usuario.
+    final supa = Supabase.instance.client;
+    if (supa.auth.currentUser == null) {
+      try {
+        await supa.auth.signInAnonymously();
+      } catch (_) {
+        // Si falla, la app igual arranca; solo afectará guardar eventos privados.
+      }
+    }
+  }
+
+  // 3) Notificaciones locales: NO en web (el plugin no está soportado).
+  if (!kIsWeb) {
+    await CalendarioNotifications.init();
+  }
+
+  runApp(const ProviderScope(child: ToolMAPEApp()));
 }
 
 class ToolMAPEApp extends StatelessWidget {
@@ -12,11 +49,23 @@ class ToolMAPEApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'ToolMAPE',
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFFFFC107), // amber-ish
+        colorSchemeSeed: const Color(0xFFFFC107),
       ),
+      locale: const Locale('es', 'PE'),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'PE'),
+        Locale('es', 'ES'),
+        Locale('en', 'US'),
+      ],
       home: const ScreenCalculadora(),
     );
   }
