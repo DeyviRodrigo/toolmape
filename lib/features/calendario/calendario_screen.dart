@@ -27,7 +27,6 @@ class CalendarioMineroScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen> {
-  int? _anioSel;
 
   // Estado del calendario
   DateTime _focused = DateTime.now();
@@ -90,11 +89,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
   @override
   Widget build(BuildContext context) {
-    final anios = ref.watch(aniosProvider);
-
-    final eventosAsync = _anioSel == null
-        ? const AsyncValue<List<EventoCalendar>>.loading()
-        : ref.watch(eventosProvider(_anioSel!));
+    final eventosAsync = ref.watch(eventosProvider(_focused.year));
 
     final userEventosAsync = ref.watch(misEventosRangoProvider(_mesRango));
 
@@ -116,8 +111,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           tooltip: 'Programar recordatorios',
           icon: const Icon(Icons.notifications_active_outlined),
           onPressed: () async {
-            if (_anioSel == null) return;
-            final events = await ref.read(eventosProvider(_anioSel!).future);
+            final events = await ref.read(eventosProvider(_focused.year).future);
             await programarNotificacionesPara(
               eventos: events,
               rucLastDigit: null,
@@ -164,26 +158,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Selector de año
-            anios.when(
-              data: (list) {
-                _anioSel ??= list.isNotEmpty ? list.last : null;
-                return Row(
-                  children: [
-                    const Text('Año:', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(width: 12),
-                    DropdownButton<int>(
-                      value: _anioSel,
-                      items: list.map((y) => DropdownMenuItem(value: y, child: Text('$y'))).toList(),
-                      onChanged: (y) => setState(() => _anioSel = y),
-                    ),
-                    const Spacer(),
-                  ],
-                );
-              },
-              loading: () => const Align(alignment: Alignment.centerLeft, child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error cargando años: $e'),
-            ),
+
             const SizedBox(height: 12),
 
             // TODO en una sola zona con scroll para evitar overflow
@@ -412,7 +387,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                     // Resumen por mes (NO scroll propio, hereda del padre)
                     eventosAsync.when(
                       data: (list) {
-                        if (list.isEmpty) return const Center(child: Text('Sin eventos para este año'));
+                        if (list.isEmpty) return const Center(child: Text('Sin eventos para este mes'));
 
                         final grupos = <int, List<EventoCalendar>>{};
                         for (final e in list) {
