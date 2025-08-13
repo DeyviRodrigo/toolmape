@@ -1,6 +1,8 @@
 import '../core/constants.dart';
 
+/// Clase: CalculadoraService - operaciones de cálculo de precios.
 class CalculadoraService {
+  /// Función: precioPorGramoEnSoles - calcula el precio por gramo en soles.
   static double precioPorGramoEnSoles({
     required double precioOro,   // USD/onza
     required double tipoCambio,  // S/ por USD
@@ -12,6 +14,7 @@ class CalculadoraService {
     return ajustadoUsd * tipoCambio;
   }
 
+  /// Función: calcularTotal - obtiene el total a pagar.
   static double calcularTotal({
     required double precioOro,
     required double tipoCambio,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Widget: CampoNumerico - campo de texto numérico reutilizable.
 class CampoNumerico extends StatelessWidget {
   final TextEditingController controller;
   final String etiqueta;

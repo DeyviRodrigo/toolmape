@@ -1,3 +1,4 @@
+/// Clase: EventoCalendar - modelo de evento general del calendario.
 class EventoCalendar {
   final String id;
   final String titulo;
@@ -33,6 +34,7 @@ class EventoCalendar {
     fuente: m['fuente'] as String?,
   );
 
+  /// Función: aplicaA - verifica si el evento aplica al usuario.
   bool aplicaA({int? rucDigit, String? regimen}) {
     final digits = (alcance['ruc_digits'] as List?)?.cast<int>();
     if (digits != null && digits.isNotEmpty && rucDigit != null && !digits.contains(rucDigit)) return false;
