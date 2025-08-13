@@ -9,12 +9,14 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/dialogs.dart';
 import '../../widgets/campo_numerico.dart';
 
+/// Widget: ScreenCalculadora - interfaz principal de la calculadora.
 class ScreenCalculadora extends ConsumerStatefulWidget {
   const ScreenCalculadora({super.key});
   @override
   ConsumerState<ScreenCalculadora> createState() => _ScreenCalculadoraState();
 }
 
+/// State: _ScreenCalculadoraState - estado de la pantalla de cálculo.
 class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   final precioOroCtrl = TextEditingController();
   final tipoCambioCtrl = TextEditingController();
@@ -41,6 +43,7 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     ).then((_) => setState(() {}));
   }
 
+  /// Función: buildMenu - crea un menú emergente genérico.
   PopupMenuButton<T> buildMenu<T>({
     required IconData icon,
     required List<MenuOption<T>> options,
@@ -63,6 +66,7 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     );
   }
 
+  /// Función: calcular - ejecuta el cálculo utilizando los valores ingresados.
   Future<void> calcular() async {
     final sugeridos = ref.read(parametrosProvider).value ?? ParametrosRecomendados.defaults();
 
@@ -283,6 +287,7 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   }
 
   // Diálogo de ayuda (usa sugeridos del provider)
+  /// Función: _dialogoCalcularDescuentoConLey - asistencia para calcular descuento.
   Future<bool> _dialogoCalcularDescuentoConLey(ParametrosRecomendados sugeridos) async {
     final precioOfrecidoCtrl = TextEditingController();
     final leyInputCtrl = TextEditingController(

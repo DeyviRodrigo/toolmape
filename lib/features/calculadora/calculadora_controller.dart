@@ -5,14 +5,17 @@ import '../../core/constants.dart';
 import 'calculadora_options.dart';
 import '../../services/calculadora_service.dart';
 
+/// Clase: ResultadoCalculo - resultado del cálculo por gramo y total.
 class ResultadoCalculo {
   final double precioPorGramo;
   final double total;
   const ResultadoCalculo({required this.precioPorGramo, required this.total});
 }
 
+/// Clase: CalculadoraController - maneja la lógica de la calculadora.
 class CalculadoraController {
   // Persistencia
+  /// Función: cargarPreferenciasInto - carga valores desde almacenamiento local.
   Future<void> cargarPreferenciasInto({
     required TextEditingController precioOro,
     required TextEditingController tipoCambio,
@@ -28,6 +31,7 @@ class CalculadoraController {
     cantidad.text   = prefs.getString('cantidad') ?? '';
   }
 
+  /// Función: guardarPreferenciasFrom - guarda valores en almacenamiento local.
   Future<void> guardarPreferenciasFrom({
     required TextEditingController precioOro,
     required TextEditingController tipoCambio,
@@ -44,6 +48,7 @@ class CalculadoraController {
   }
 
   // Acción general “Actualizar” usa sugeridos que le pasa la pantalla
+  /// Función: onGeneralAction - gestiona las acciones generales del menú.
   bool onGeneralAction(
       GeneralAction a,
       TextEditingController target, {
@@ -63,6 +68,7 @@ class CalculadoraController {
     }
   }
 
+  /// Función: calcular - realiza el cálculo principal.
   ResultadoCalculo calcular({
     required double precioOro,
     required double tipoCambio,
@@ -87,6 +93,7 @@ class CalculadoraController {
   }
 
   // Base S/ por gramo sin descuento
+  /// Función: baseSolesPorGramo - calcula base sin aplicar descuento.
   double baseSolesPorGramo({
     required double precioOroUsdOnza,
     required double tipoCambio,

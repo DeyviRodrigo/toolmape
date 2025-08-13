@@ -10,24 +10,27 @@ import 'eventos_calendario.dart';
 import 'mis_eventos_provider.dart';
 import 'mi_evento.dart';
 
+/// Enum: EventFilter - filtros disponibles para eventos.
 enum EventFilter { all, general, personal }
 
-/// Marker para el calendario (icono + color)
+/// Clase: _Marker - marcador para el calendario (icono + color).
 class _Marker {
   final IconData icon;
   final Color color;
   const _Marker(this.icon, this.color);
 }
 
-// Pantalla principal
+/// Widget: CalendarioMineroScreen - pantalla principal del calendario.
 class CalendarioMineroScreen extends ConsumerStatefulWidget {
   const CalendarioMineroScreen({super.key});
   @override
   ConsumerState<CalendarioMineroScreen> createState() => _CalendarioMineroScreenState();
 }
 
+/// State: _CalendarioMineroScreenState - maneja la lógica del calendario.
 class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen> {
 
+  // Getter: _mesClave - clave del mes enfocado.
   DateTime get _mesClave => DateTime(_focused.year, _focused.month, 1);
 
   // Estado del calendario
@@ -35,7 +38,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
   DateTime _selected = DateTime.now();
   EventFilter _filtro = EventFilter.all;
 
-  // Rango visible del mes (para cargar "mis eventos")
+  // Getter: _mesRango - rango visible del mes para cargar "mis eventos".
   DateTimeRange get _mesRango {
     final first = DateTime(_focused.year, _focused.month, 1);
     final last = DateTime(_focused.year, _focused.month + 1, 0);
@@ -45,12 +48,12 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
-  /// Fecha de vencimiento para pintar (prioridad: fin > inicio > recordatorio)
+  /// Función: _fechaVenc - fecha de vencimiento para pintar (prioridad: fin > inicio > recordatorio)
   DateTime? _fechaVenc(EventoCalendar e) => e.fin ?? e.inicio ?? e.recordatorio;
 
   // ---- Helpers de estilo / lógica ----
 
-  // Altura “estable” del calendario para evitar deformaciones
+  // Función: _calendarHeight - altura estable del calendario.
   double _calendarHeight(BuildContext ctx) {
     final h = MediaQuery.of(ctx).size.height;
     if (h < 650) return 300;
@@ -58,12 +61,13 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     return 400;
   }
 
-  // Borde cuadriculado de cada celda
+  // Función: _cellRectBorder - borde cuadriculado de cada celda.
   BoxDecoration _cellRectBorder(BuildContext ctx, {Color? color}) => BoxDecoration(
     shape: BoxShape.rectangle,
     border: Border.all(color: color ?? Colors.grey.shade300, width: 0.6),
   );
 
+  // Función: _cellRectFilled - celda con relleno y borde.
   BoxDecoration _cellRectFilled(BuildContext ctx, {required Color bg, Color? border}) {
     return BoxDecoration(
       shape: BoxShape.rectangle,
@@ -72,10 +76,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
-  // ¿Es feriado?
+  // Función: _esFeriado - determina si el evento es feriado.
   bool _esFeriado(EventoCalendar e) => (e.categoria ?? '').toLowerCase() == 'fechas festivas';
 
-  // Icono por categoría/título
+  // Función: _iconoPara - icono por categoría/título.
   IconData _iconoPara(EventoCalendar e) {
     final cat = (e.categoria ?? '').toLowerCase();
     final t = (e.titulo).toLowerCase();
@@ -471,6 +475,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
+  /// Función: _itemFiltro - elemento de menú para filtrar eventos.
   PopupMenuItem<EventFilter> _itemFiltro(
       EventFilter value, String label, IconData icon, EventFilter current,
       ) {
@@ -487,7 +492,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
-  // Diálogo para crear evento privado
+  // Función: _nuevoEventoDialog - diálogo para crear evento privado.
   Future<bool?> _nuevoEventoDialog(BuildContext context) async {
     final repo = ref.read(misEventosRepoProvider);
     final titulo = TextEditingController();
@@ -591,6 +596,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
   }
 }
 
+/// Widget: _LegendItem - elemento de la leyenda del calendario.
 class _LegendItem extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -610,6 +616,7 @@ class _LegendItem extends StatelessWidget {
   }
 }
 
+/// Función: _mesNombre - devuelve el nombre del mes.
 String _mesNombre(int m) {
   const meses = [
     '',

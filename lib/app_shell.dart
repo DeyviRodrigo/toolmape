@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/app_drawer.dart';
 
+/// Widget: AppShell - estructura base con AppBar y Drawer.
 class AppShell extends StatelessWidget {
   final String title;
   final Widget body;

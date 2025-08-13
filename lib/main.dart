@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/notifications/calendario_notifications.dart';
 import 'features/calculadora/calculadora_screen.dart';
 
+/// Función: main - punto de entrada de la aplicación.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -43,6 +44,7 @@ Future<void> main() async {
   runApp(const ProviderScope(child: ToolMAPEApp()));
 }
 
+/// Widget: ToolMAPEApp - configuración base de MaterialApp.
 class ToolMAPEApp extends StatelessWidget {
   const ToolMAPEApp({super.key});
 

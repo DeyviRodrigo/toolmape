@@ -1,3 +1,4 @@
+/// Clase: MiEvento - modelo para eventos privados del usuario.
 class MiEvento {
   final String id;
   final String userId;

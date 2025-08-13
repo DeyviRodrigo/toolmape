@@ -1,12 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'eventos_calendario.dart';
 
+/// Clase: CalendarioRepo - acceso a datos del calendario.
 class CalendarioRepo {
   CalendarioRepo(this._client);
   final SupabaseClient _client;
 
-  /// Devuelve todos los eventos cuyo `inicio` **o** `fin` **o** `recordatorio`
-  /// cae dentro del [start, end] (inclusive).
+  /// Función: eventosEnRango - eventos cuyo `inicio`, `fin` o `recordatorio` cae dentro del rango.
   Future<List<EventoCalendar>> eventosEnRango({
     required DateTime start,
     required DateTime end,

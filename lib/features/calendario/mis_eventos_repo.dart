@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'mi_evento.dart';
 
+/// Clase: MisEventosRepo - operaciones sobre eventos personales.
 class MisEventosRepo {
   MisEventosRepo(this._client);
   final SupabaseClient _client;
@@ -8,7 +9,7 @@ class MisEventosRepo {
   bool _anonDisabled = false;
   bool get anonDisabled => _anonDisabled;
 
-  /// Asegura sesión anónima si está habilitada en Supabase.
+  /// Función: _ensureAnonAuth - asegura sesión anónima si está habilitada en Supabase.
   Future<void> _ensureAnonAuth() async {
     if (_anonDisabled) return;
 
@@ -32,6 +33,7 @@ class MisEventosRepo {
     }
   }
 
+  /// Función: eventosEnRango - obtiene eventos personales dentro de un rango.
   Future<List<MiEvento>> eventosEnRango(DateTime start, DateTime end) async {
     await _ensureAnonAuth();
     if (_anonDisabled || _client.auth.currentUser == null) return [];
@@ -57,6 +59,7 @@ class MisEventosRepo {
     }
   }
 
+  /// Función: crear - inserta un nuevo evento personal.
   Future<void> crear({
     required String titulo,
     String? descripcion,
@@ -78,6 +81,7 @@ class MisEventosRepo {
     });
   }
 
+  /// Función: borrar - elimina un evento personal por id.
   Future<void> borrar(String id) async {
     await _ensureAnonAuth();
     if (_anonDisabled || _client.auth.currentUser == null) {

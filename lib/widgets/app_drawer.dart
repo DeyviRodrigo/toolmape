@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../features/calculadora/calculadora_screen.dart';
 import '../features/calendario/calendario_screen.dart';
 
+/// Widget: AppDrawer - menú lateral de navegación.
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
+  /// Función: _go - navega a la pantalla indicada.
   void _go(BuildContext context, Widget screen) {
     Navigator.pop(context); // cierra el drawer
 
