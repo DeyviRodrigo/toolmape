@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Modelo con “recomendados” (vendrán de BD; aquí con defaults de arranque)
+/// Clase: ParametrosRecomendados - modelo con valores recomendados.
 class ParametrosRecomendados {
   final double precioOroUsdOnza;
   final double tipoCambio;
@@ -36,6 +36,7 @@ class ParametrosRecomendados {
   }
 }
 
+/// Notifier: ParametrosNotifier - gestiona los parámetros recomendados.
 class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
   @override
   Future<ParametrosRecomendados> build() async {
@@ -59,6 +60,7 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
       state = AsyncData((state.value ?? ParametrosRecomendados.defaults()).copyWith(leySugerida: v));
 }
 
+/// Provider: parametrosProvider - expone ParametrosNotifier.
 final parametrosProvider = AsyncNotifierProvider<ParametrosNotifier, ParametrosRecomendados>(
       () => ParametrosNotifier(),
 );

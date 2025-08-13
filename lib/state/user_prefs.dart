@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Clase: UserPrefs - preferencias locales del usuario.
 class UserPrefs {
   final int? rucLastDigit;   // 0..9
   final String? regimen;     // "RMT","RER","MYPE","RG", etc.
@@ -15,6 +16,7 @@ class UserPrefs {
   );
 }
 
+/// Notifier: UserPrefsNotifier - maneja la persistencia de UserPrefs.
 class UserPrefsNotifier extends AsyncNotifier<UserPrefs> {
   static const _kRucDigit = 'prefs.rucLastDigit';
   static const _kRegimen  = 'prefs.regimen';
@@ -51,5 +53,6 @@ class UserPrefsNotifier extends AsyncNotifier<UserPrefs> {
   }
 }
 
+/// Provider: userPrefsProvider - expone las preferencias del usuario.
 final userPrefsProvider =
-AsyncNotifierProvider<UserPrefsNotifier, UserPrefs>(() => UserPrefsNotifier());
+    AsyncNotifierProvider<UserPrefsNotifier, UserPrefs>(() => UserPrefsNotifier());

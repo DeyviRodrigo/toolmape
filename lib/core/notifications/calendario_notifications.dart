@@ -2,9 +2,11 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+/// Clase: CalendarioNotifications - gestiona avisos locales.
 class CalendarioNotifications {
   static final _plugin = FlutterLocalNotificationsPlugin();
 
+  /// Función: init - inicializa el plugin de notificaciones.
   static Future<void> init() async {
     tz.initializeTimeZones();
 
@@ -17,7 +19,7 @@ class CalendarioNotifications {
     await _plugin.initialize(initSettings);
   }
 
-  /// Programa una notificación única en la fecha/hora indicada.
+  /// Función: scheduleOnce - programa una notificación única en la fecha/hora indicada.
   static Future<void> scheduleOnce({
     required int id,
     required DateTime when,
@@ -46,5 +48,6 @@ class CalendarioNotifications {
     );
   }
 
+  /// Función: cancelAll - elimina todas las notificaciones programadas.
   static Future<void> cancelAll() => _plugin.cancelAll();
 }

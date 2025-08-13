@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Clase: MenuOption - representa una opción del menú contextual.
 class MenuOption<T> {
   final T value;
   final String label;
@@ -7,10 +8,14 @@ class MenuOption<T> {
   const MenuOption({required this.value, required this.label, required this.icon});
 }
 
+/// Enum: GeneralAction - opciones generales.
 enum GeneralAction { actualizar, avanzadas, personalizados }
+/// Enum: DescuentoAction - acciones relacionadas al descuento.
 enum DescuentoAction { ayuda, desdePrecio, predeterminado }
+/// Enum: LeyAction - acciones para la ley.
 enum LeyAction { ayuda, predeterminado }
 
+/// Constante: generalMenuOptions - menú para acciones generales.
 const generalMenuOptions = <MenuOption<GeneralAction>>[
   MenuOption(
       value: GeneralAction.actualizar,
@@ -29,6 +34,7 @@ const generalMenuOptions = <MenuOption<GeneralAction>>[
   ),
 ];
 
+/// Constante: descuentoMenuOptions - menú para acciones de descuento.
 const descuentoMenuOptions = <MenuOption<DescuentoAction>>[
   MenuOption(
     value: DescuentoAction.ayuda,
@@ -47,6 +53,7 @@ const descuentoMenuOptions = <MenuOption<DescuentoAction>>[
   ),
 ];
 
+/// Constante: leyMenuOptions - menú para acciones de ley.
 const leyMenuOptions = <MenuOption<LeyAction>>[
   MenuOption(
     value: LeyAction.ayuda,

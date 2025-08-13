@@ -7,16 +7,18 @@ import 'calendario_repo.dart';
 import 'eventos_calendario.dart';
 
 // --- Providers base ---
+/// Provider: supabaseClientProvider - cliente de Supabase.
 final supabaseClientProvider =
-Provider<SupabaseClient>((ref) => Supabase.instance.client);
+    Provider<SupabaseClient>((ref) => Supabase.instance.client);
 
+/// Provider: calendarioRepoProvider - repositorio de calendario.
 final calendarioRepoProvider = Provider<CalendarioRepo>((ref) {
   return CalendarioRepo(ref.read(supabaseClientProvider));
 });
 
-/// Eventos del MES visible (usa rango 1..último día)
+/// Provider: eventosMesProvider - eventos del MES visible (usa rango 1..último día).
 final eventosMesProvider =
-FutureProvider.family<List<EventoCalendar>, DateTime>((ref, focused) async {
+    FutureProvider.family<List<EventoCalendar>, DateTime>((ref, focused) async {
   final repo = ref.read(calendarioRepoProvider);
   final start = DateTime(focused.year, focused.month, 1);
   final end   = DateTime(focused.year, focused.month + 1, 0);
@@ -24,6 +26,7 @@ FutureProvider.family<List<EventoCalendar>, DateTime>((ref, focused) async {
 });
 
 // --- Notificaciones locales (recordatorio + inicio + fin a las 09:00) ---
+/// Función: programarNotificacionesPara - programa notificaciones para eventos.
 Future<void> programarNotificacionesPara({
   required List<EventoCalendar> eventos,
   required int? rucLastDigit,
