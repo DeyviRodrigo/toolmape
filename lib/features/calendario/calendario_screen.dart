@@ -4,14 +4,12 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../app_shell.dart';
 import 'calendario_controller.dart';
+import 'calendario_view_model.dart';
 import 'eventos_calendario.dart';
 
 // Eventos privados del usuario
 import 'mis_eventos_provider.dart';
 import 'mi_evento.dart';
-
-/// Enum: EventFilter - filtros disponibles para eventos.
-enum EventFilter { all, general, personal }
 
 /// Clase: _Marker - marcador para el calendario (icono + color).
 class _Marker {
@@ -21,35 +19,8 @@ class _Marker {
 }
 
 /// Widget: CalendarioMineroScreen - pantalla principal del calendario.
-class CalendarioMineroScreen extends ConsumerStatefulWidget {
+class CalendarioMineroScreen extends ConsumerWidget {
   const CalendarioMineroScreen({super.key});
-  @override
-  ConsumerState<CalendarioMineroScreen> createState() => _CalendarioMineroScreenState();
-}
-
-/// State: _CalendarioMineroScreenState - maneja la lógica del calendario.
-class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen> {
-
-  // Getter: _mesClave - clave del mes enfocado.
-  DateTime get _mesClave => DateTime(_focused.year, _focused.month, 1);
-
-  // Estado del calendario
-  DateTime _focused = DateTime.now();
-  DateTime _selected = DateTime.now();
-  EventFilter _filtro = EventFilter.all;
-
-  // Getter: _mesRango - rango visible del mes para cargar "mis eventos".
-  DateTimeRange get _mesRango {
-    final first = DateTime(_focused.year, _focused.month, 1);
-    final last = DateTime(_focused.year, _focused.month + 1, 0);
-    return DateTimeRange(
-      start: first,
-      end: DateTime(last.year, last.month, last.day, 23, 59, 59),
-    );
-  }
-
-  /// Función: _fechaVenc - fecha de vencimiento para pintar (prioridad: fin > inicio > recordatorio)
-  DateTime? _fechaVenc(EventoCalendar e) => e.fin ?? e.inicio ?? e.recordatorio;
 
   // ---- Helpers de estilo / lógica ----
 
@@ -76,28 +47,14 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
-  // Función: _esFeriado - determina si el evento es feriado.
-  bool _esFeriado(EventoCalendar e) => (e.categoria ?? '').toLowerCase() == 'fechas festivas';
-
-  // Función: _iconoPara - icono por categoría/título.
-  IconData _iconoPara(EventoCalendar e) {
-    final cat = (e.categoria ?? '').toLowerCase();
-    final t = (e.titulo).toLowerCase();
-    if (cat == 'feriado') return Icons.flag;
-    if (t.contains('afp')) return Icons.payments_outlined;
-    if (t.contains('agua')) return Icons.water_drop_outlined;
-    if (t.contains('sucamec') || t.contains('explosiv')) return Icons.bolt_outlined;
-    if (t.contains('estamin')) return Icons.insert_chart_outlined;
-    if (t.contains('iqbf') || t.contains('insumos')) return Icons.science_outlined;
-    if (t.contains('sunat') || t.contains('tributarias')) return Icons.assignment_outlined;
-    return Icons.event_note_outlined;
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final eventosAsync = ref.watch(eventosMesProvider(_mesClave));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(calendarioViewModelProvider);
+    final vm = ref.read(calendarioViewModelProvider.notifier);
 
-    final userEventosAsync = ref.watch(misEventosRangoProvider(_mesRango));
+    final eventosAsync = ref.watch(eventosMesProvider(vm.mesClave));
+
+    final userEventosAsync = ref.watch(misEventosRangoProvider(vm.mesRango));
 
     return AppShell(
       title: 'Calendario minero',
@@ -106,24 +63,24 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
         PopupMenuButton<EventFilter>(
           tooltip: 'Filtrar',
           icon: const Icon(Icons.filter_list),
-          onSelected: (f) => setState(() => _filtro = f),
+          onSelected: vm.setFiltro,
           itemBuilder: (_) => [
-            _itemFiltro(EventFilter.all, 'Todo', Icons.layers, _filtro),
-            _itemFiltro(EventFilter.general, 'Obligaciones', Icons.assignment_outlined, _filtro),
-            _itemFiltro(EventFilter.personal, 'Mis eventos', Icons.event, _filtro),
+            _itemFiltro(EventFilter.all, 'Todo', Icons.layers, state.filtro),
+            _itemFiltro(EventFilter.general, 'Obligaciones', Icons.assignment_outlined, state.filtro),
+            _itemFiltro(EventFilter.personal, 'Mis eventos', Icons.event, state.filtro),
           ],
         ),
         IconButton(
           tooltip: 'Programar recordatorios',
           icon: const Icon(Icons.notifications_active_outlined),
           onPressed: () async {
-            final events = await ref.read(eventosMesProvider(_focused).future);
+            final events = await ref.read(eventosMesProvider(state.focused).future);
             await programarNotificacionesPara(
               eventos: events,
               rucLastDigit: null,
               regimen: null,
             );
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Notificaciones programadas')),
               );
@@ -137,7 +94,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           onPressed: () async {
             final repo = ref.read(misEventosRepoProvider);
             if (repo.anonDisabled) {
-              if (mounted) {
+              if (context.mounted) {
                 showDialog(
                   context: context,
                   builder: (_) => const AlertDialog(
@@ -148,10 +105,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
               }
               return;
             }
-            final ok = await _nuevoEventoDialog(context);
+            final ok = await _nuevoEventoDialog(context, ref);
             if (ok == true) {
-              ref.invalidate(misEventosRangoProvider(_mesRango));
-              if (mounted) {
+              ref.invalidate(misEventosRangoProvider(vm.mesRango));
+              if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Evento guardado')),
                 );
@@ -164,10 +121,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           tooltip: 'Actualizar calendario',
           icon: const Icon(Icons.sync),
           onPressed: () async {
-            final mes = DateTime(_focused.year, _focused.month, 1);
+            final mes = vm.mesClave;
             ref.invalidate(eventosMesProvider(mes));
             await ref.read(eventosMesProvider(mes).future);
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Calendario actualizado')),
               );
@@ -195,19 +152,19 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                       child: TableCalendar(
                         firstDay: DateTime(2020, 1, 1),
                         lastDay: DateTime(2030, 12, 31),
-                        focusedDay: _focused,
+                        focusedDay: state.focused,
                         startingDayOfWeek: StartingDayOfWeek.monday,
                         locale: 'es_ES',
                         headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
                         calendarFormat: CalendarFormat.month,
-                        selectedDayPredicate: (d) => isSameDay(d, _selected),
-                        onDaySelected: (sel, foc) => setState(() { _selected = sel;}),
-                        onPageChanged: (foc) => setState(() { _focused = foc; }),
+                        selectedDayPredicate: (d) => isSameDay(d, state.selected),
+                        onDaySelected: (sel, foc) => vm.setSelected(sel),
+                        onPageChanged: (foc) => vm.setFocused(foc),
 
                         // feriados en rojo (usa fecha de vencimiento)
                         holidayPredicate: (day) {
                           final evs = eventosAsync.value ?? const <EventoCalendar>[];
-                          return evs.any((e) => _esFeriado(e) && isSameDay(_fechaVenc(e), day));
+                          return evs.any((e) => vm.esFeriado(e) && isSameDay(vm.fechaVenc(e), day));
                         },
 
                         // cuadriculado
@@ -258,18 +215,18 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                         eventLoader: (day) {
                           final generales = (eventosAsync.value ?? [])
                               .where((e) {
-                            final f = _fechaVenc(e);
-                            return f != null && isSameDay(f, day) && !_esFeriado(e);
+                            final f = vm.fechaVenc(e);
+                            return f != null && isSameDay(f, day) && !vm.esFeriado(e);
                           })
-                              .map((e) => _Marker(_iconoPara(e), Colors.amber.shade800));
+                              .map((e) => _Marker(vm.iconoPara(e), Colors.amber.shade800));
 
                           final propios = (userEventosAsync.value ?? [])
                               .where((e) => isSameDay(e.inicio, day))
                               .map((_) => const _Marker(Icons.event, Colors.blue));
 
                           final List<_Marker> list = [];
-                          if (_filtro == EventFilter.all || _filtro == EventFilter.general) list.addAll(generales);
-                          if (_filtro == EventFilter.all || _filtro == EventFilter.personal) list.addAll(propios);
+                          if (state.filtro == EventFilter.all || state.filtro == EventFilter.general) list.addAll(generales);
+                          if (state.filtro == EventFilter.all || state.filtro == EventFilter.personal) list.addAll(propios);
                           return list;
                         },
 
@@ -316,17 +273,17 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                       builder: (_) {
                         final genAll = (eventosAsync.value ?? [])
                             .where((e) {
-                          final f = _fechaVenc(e);
-                          return f != null && isSameDay(f, _selected);
+                          final f = vm.fechaVenc(e);
+                          return f != null && isSameDay(f, state.selected);
                         })
                             .toList();
 
                         final usrAll = (userEventosAsync.value ?? [])
-                            .where((e) => isSameDay(e.inicio, _selected))
+                            .where((e) => isSameDay(e.inicio, state.selected))
                             .toList();
 
-                        final generales = (_filtro == EventFilter.personal) ? <EventoCalendar>[] : genAll;
-                        final propios   = (_filtro == EventFilter.general)  ? <MiEvento>[]       : usrAll;
+                        final generales = (state.filtro == EventFilter.personal) ? <EventoCalendar>[] : genAll;
+                        final propios   = (state.filtro == EventFilter.general)  ? <MiEvento>[]       : usrAll;
 
                         if (generales.isEmpty && propios.isEmpty) {
                           return const Align(
@@ -347,7 +304,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                                 child: Text('Eventos para hoy', style: TextStyle(fontWeight: FontWeight.w600)),
                               ),
                             ...generales.map((e) {
-                              final f = _fechaVenc(e)!; // vencimiento
+                              final f = vm.fechaVenc(e)!; // vencimiento
                               final fechaStr = '${f.day.toString().padLeft(2,'0')}/${f.month.toString().padLeft(2,'0')}';
                               return ListTile(
                                 dense: true,
@@ -396,7 +353,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: () async {
                                     await ref.read(misEventosRepoProvider).borrar(e.id);
-                                    ref.invalidate(misEventosRangoProvider(_mesRango));
+                                    ref.invalidate(misEventosRangoProvider(vm.mesRango));
                                   },
                                 ),
                               );
@@ -415,7 +372,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
                         final grupos = <int, List<EventoCalendar>>{};
                         for (final e in list) {
-                          final f = _fechaVenc(e);
+                          final f = vm.fechaVenc(e);
                           if (f == null) continue;
                           grupos.putIfAbsent(f.month, () => []).add(e);
                         }
@@ -423,11 +380,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
                         return Column(
                           children: meses.map((mes) {
-                            final items = grupos[mes]!..sort((a, b) => _fechaVenc(a)!.compareTo(_fechaVenc(b)!));
+                            final items = grupos[mes]!..sort((a, b) => vm.fechaVenc(a)!.compareTo(vm.fechaVenc(b)!));
                             return ExpansionTile(
-                              title: Text(_mesNombre(mes), style: const TextStyle(fontWeight: FontWeight.w600)),
+                              title: Text(vm.mesNombre(mes), style: const TextStyle(fontWeight: FontWeight.w600)),
                               children: items.map((e) {
-                                final f = _fechaVenc(e)!;
+                                final f = vm.fechaVenc(e)!;
                                 final fechaStr = '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}';
 
                                 return ListTile(
@@ -493,11 +450,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
   }
 
   // Función: _nuevoEventoDialog - diálogo para crear evento privado.
-  Future<bool?> _nuevoEventoDialog(BuildContext context) async {
+  Future<bool?> _nuevoEventoDialog(BuildContext context, WidgetRef ref) async {
     final repo = ref.read(misEventosRepoProvider);
     final titulo = TextEditingController();
     final desc = TextEditingController();
-    DateTime fecha = _selected;
+    DateTime fecha = ref.read(calendarioViewModelProvider).selected;
     TimeOfDay hora = const TimeOfDay(hour: 9, minute: 0);
     bool allDay = false;
 
@@ -597,7 +554,6 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 }
 
 /// Widget: _LegendItem - elemento de la leyenda del calendario.
-class _LegendItem extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String label;
@@ -614,24 +570,4 @@ class _LegendItem extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Función: _mesNombre - devuelve el nombre del mes.
-String _mesNombre(int m) {
-  const meses = [
-    '',
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre'
-  ];
-  return meses[m];
 }
