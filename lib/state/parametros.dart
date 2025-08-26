@@ -15,8 +15,8 @@ class ParametrosRecomendados {
   });
 
   factory ParametrosRecomendados.defaults() => const ParametrosRecomendados(
-    precioOroUsdOnza: 3394.90,
-    tipoCambio: 3.56,
+    precioOroUsdOnza: 3373.1,
+    tipoCambio: 3.50,
     descuentoSugerido: 7,
     leySugerida: 93,
   );
