@@ -5,13 +5,11 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../app_shell.dart';
 import 'calendario_controller.dart';
 import 'eventos_calendario.dart';
+import 'calendario_view_model.dart';
 
 // Eventos privados del usuario
 import 'mis_eventos_provider.dart';
 import 'mi_evento.dart';
-
-/// Enum: EventFilter - filtros disponibles para eventos.
-enum EventFilter { all, general, personal }
 
 /// Clase: _Marker - marcador para el calendario (icono + color).
 class _Marker {
@@ -48,9 +46,6 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
-  /// Función: _fechaVenc - fecha de vencimiento para pintar (prioridad: fin > inicio > recordatorio)
-  DateTime? _fechaVenc(EventoCalendar e) => e.fin ?? e.inicio ?? e.recordatorio;
-
   // ---- Helpers de estilo / lógica ----
 
   // Función: _calendarHeight - altura estable del calendario.
@@ -76,28 +71,12 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
     );
   }
 
-  // Función: _esFeriado - determina si el evento es feriado.
-  bool _esFeriado(EventoCalendar e) => (e.categoria ?? '').toLowerCase() == 'fechas festivas';
-
-  // Función: _iconoPara - icono por categoría/título.
-  IconData _iconoPara(EventoCalendar e) {
-    final cat = (e.categoria ?? '').toLowerCase();
-    final t = (e.titulo).toLowerCase();
-    if (cat == 'feriado') return Icons.flag;
-    if (t.contains('afp')) return Icons.payments_outlined;
-    if (t.contains('agua')) return Icons.water_drop_outlined;
-    if (t.contains('sucamec') || t.contains('explosiv')) return Icons.bolt_outlined;
-    if (t.contains('estamin')) return Icons.insert_chart_outlined;
-    if (t.contains('iqbf') || t.contains('insumos')) return Icons.science_outlined;
-    if (t.contains('sunat') || t.contains('tributarias')) return Icons.assignment_outlined;
-    return Icons.event_note_outlined;
-  }
-
   @override
   Widget build(BuildContext context) {
     final eventosAsync = ref.watch(eventosMesProvider(_mesClave));
 
     final userEventosAsync = ref.watch(misEventosRangoProvider(_mesRango));
+    final vm = ref.read(calendarioViewModelProvider.notifier);
 
     return AppShell(
       title: 'Calendario minero',
@@ -207,7 +186,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                         // feriados en rojo (usa fecha de vencimiento)
                         holidayPredicate: (day) {
                           final evs = eventosAsync.value ?? const <EventoCalendar>[];
-                          return evs.any((e) => _esFeriado(e) && isSameDay(_fechaVenc(e), day));
+                          return evs.any((e) => vm.esFeriado(e) && isSameDay(vm.fechaVenc(e), day));
                         },
 
                         // cuadriculado
@@ -258,10 +237,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                         eventLoader: (day) {
                           final generales = (eventosAsync.value ?? [])
                               .where((e) {
-                            final f = _fechaVenc(e);
-                            return f != null && isSameDay(f, day) && !_esFeriado(e);
+                            final f = vm.fechaVenc(e);
+                            return f != null && isSameDay(f, day) && !vm.esFeriado(e);
                           })
-                              .map((e) => _Marker(_iconoPara(e), Colors.amber.shade800));
+                              .map((e) => _Marker(vm.iconoPara(e), Colors.amber.shade800));
 
                           final propios = (userEventosAsync.value ?? [])
                               .where((e) => isSameDay(e.inicio, day))
@@ -316,7 +295,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                       builder: (_) {
                         final genAll = (eventosAsync.value ?? [])
                             .where((e) {
-                          final f = _fechaVenc(e);
+                            final f = vm.fechaVenc(e);
                           return f != null && isSameDay(f, _selected);
                         })
                             .toList();
@@ -347,7 +326,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                                 child: Text('Eventos para hoy', style: TextStyle(fontWeight: FontWeight.w600)),
                               ),
                             ...generales.map((e) {
-                              final f = _fechaVenc(e)!; // vencimiento
+                              final f = vm.fechaVenc(e)!; // vencimiento
                               final fechaStr = '${f.day.toString().padLeft(2,'0')}/${f.month.toString().padLeft(2,'0')}';
                               return ListTile(
                                 dense: true,
@@ -415,7 +394,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
                         final grupos = <int, List<EventoCalendar>>{};
                         for (final e in list) {
-                          final f = _fechaVenc(e);
+                          final f = vm.fechaVenc(e);
                           if (f == null) continue;
                           grupos.putIfAbsent(f.month, () => []).add(e);
                         }
@@ -423,11 +402,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
                         return Column(
                           children: meses.map((mes) {
-                            final items = grupos[mes]!..sort((a, b) => _fechaVenc(a)!.compareTo(_fechaVenc(b)!));
+                            final items = grupos[mes]!..sort((a, b) => vm.fechaVenc(a)!.compareTo(vm.fechaVenc(b)!));
                             return ExpansionTile(
-                              title: Text(_mesNombre(mes), style: const TextStyle(fontWeight: FontWeight.w600)),
+                              title: Text(vm.mesNombre(mes), style: const TextStyle(fontWeight: FontWeight.w600)),
                               children: items.map((e) {
-                                final f = _fechaVenc(e)!;
+                                final f = vm.fechaVenc(e)!;
                                 final fechaStr = '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}';
 
                                 return ListTile(
@@ -614,24 +593,4 @@ class _LegendItem extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Función: _mesNombre - devuelve el nombre del mes.
-String _mesNombre(int m) {
-  const meses = [
-    '',
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre'
-  ];
-  return meses[m];
 }
