@@ -1,15 +1,33 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'mi_evento.dart';
 
-/// Clase: MisEventosRepo - operaciones sobre eventos personales.
-class MisEventosRepo {
-  MisEventosRepo(this._client);
+/// Datasource contract for personal events.
+abstract class MisEventosDatasource {
+  bool get anonDisabled;
+
+  Future<List<Map<String, dynamic>>> eventosEnRango(
+      DateTime start, DateTime end);
+
+  Future<void> crear({
+    required String titulo,
+    String? descripcion,
+    required DateTime inicio,
+    DateTime? fin,
+    bool allDay = false,
+  });
+
+  Future<void> borrar(String id);
+}
+
+/// Supabase implementation handling auth and CRUD operations.
+class MisEventosSupabaseDatasource implements MisEventosDatasource {
+  MisEventosSupabaseDatasource(this._client);
   final SupabaseClient _client;
 
   bool _anonDisabled = false;
+
+  @override
   bool get anonDisabled => _anonDisabled;
 
-  /// Función: _ensureAnonAuth - asegura sesión anónima si está habilitada en Supabase.
   Future<void> _ensureAnonAuth() async {
     if (_anonDisabled) return;
 
@@ -23,8 +41,8 @@ class MisEventosRepo {
         _anonDisabled = true;
       }
     } on AuthApiException catch (e) {
-      final code = e.statusCode?.toString();                  // <- String?
-      final msg  = (e.message).toLowerCase();                 // <- sin ?? warning
+      final code = e.statusCode?.toString();
+      final msg = (e.message).toLowerCase();
       if (code == '422' || msg.contains('anonymous') || msg.contains('disabled')) {
         _anonDisabled = true;
         return;
@@ -33,8 +51,9 @@ class MisEventosRepo {
     }
   }
 
-  /// Función: eventosEnRango - obtiene eventos personales dentro de un rango.
-  Future<List<MiEvento>> eventosEnRango(DateTime start, DateTime end) async {
+  @override
+  Future<List<Map<String, dynamic>>> eventosEnRango(
+      DateTime start, DateTime end) async {
     await _ensureAnonAuth();
     if (_anonDisabled || _client.auth.currentUser == null) return [];
     try {
@@ -47,7 +66,7 @@ class MisEventosRepo {
           .lte('inicio', end.toUtc().toIso8601String())
           .order('inicio');
 
-      return (res as List).map((e) => MiEvento.fromMap(e)).toList();
+      return (res as List).cast<Map<String, dynamic>>();
     } on AuthApiException catch (e) {
       final code = e.statusCode?.toString();
       final msg = (e.message).toLowerCase();
@@ -59,7 +78,7 @@ class MisEventosRepo {
     }
   }
 
-  /// Función: crear - inserta un nuevo evento personal.
+  @override
   Future<void> crear({
     required String titulo,
     String? descripcion,
@@ -81,12 +100,15 @@ class MisEventosRepo {
     });
   }
 
-  /// Función: borrar - elimina un evento personal por id.
+  @override
   Future<void> borrar(String id) async {
     await _ensureAnonAuth();
     if (_anonDisabled || _client.auth.currentUser == null) {
       throw StateError('EVENTS_AUTH_DISABLED');
     }
-    await _client.from('calendario_eventos_usuario').delete().eq('id', id);
+    await _client
+        .from('calendario_eventos_usuario')
+        .delete()
+        .eq('id', id);
   }
 }

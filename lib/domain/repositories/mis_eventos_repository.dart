@@ -1,0 +1,22 @@
+import '../../features/calendario/mi_evento.dart';
+
+/// Repository contract for personal user events.
+abstract class MisEventosRepository {
+  /// Whether anonymous authentication is disabled in Supabase.
+  bool get anonDisabled;
+
+  /// Personal events for the current user within [start] and [end].
+  Future<List<MiEvento>> eventosEnRango(DateTime start, DateTime end);
+
+  /// Creates a new personal event for the current user.
+  Future<void> crear({
+    required String titulo,
+    String? descripcion,
+    required DateTime inicio,
+    DateTime? fin,
+    bool allDay = false,
+  });
+
+  /// Deletes a personal event by its [id].
+  Future<void> borrar(String id);
+}
