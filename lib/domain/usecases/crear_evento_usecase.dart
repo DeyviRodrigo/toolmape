@@ -1,9 +1,9 @@
-import '../../features/calendario/mis_eventos_repo.dart';
+import '../repositories/mis_eventos_repository.dart';
 
 /// Use case to create a personal calendar event.
 class CrearEvento {
   CrearEvento(this._repo);
-  final MisEventosRepo _repo;
+  final MisEventosRepository _repo;
 
   Future<void> call({
     required String titulo,

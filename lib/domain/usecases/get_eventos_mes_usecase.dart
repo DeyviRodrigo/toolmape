@@ -1,10 +1,10 @@
-import '../../features/calendario/calendario_repo.dart';
+import '../repositories/calendario_repository.dart';
 import '../../features/calendario/eventos_calendario.dart';
 
 /// Use case to obtain calendar events for a given month.
 class GetEventosMes {
   GetEventosMes(this._repo);
-  final CalendarioRepo _repo;
+  final CalendarioRepository _repo;
 
   Future<List<EventoCalendar>> call(DateTime focused) {
     final start = DateTime(focused.year, focused.month, 1);

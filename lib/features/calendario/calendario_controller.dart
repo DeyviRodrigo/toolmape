@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../core/notifications/calendario_notifications.dart';
-import 'calendario_repo.dart';
+import '../../domain/repositories/calendario_repository.dart';
+import '../../infrastructure/repositories/calendario_repository_impl.dart';
+import '../../infrastructure/datasources/calendario_supabase_ds.dart';
 import 'eventos_calendario.dart';
 
 // --- Providers base ---
@@ -12,8 +14,9 @@ final supabaseClientProvider =
     Provider<SupabaseClient>((ref) => Supabase.instance.client);
 
 /// Provider: calendarioRepoProvider - repositorio de calendario.
-final calendarioRepoProvider = Provider<CalendarioRepo>((ref) {
-  return CalendarioRepo(ref.read(supabaseClientProvider));
+final calendarioRepoProvider = Provider<CalendarioRepository>((ref) {
+  final ds = CalendarioSupabaseDatasource(ref.read(supabaseClientProvider));
+  return CalendarioRepositoryImpl(ds);
 });
 
 /// Provider: eventosMesProvider - eventos del MES visible (usa rango 1..último día).

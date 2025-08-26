@@ -14,8 +14,8 @@ Este documento resume los principales bloques del código y su propósito.
 - **CalculadoraController**: gestiona la lógica de cálculo y preferencias.
 - **ParametrosNotifier**: administra valores recomendados para el cálculo.
 - **UserPrefsNotifier**: maneja preferencias persistentes del usuario.
-- **MisEventosRepo**: operaciones sobre eventos personales.
-- **CalendarioRepo**: acceso a eventos generales del calendario.
+- **MisEventosRepository**: operaciones sobre eventos personales.
+- **CalendarioRepository**: acceso a eventos generales del calendario.
 
 ## Servicios y Utilidades
 - **CalculadoraService**: fórmulas para el precio del oro.
