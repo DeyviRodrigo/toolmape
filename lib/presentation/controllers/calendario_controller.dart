@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart' show DateTimeRange;
 
+import '../../domain/entities/evento_entity.dart';
+import '../../domain/entities/mi_evento_entity.dart';
 import '../../domain/usecases/crear_evento_usecase.dart';
 import '../../domain/usecases/get_eventos_mes_usecase.dart';
 import '../../domain/usecases/get_mis_eventos_usecase.dart';
-import '../../features/calendario/eventos_calendario.dart';
-import '../../features/calendario/mi_evento.dart';
 
 /// Controller that delegates calendar operations to domain use cases.
 class CalendarioController {
@@ -20,11 +20,11 @@ class CalendarioController {
   final GetMisEventos _getMisEventos;
   final CrearEvento _crearEvento;
 
-  Future<List<EventoCalendar>> eventosDelMes(DateTime month) {
+  Future<List<EventoEntity>> eventosDelMes(DateTime month) {
     return _getEventosMes(month);
   }
 
-  Future<List<MiEvento>> misEventos(DateTimeRange range) {
+  Future<List<MiEventoEntity>> misEventos(DateTimeRange range) {
     return _getMisEventos(range);
   }
 

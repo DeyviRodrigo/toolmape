@@ -1,4 +1,4 @@
-import '../../features/calendario/mi_evento.dart';
+import '../entities/mi_evento_entity.dart';
 
 /// Repository contract for personal user events.
 abstract class MisEventosRepository {
@@ -6,7 +6,7 @@ abstract class MisEventosRepository {
   bool get anonDisabled;
 
   /// Personal events for the current user within [start] and [end].
-  Future<List<MiEvento>> eventosEnRango(DateTime start, DateTime end);
+  Future<List<MiEventoEntity>> eventosEnRango(DateTime start, DateTime end);
 
   /// Creates a new personal event for the current user.
   Future<void> crear({

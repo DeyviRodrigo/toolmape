@@ -1,6 +1,8 @@
+import '../../domain/entities/mi_evento_entity.dart';
 import '../../domain/repositories/mis_eventos_repository.dart';
-import '../../features/calendario/mi_evento.dart';
 import '../datasources/mis_eventos_supabase_ds.dart';
+import '../dto/mi_evento_dto.dart';
+import '../mappers/mi_evento_mapper.dart';
 
 /// Repository implementation for personal events.
 class MisEventosRepositoryImpl implements MisEventosRepository {
@@ -11,9 +13,11 @@ class MisEventosRepositoryImpl implements MisEventosRepository {
   bool get anonDisabled => _ds.anonDisabled;
 
   @override
-  Future<List<MiEvento>> eventosEnRango(DateTime start, DateTime end) async {
+  Future<List<MiEventoEntity>> eventosEnRango(DateTime start, DateTime end) async {
     final data = await _ds.eventosEnRango(start, end);
-    return data.map((e) => MiEvento.fromMap(e)).toList();
+    return data
+        .map((e) => MiEventoMapper.fromDto(MiEventoDto.fromJson(e)))
+        .toList();
   }
 
   @override

@@ -1,11 +1,11 @@
 import 'package:test/test.dart';
 
-import 'package:toolmape/infrastructure/repositories/calendario_repository_impl.dart';
-import 'package:toolmape/infrastructure/repositories/mis_eventos_repository_impl.dart';
+import 'package:toolmape/domain/entities/evento_entity.dart';
+import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/infrastructure/datasources/calendario_supabase_ds.dart';
 import 'package:toolmape/infrastructure/datasources/mis_eventos_supabase_ds.dart';
-import 'package:toolmape/features/calendario/eventos_calendario.dart';
-import 'package:toolmape/features/calendario/mi_evento.dart';
+import 'package:toolmape/infrastructure/repositories/calendario_repository_impl.dart';
+import 'package:toolmape/infrastructure/repositories/mis_eventos_repository_impl.dart';
 
 class _FakeCalendarioDs implements CalendarioDatasource {
   DateTime? start;
@@ -87,7 +87,7 @@ void main() {
     final res = await repo.eventosEnRango(start: s, end: e);
     expect(ds.start, s);
     expect(ds.end, e);
-    expect(res, isA<List<EventoCalendar>>());
+    expect(res, isA<List<EventoEntity>>());
     expect(res.length, 1);
   });
 
@@ -99,7 +99,7 @@ void main() {
     final res = await repo.eventosEnRango(s, e);
     expect(ds.start, s);
     expect(ds.end, e);
-    expect(res, isA<List<MiEvento>>());
+    expect(res, isA<List<MiEventoEntity>>());
     await repo.crear(titulo: 'x', inicio: s, fin: e);
     expect(ds.created, 'x');
     await repo.borrar('1');

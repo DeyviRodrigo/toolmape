@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:toolmape/domain/entities/evento_entity.dart';
+import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/presentation/controllers/calendario_controller.dart';
 import 'package:toolmape/presentation/screens/calendario_screen.dart';
 
 void main() {
   testWidgets('shows event count and button', (tester) async {
     final controller = CalendarioController(
-      getEventosMes: (d) async => [],
-      getMisEventos: (r) async => [],
+      getEventosMes: (d) async => <EventoEntity>[],
+      getMisEventos: (r) async => <MiEventoEntity>[],
       crearEvento: ({required String titulo, String? descripcion, required DateTime inicio, DateTime? fin, bool allDay = false}) async {},
     );
 

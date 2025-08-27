@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:toolmape/domain/entities/evento_entity.dart';
+import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/presentation/controllers/calendario_controller.dart';
-import 'package:toolmape/features/calendario/eventos_calendario.dart';
-import 'package:toolmape/features/calendario/mi_evento.dart';
 
 class _FakeGetEventosMes {
   DateTime? calledWith;
-  Future<List<EventoCalendar>> call(DateTime d) async {
+  Future<List<EventoEntity>> call(DateTime d) async {
     calledWith = d;
     return [];
   }
@@ -14,7 +14,7 @@ class _FakeGetEventosMes {
 
 class _FakeGetMisEventos {
   DateTimeRange? calledWith;
-  Future<List<MiEvento>> call(DateTimeRange r) async {
+  Future<List<MiEventoEntity>> call(DateTimeRange r) async {
     calledWith = r;
     return [];
   }
