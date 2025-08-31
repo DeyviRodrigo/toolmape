@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/calculadora/calculadora_screen.dart';
-import '../presentation/screens/calendario_screen.dart';
+import '../features/calendario/calendario_screen.dart';
 
 /// Widget: AppDrawer - menú lateral de navegación.
 class AppDrawer extends StatelessWidget {
