@@ -113,15 +113,20 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
 
     // Si ley falta, dar opción simple (predeterminado o cancelar)
     if (leyCtrl.text.trim().isEmpty) {
+      const optAyuda = 'Requiero ayuda';
+      const optPred  = 'Utilizar predeterminado';
+
       final sel = await choiceDialog(
         context: context,
         title: 'Ley faltante',
         message: 'No pusiste valores en ley.',
-        options: const ['Utilizar predeterminado', 'Cancelar'],
+        options: const [optAyuda, optPred], // <-- orden correcto
       );
-      if (sel == 'Utilizar predeterminado') {
+
+      if (sel == optPred) {
         leyCtrl.text = sugeridos.leySugerida.toString();
       } else {
+        // Requiere ayuda o cerró el diálogo: no cambiamos nada y salimos.
         return;
       }
     }
