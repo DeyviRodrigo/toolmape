@@ -4,13 +4,21 @@ import '../../../widgets/campo_numerico.dart';
 
 class CantidadField extends StatelessWidget {
   final TextEditingController controller;
-  const CantidadField({super.key, required this.controller});
+  final Widget menu;
+  const CantidadField({super.key, required this.controller, required this.menu});
 
   @override
   Widget build(BuildContext context) {
-    return CampoNumerico(
-      controller: controller,
-      etiqueta: 'Cantidad (g)',
+    return Row(
+      children: [
+        Expanded(
+          child: CampoNumerico(
+            controller: controller,
+            etiqueta: 'Cantidad (g)',
+          ),
+        ),
+        menu,
+      ],
     );
   }
 }
