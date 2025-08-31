@@ -1,12 +1,13 @@
 import '../entities/mi_evento_entity.dart';
+import '../value_objects/date_range_entity.dart';
 
 /// Repository contract for personal user events.
 abstract class MisEventosRepository {
   /// Whether anonymous authentication is disabled in Supabase.
   bool get anonDisabled;
 
-  /// Personal events for the current user within [start] and [end].
-  Future<List<MiEventoEntity>> eventosEnRango(DateTime start, DateTime end);
+  /// Personal events for the current user within [range].
+  Future<List<MiEventoEntity>> eventosEnRango(DateRange range);
 
   /// Creates a new personal event for the current user.
   Future<void> crear({

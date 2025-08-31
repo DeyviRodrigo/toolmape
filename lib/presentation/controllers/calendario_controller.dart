@@ -6,6 +6,7 @@ import '../../domain/usecases/crear_evento_usecase.dart';
 import '../../domain/usecases/get_eventos_mes_usecase.dart';
 import '../../domain/usecases/get_mis_eventos_usecase.dart';
 import '../../domain/usecases/schedule_notifications_usecase.dart';
+import '../../domain/value_objects/date_range_entity.dart';
 
 /// Controller that delegates calendar operations to domain use cases.
 class CalendarioController {
@@ -29,7 +30,7 @@ class CalendarioController {
   }
 
   Future<List<MiEventoEntity>> misEventos(DateTimeRange range) {
-    return _getMisEventos(range);
+    return _getMisEventos(DateRange(start: range.start, end: range.end));
   }
 
   Future<void> crearEvento({

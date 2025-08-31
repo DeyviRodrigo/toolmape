@@ -4,6 +4,7 @@ import 'package:toolmape/domain/entities/evento_entity.dart';
 import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/domain/repositories/calendario_repository.dart';
 import 'package:toolmape/domain/repositories/mis_eventos_repository.dart';
+import 'package:toolmape/domain/value_objects/date_range_entity.dart';
 import 'package:toolmape/domain/usecases/crear_evento_usecase.dart';
 import 'package:toolmape/domain/usecases/get_eventos_mes_usecase.dart';
 import 'package:toolmape/domain/usecases/get_mis_eventos_usecase.dart';
@@ -24,10 +25,8 @@ class _FakeMisRepo implements MisEventosRepository {
   bool get anonDisabled => false;
 
   @override
-  Future<List<MiEventoEntity>> eventosEnRango(
-    DateTime start,
-    DateTime end,
-  ) async => <MiEventoEntity>[];
+  Future<List<MiEventoEntity>> eventosEnRango(DateRange range) async =>
+      <MiEventoEntity>[];
 
   @override
   Future<void> crear({

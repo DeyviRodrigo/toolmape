@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:toolmape/domain/entities/evento_entity.dart';
 import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
+import 'package:toolmape/domain/value_objects/date_range_entity.dart';
 import 'package:toolmape/infrastructure/datasources/calendario_supabase_ds.dart';
 import 'package:toolmape/infrastructure/datasources/mis_eventos_supabase_ds.dart';
 import 'package:toolmape/infrastructure/datasources/preferencias_local_ds.dart';
@@ -120,7 +121,7 @@ void main() {
     final repo = MisEventosRepositoryImpl(ds);
     final s = DateTime(2024, 1, 1);
     final e = DateTime(2024, 1, 2);
-    final res = await repo.eventosEnRango(s, e);
+    final res = await repo.eventosEnRango(DateRange(start: s, end: e));
     expect(ds.start, s);
     expect(ds.end, e);
     expect(res, isA<List<MiEventoEntity>>());

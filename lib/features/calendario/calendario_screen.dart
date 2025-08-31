@@ -6,6 +6,7 @@ import '../../app_shell.dart';
 import '../../core/notifications/calendario_notifications.dart';
 import '../../presentation/providers/calendario_providers.dart';
 import '../../presentation/providers/mis_eventos_providers.dart';
+import '../../domain/value_objects/date_range_entity.dart';
 import '../../routes.dart';
 import '../../domain/usecases/schedule_notifications_usecase.dart';
 import 'eventos_calendario.dart';
@@ -78,7 +79,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
   Widget build(BuildContext context) {
     final eventosAsync = ref.watch(eventosMesProvider(_mesClave));
 
-    final userEventosAsync = ref.watch(misEventosRangoProvider(_mesRango));
+    final userEventosAsync = ref.watch(
+      misEventosRangoProvider(
+        DateRange(start: _mesRango.start, end: _mesRango.end),
+      ),
+    );
     final vm = ref.read(calendarioViewModelProvider.notifier);
 
     return AppShell(
@@ -140,7 +145,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
             }
             final ok = await _nuevoEventoDialog(context);
             if (ok == true) {
-              ref.invalidate(misEventosRangoProvider(_mesRango));
+              ref.invalidate(
+                misEventosRangoProvider(
+                  DateRange(start: _mesRango.start, end: _mesRango.end),
+                ),
+              );
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Evento guardado')),
@@ -386,7 +395,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: () async {
                                     await ref.read(misEventosRepoProvider).borrar(e.id);
-                                    ref.invalidate(misEventosRangoProvider(_mesRango));
+                                    ref.invalidate(
+                                      misEventosRangoProvider(
+                                        DateRange(start: _mesRango.start, end: _mesRango.end),
+                                      ),
+                                    );
                                   },
                                 ),
                               );
