@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../ui_kit/app_drawer_item.dart';
 
 /// Widget: AppDrawer - menú lateral de navegación.
 class AppDrawer extends StatelessWidget {
@@ -24,35 +25,35 @@ class AppDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            ListTile(
-              leading: const Icon(Icons.calculate_outlined),
-              title: const Text('Calcular precio del oro'),
+            AppDrawerItem(
+              icon: Icons.calculate_outlined,
+              title: 'Calcular precio del oro',
               onTap: () => _go(context, onGoToCalculadora),
             ),
-            ListTile(
-              leading: const Icon(Icons.calendar_month),
-              title: const Text('Calendario minero'),
+            AppDrawerItem(
+              icon: Icons.calendar_month,
+              title: 'Calendario minero',
               onTap: () => _go(context, onGoToCalendario),
             ),
-            ListTile(
-              leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('Biblioteca Minera'),
+            AppDrawerItem(
+              icon: Icons.menu_book_outlined,
+              title: 'Biblioteca Minera',
               onTap: () {}, // TODO
             ),
-            ListTile(
-              leading: const Icon(Icons.support_agent),
-              title: const Text('Consultoría personalizada'),
+            AppDrawerItem(
+              icon: Icons.support_agent,
+              title: 'Consultoría personalizada',
               onTap: () {}, // TODO
             ),
             const Divider(),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Configuración de la cuenta'),
+            AppDrawerItem(
+              icon: Icons.settings,
+              title: 'Configuración de la cuenta',
               onTap: () {}, // TODO
             ),
-            ListTile(
-              leading: const Icon(Icons.feedback_outlined),
-              title: const Text('Dejar feedback sobre la app'),
+            AppDrawerItem(
+              icon: Icons.feedback_outlined,
+              title: 'Dejar feedback sobre la app',
               onTap: () {}, // TODO
             ),
           ],

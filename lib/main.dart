@@ -9,6 +9,7 @@ import 'core/notifications/calendario_notifications.dart';
 import 'features/calculadora/calculadora_screen.dart';
 import 'features/calendario/calendario_screen.dart';
 import 'routes.dart';
+import 'core_foundation/core_foundation.dart';
 
 /// Función: main - punto de entrada de la aplicación.
 Future<void> main() async {
@@ -24,7 +25,10 @@ Future<void> main() async {
   // 2) Inicializar Supabase solo si hay claves válidas.
   final supaUrl = dotenv.env['SUPABASE_URL'];
   final supaKey = dotenv.env['SUPABASE_ANON_KEY'];
-  if (supaUrl != null && supaKey != null && supaUrl.isNotEmpty && supaKey.isNotEmpty) {
+  if (supaUrl != null &&
+      supaKey != null &&
+      supaUrl.isNotEmpty &&
+      supaKey.isNotEmpty) {
     await Supabase.initialize(url: supaUrl, anonKey: supaKey);
 
     // 2.1) Asegurar sesión anónima para poder guardar eventos privados por usuario.
@@ -58,6 +62,7 @@ class ToolMAPEApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFFFFC107),
+        extensions: const [ToolmapeTheme(brandGold: Color(0xFFFFC107))],
       ),
       locale: const Locale('es', 'PE'),
       localizationsDelegates: const [

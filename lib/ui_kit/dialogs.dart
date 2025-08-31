@@ -5,7 +5,8 @@ Future<String?> choiceDialog({
   required BuildContext context,
   required String title,
   required String message,
-  required List<String> options, // p.ej. ['Requiero ayuda','Utilizar predeterminado']
+  required List<String>
+  options, // p.ej. ['Requiero ayuda','Utilizar predeterminado']
 }) {
   return showDialog<String>(
     context: context,
@@ -14,10 +15,12 @@ Future<String?> choiceDialog({
       title: Text(title),
       content: Text(message),
       actions: options
-          .map((opt) => TextButton(
-        onPressed: () => Navigator.pop(context, opt),
-        child: Text(opt),
-      ))
+          .map(
+            (opt) => TextButton(
+              onPressed: () => Navigator.pop(context, opt),
+              child: Text(opt),
+            ),
+          )
           .toList(),
     ),
   );

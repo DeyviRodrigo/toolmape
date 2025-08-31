@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../widgets/campo_numerico.dart';
+import '../../../ui_kit/numeric_field.dart';
 
 class LeyField extends StatelessWidget {
   final TextEditingController controller;
@@ -12,10 +12,7 @@ class LeyField extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: CampoNumerico(
-            controller: controller,
-            etiqueta: 'Ley (%)',
-          ),
+          child: NumericField(controller: controller, etiqueta: 'Ley (%)'),
         ),
         menu,
       ],

@@ -8,7 +8,7 @@ import 'package:toolmape/presentation/controllers/calculadora_controller.dart';
 
 class _FakeCalc extends CalculateTotal {
   CalculatorPrefs? params;
-  const _FakeCalc();
+  _FakeCalc();
   @override
   PriceResult call(CalculatorPrefs prefs) {
     params = prefs;
@@ -32,14 +32,16 @@ class _FakeRepo implements PreferenciasRepository {
 
 void main() {
   test('controller delegates to use cases', () async {
-    final repo = _FakeRepo(const CalculatorPrefs(
-      precioOro: '1',
-      tipoCambio: '2',
-      descuento: '3',
-      ley: '4',
-      cantidad: '5',
-    ));
-    final calc = const _FakeCalc();
+    final repo = _FakeRepo(
+      const CalculatorPrefs(
+        precioOro: '1',
+        tipoCambio: '2',
+        descuento: '3',
+        ley: '4',
+        cantidad: '5',
+      ),
+    );
+    final calc = _FakeCalc();
     final controller = CalculadoraController(
       calcularTotal: calc,
       guardarPrefs: SavePrefs(repo),

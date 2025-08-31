@@ -6,8 +6,7 @@ import '../../presentation/controllers/calculadora_controller.dart';
 import '../../presentation/providers/parametros_providers.dart';
 import '../../routes.dart';
 import '../../core/utils/formatters.dart';
-import '../../core/utils/dialogs.dart';
-import '../../widgets/campo_numerico.dart';
+import '../../ui_kit/dialogs.dart';
 
 import 'options/index.dart';
 import 'widgets/precio_oro_field.dart';
@@ -60,14 +59,18 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
       icon: Icon(icon),
       offset: _menuOffsetUp,
       itemBuilder: (_) => options
-          .map((o) => PopupMenuItem<T>(
-        value: o.value,
-        child: Row(children: [
-          Icon(o.icon, size: 20),
-          const SizedBox(width: 10),
-          Text(o.label),
-        ]),
-      ))
+          .map(
+            (o) => PopupMenuItem<T>(
+              value: o.value,
+              child: Row(
+                children: [
+                  Icon(o.icon, size: 20),
+                  const SizedBox(width: 10),
+                  Text(o.label),
+                ],
+              ),
+            ),
+          )
           .toList(),
       onSelected: onSelected,
     );
@@ -115,7 +118,7 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     // Si ley falta, dar opción simple (predeterminado o cancelar)
     if (leyCtrl.text.trim().isEmpty) {
       const optAyuda = 'Requiero ayuda';
-      const optPred  = 'Utilizar predeterminado';
+      const optPred = 'Utilizar predeterminado';
 
       final sel = await choiceDialog(
         context: context,
@@ -151,7 +154,8 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   @override
   Widget build(BuildContext context) {
     final sugeridos =
-        ref.watch(parametrosProvider).value ?? ParametrosRecomendados.defaults();
+        ref.watch(parametrosProvider).value ??
+        ParametrosRecomendados.defaults();
     final state = ref.watch(calculadoraControllerProvider);
     final controller = ref.read(calculadoraControllerProvider.notifier);
 
@@ -175,13 +179,13 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
                   onSelected: (a) {
                     switch (a) {
                       case GeneralAction.actualizar:
-                        precioOroCtrl.text =
-                            sugeridos.precioOroUsdOnza.toString();
+                        precioOroCtrl.text = sugeridos.precioOroUsdOnza
+                            .toString();
                         controller.setPrecioOro(precioOroCtrl.text);
                         setState(() {});
                         break;
                       default:
-                      // No-op para otras acciones (si existen)
+                        // No-op para otras acciones (si existen)
                         break;
                     }
                   },
@@ -236,8 +240,8 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
                         }
                         break;
                       case DescuentoAction.predeterminado:
-                        descuentoCtrl.text =
-                            sugeridos.descuentoSugerido.toString();
+                        descuentoCtrl.text = sugeridos.descuentoSugerido
+                            .toString();
                         controller.setDescuento(descuentoCtrl.text);
                         setState(() {});
                         break;
@@ -256,7 +260,7 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
                   onSelected: (a) {
                     switch (a) {
                       case LeyAction.ayuda:
-                      // TODO: flujo de ayuda de ley (si aplica)
+                        // TODO: flujo de ayuda de ley (si aplica)
                         break;
                       case LeyAction.predeterminado:
                         leyCtrl.text = sugeridos.leySugerida.toString();
