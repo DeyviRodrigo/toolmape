@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants.dart';
 import '../../../presentation/providers/parametros_providers.dart';
+import '../calculadora_options.dart';
 
 /// Dialog helper to calculate discount based on offered price and gold law.
 Future<bool> showDescuentoDialog({
