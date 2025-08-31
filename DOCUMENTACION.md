@@ -23,10 +23,4 @@ Este documento resume los principales bloques del código y su propósito.
 - **choiceDialog**: cuadro de diálogo con opciones.
 - **soles**: formatea números a moneda peruana.
 
-## Sugerencias de limpieza
-  - Revisar los manejadores `onTap` con `// TODO` en `lib/presentation/widgets/app_drawer.dart` (líneas 40, 45, 50 y 55) que no realizan acciones visibles.
-- En `lib/features/calculadora/calculadora_screen.dart` existe un `// TODO` pendiente para el flujo de ayuda de ley (línea 240).
-- `lib/features/calendario/calendario_screen.dart` contiene un `// TODO` sobre manejar overflow en una zona con scroll (línea 186).
-- `lib/presentation/providers/parametros_providers.dart` incluye `// TODO` para cargar parámetros desde BD (línea 43).
 
-Estas secciones pueden eliminarse o completarse si ya no son necesarias.

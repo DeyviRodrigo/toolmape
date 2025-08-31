@@ -2,10 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/calculator_prefs_entity.dart';
 import '../../domain/usecases/calculate_total_usecase.dart';
-import '../../domain/usecases/save_prefs_usecase.dart';
 import '../../domain/usecases/load_prefs_usecase.dart';
-import '../../infrastructure/datasources/preferencias_local_ds.dart';
-import '../../infrastructure/repositories/preferencias_repository_impl.dart';
+import '../../domain/usecases/save_prefs_usecase.dart';
+import '../../init_dependencies.dart';
 
 class CalculadoraState {
   final String precioOro;
@@ -46,8 +45,8 @@ class CalculadoraState {
   }
 }
 
-class CalculadoraController extends StateNotifier<CalculadoraState> {
-  CalculadoraController({
+class CalculadoraViewModel extends StateNotifier<CalculadoraState> {
+  CalculadoraViewModel({
     required CalculateTotal calcularTotal,
     required SavePrefs guardarPrefs,
     required LoadPrefs cargarPrefs,
@@ -60,6 +59,8 @@ class CalculadoraController extends StateNotifier<CalculadoraState> {
   final SavePrefs _guardarPrefs;
   final LoadPrefs _cargarPrefs;
 
+  bool _isNumeric(String v) => double.tryParse(v) != null;
+
   Future<void> cargar() async {
     final prefs = await _cargarPrefs();
     state = state.copyWith(
@@ -71,13 +72,34 @@ class CalculadoraController extends StateNotifier<CalculadoraState> {
     );
   }
 
-  void setPrecioOro(String v) => state = state.copyWith(precioOro: v);
-  void setTipoCambio(String v) => state = state.copyWith(tipoCambio: v);
-  void setDescuento(String v) => state = state.copyWith(descuento: v);
-  void setLey(String v) => state = state.copyWith(ley: v);
-  void setCantidad(String v) => state = state.copyWith(cantidad: v);
+  void setPrecioOro(String v) {
+    if (_isNumeric(v)) state = state.copyWith(precioOro: v);
+  }
+
+  void setTipoCambio(String v) {
+    if (_isNumeric(v)) state = state.copyWith(tipoCambio: v);
+  }
+
+  void setDescuento(String v) {
+    if (_isNumeric(v)) state = state.copyWith(descuento: v);
+  }
+
+  void setLey(String v) {
+    if (_isNumeric(v)) state = state.copyWith(ley: v);
+  }
+
+  void setCantidad(String v) {
+    if (_isNumeric(v)) state = state.copyWith(cantidad: v);
+  }
 
   Future<void> calcular() async {
+    if (!_isNumeric(state.precioOro) ||
+        !_isNumeric(state.tipoCambio) ||
+        !_isNumeric(state.descuento) ||
+        !_isNumeric(state.ley) ||
+        !_isNumeric(state.cantidad)) {
+      return;
+    }
     final prefs = CalculatorPrefs(
       precioOro: state.precioOro,
       tipoCambio: state.tipoCambio,
@@ -86,15 +108,18 @@ class CalculadoraController extends StateNotifier<CalculadoraState> {
       cantidad: state.cantidad,
     );
     final res = _calcularTotal(prefs);
-    state = state.copyWith(precioPorGramo: res.precioPorGramo, total: res.total);
+    state = state.copyWith(
+      precioPorGramo: res.precioPorGramo,
+      total: res.total,
+    );
     await _guardarPrefs(prefs);
   }
 }
 
-final calculadoraControllerProvider =
-    StateNotifierProvider<CalculadoraController, CalculadoraState>((ref) {
-  final repo = PreferenciasRepositoryImpl(PreferenciasLocalDatasource());
-  return CalculadoraController(
+final calculadoraViewModelProvider =
+    StateNotifierProvider<CalculadoraViewModel, CalculadoraState>((ref) {
+  final repo = ref.read(preferenciasRepositoryProvider);
+  return CalculadoraViewModel(
     calcularTotal: const CalculateTotal(),
     guardarPrefs: SavePrefs(repo),
     cargarPrefs: LoadPrefs(repo),

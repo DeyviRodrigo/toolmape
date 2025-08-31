@@ -38,23 +38,23 @@ class AppDrawer extends StatelessWidget {
             AppDrawerItem(
               icon: Icons.menu_book_outlined,
               title: 'Biblioteca Minera',
-              onTap: () {}, // TODO
+              onTap: () { Navigator.pop(context); },
             ),
             AppDrawerItem(
               icon: Icons.support_agent,
               title: 'Consultoría personalizada',
-              onTap: () {}, // TODO
+              onTap: () { Navigator.pop(context); },
             ),
             const Divider(),
             AppDrawerItem(
               icon: Icons.settings,
               title: 'Configuración de la cuenta',
-              onTap: () {}, // TODO
+              onTap: () { Navigator.pop(context); },
             ),
             AppDrawerItem(
               icon: Icons.feedback_outlined,
               title: 'Dejar feedback sobre la app',
-              onTap: () {}, // TODO
+              onTap: () { Navigator.pop(context); },
             ),
           ],
         ),

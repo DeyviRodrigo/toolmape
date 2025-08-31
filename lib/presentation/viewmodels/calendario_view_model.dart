@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'eventos_calendario.dart';
+import '../../domain/entities/evento_entity.dart';
+import '../../domain/entities/mi_evento_entity.dart';
+import '../../domain/repositories/calendario_repository.dart';
+import '../../domain/repositories/mis_eventos_repository.dart';
+import '../../domain/value_objects/date_range_entity.dart';
+import '../../init_dependencies.dart';
+import '../shared/event_filter.dart';
+import '../shared/meses.dart';
 
-/// Enum: EventFilter - filtros disponibles para eventos.
-enum EventFilter { all, general, personal }
-
-/// Clase: CalendarioState - estado para la pantalla de calendario.
 class CalendarioState {
   final DateTime focused;
   final DateTime selected;
@@ -29,20 +32,23 @@ class CalendarioState {
       );
 }
 
-/// Notifier: CalendarioViewModel - maneja estado y utilitarios del calendario.
-class CalendarioViewModel extends Notifier<CalendarioState> {
-  @override
-  CalendarioState build() {
-    final now = DateTime.now();
-    return CalendarioState(focused: now, selected: now, filtro: EventFilter.all);
-  }
+class CalendarioViewModel extends StateNotifier<CalendarioState> {
+  CalendarioViewModel(this._calRepo, this._misRepo)
+      : super(CalendarioState(
+          focused: DateTime.now(),
+          selected: DateTime.now(),
+          filtro: EventFilter.all,
+        ));
 
-  // Mutadores
+  final CalendarioRepository _calRepo;
+  final MisEventosRepository _misRepo;
+
+  // Mutators
   void setFocused(DateTime f) => state = state.copyWith(focused: f);
   void setSelected(DateTime s) => state = state.copyWith(selected: s);
   void setFiltro(EventFilter f) => state = state.copyWith(filtro: f);
 
-  // Getters derivados
+  // Derived getters
   DateTime get mesClave => DateTime(state.focused.year, state.focused.month, 1);
   DateTimeRange get mesRango {
     final first = DateTime(state.focused.year, state.focused.month, 1);
@@ -53,14 +59,20 @@ class CalendarioViewModel extends Notifier<CalendarioState> {
     );
   }
 
-  /// Fecha de vencimiento para pintar (prioridad: fin > inicio > recordatorio)
-  DateTime? fechaVenc(EventoCalendar e) => e.fin ?? e.inicio ?? e.recordatorio;
+  Future<List<EventoEntity>> eventosDelMes(DateTime month) {
+    final start = DateTime(month.year, month.month, 1);
+    final end = DateTime(month.year, month.month + 1, 0);
+    return _calRepo.eventosEnRango(start: start, end: end);
+  }
 
-  /// Determina si el evento es feriado.
-  bool esFeriado(EventoCalendar e) => (e.categoria ?? '').toLowerCase() == 'fechas festivas';
+  Future<List<MiEventoEntity>> misEventos(DateTimeRange range) {
+    return _misRepo.eventosEnRango(DateRange(start: range.start, end: range.end));
+  }
 
-  /// Icono por categoría/título del evento.
-  IconData iconoPara(EventoCalendar e) {
+  DateTime? fechaVenc(EventoEntity e) => e.fin ?? e.inicio ?? e.recordatorio;
+  bool esFeriado(EventoEntity e) => (e.categoria ?? '').toLowerCase() == 'fechas festivas';
+
+  IconData iconoPara(EventoEntity e) {
     final cat = (e.categoria ?? '').toLowerCase();
     final t = e.titulo.toLowerCase();
     if (cat == 'feriado') return Icons.flag;
@@ -73,28 +85,12 @@ class CalendarioViewModel extends Notifier<CalendarioState> {
     return Icons.event_note_outlined;
   }
 
-  /// Nombre del mes.
-  String mesNombre(int m) {
-    const meses = [
-      '',
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre'
-    ];
-    return meses[m];
-  }
+  String mesNombrePublic(int m) => mesNombre(m);
 }
 
-/// Provider: calendarioViewModelProvider - expone CalendarioViewModel.
 final calendarioViewModelProvider =
-    NotifierProvider<CalendarioViewModel, CalendarioState>(CalendarioViewModel.new);
-
+    StateNotifierProvider<CalendarioViewModel, CalendarioState>((ref) {
+  final calRepo = ref.read(calendarioRepositoryProvider);
+  final misRepo = ref.read(misEventosRepositoryProvider);
+  return CalendarioViewModel(calRepo, misRepo);
+});

@@ -39,9 +39,7 @@ class ParametrosRecomendados {
 /// Notifier: ParametrosNotifier - gestiona los parámetros recomendados.
 class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
   @override
-  Future<ParametrosRecomendados> build() async {
-    // TODO: aquí luego lees de Supabase / BD y devuelves esos valores
-    // fallback a defaults
+  Future<ParametrosRecomendados> build() async {    // fallback a defaults
     return ParametrosRecomendados.defaults();
   }
 

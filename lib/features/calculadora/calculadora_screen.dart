@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app_shell.dart';
-import '../../presentation/controllers/calculadora_controller.dart';
+import '../../presentation/viewmodels/calculadora_view_model.dart';
 import '../../presentation/providers/parametros_providers.dart';
 import '../../routes.dart';
 import '../../core/utils/formatters.dart';
 import '../../ui_kit/dialogs.dart';
+import '../../presentation/shared/general_action.dart';
+import '../../presentation/shared/descuento_action.dart';
+import '../../presentation/shared/ley_action.dart';
+import '../../presentation/shared/menu_option.dart';
 
-import 'options/index.dart';
 import 'widgets/precio_oro_field.dart';
 import 'widgets/tipo_cambio_field.dart';
 import 'widgets/descuento_field.dart';
@@ -16,7 +19,6 @@ import 'widgets/ley_field.dart';
 import 'widgets/cantidad_field.dart';
 import 'widgets/descuento_dialog.dart';
 
-/// Widget: ScreenCalculadora - interfaz principal de la calculadora.
 class ScreenCalculadora extends ConsumerStatefulWidget {
   const ScreenCalculadora({super.key});
 
@@ -24,7 +26,6 @@ class ScreenCalculadora extends ConsumerStatefulWidget {
   ConsumerState<ScreenCalculadora> createState() => _ScreenCalculadoraState();
 }
 
-/// State: _ScreenCalculadoraState - estado de la pantalla de cálculo.
 class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   final precioOroCtrl = TextEditingController();
   final tipoCambioCtrl = TextEditingController();
@@ -37,9 +38,8 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   @override
   void initState() {
     super.initState();
-    // Cargar preferencias con el nuevo controller (Riverpod)
-    ref.read(calculadoraControllerProvider.notifier).cargar().then((_) {
-      final s = ref.read(calculadoraControllerProvider);
+    ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) {
+      final s = ref.read(calculadoraViewModelProvider);
       precioOroCtrl.text = s.precioOro;
       tipoCambioCtrl.text = s.tipoCambio;
       descuentoCtrl.text = s.descuento;
@@ -49,7 +49,6 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     });
   }
 
-  /// Menú emergente genérico.
   PopupMenuButton<T> buildMenu<T>({
     required IconData icon,
     required List<MenuOption<T>> options,
@@ -76,21 +75,17 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     );
   }
 
-  /// Acción calcular: asegura sugeridos/ayudas y delega al controller.
   Future<void> _calcular() async {
     final sugeridos =
         ref.read(parametrosProvider).value ?? ParametrosRecomendados.defaults();
-    final controller = ref.read(calculadoraControllerProvider.notifier);
+    final vm = ref.read(calculadoraViewModelProvider.notifier);
 
-    // Completar faltantes mínimos
     if (precioOroCtrl.text.trim().isEmpty) {
       precioOroCtrl.text = sugeridos.precioOroUsdOnza.toString();
     }
     if (tipoCambioCtrl.text.trim().isEmpty) {
       tipoCambioCtrl.text = sugeridos.tipoCambio.toString();
     }
-
-    // Si descuento falta, ofrecer diálogo que también puede fijar ley
     if (descuentoCtrl.text.trim().isEmpty) {
       final sel = await choiceDialog(
         context: context,
@@ -115,22 +110,18 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
       }
     }
 
-    // Si ley falta, dar opción simple (predeterminado o cancelar)
     if (leyCtrl.text.trim().isEmpty) {
       const optAyuda = 'Requiero ayuda';
       const optPred = 'Utilizar predeterminado';
-
       final sel = await choiceDialog(
         context: context,
         title: 'Ley faltante',
         message: 'No pusiste valores en ley.',
-        options: const [optAyuda, optPred], // <-- orden correcto
+        options: const [optAyuda, optPred],
       );
-
       if (sel == optPred) {
         leyCtrl.text = sugeridos.leySugerida.toString();
       } else {
-        // Requiere ayuda o cerró el diálogo: no cambiamos nada y salimos.
         return;
       }
     }
@@ -139,15 +130,14 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
       cantidadCtrl.text = '1';
     }
 
-    // Sincronizar al controller y calcular
-    controller
+    vm
       ..setPrecioOro(precioOroCtrl.text)
       ..setTipoCambio(tipoCambioCtrl.text)
       ..setDescuento(descuentoCtrl.text)
       ..setLey(leyCtrl.text)
       ..setCantidad(cantidadCtrl.text);
 
-    await controller.calcular();
+    await vm.calcular();
     setState(() {});
   }
 
@@ -156,8 +146,8 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     final sugeridos =
         ref.watch(parametrosProvider).value ??
         ParametrosRecomendados.defaults();
-    final state = ref.watch(calculadoraControllerProvider);
-    final controller = ref.read(calculadoraControllerProvider.notifier);
+    final state = ref.watch(calculadoraViewModelProvider);
+    final vm = ref.read(calculadoraViewModelProvider.notifier);
 
     return AppShell(
       title: 'Calcular precio del oro',
@@ -170,148 +160,19 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              /// Precio oro
-              PrecioOroField(
-                controller: precioOroCtrl,
-                menu: buildMenu<GeneralAction>(
-                  icon: Icons.settings,
-                  options: generalMenuOptions,
-                  onSelected: (a) {
-                    switch (a) {
-                      case GeneralAction.actualizar:
-                        precioOroCtrl.text = sugeridos.precioOroUsdOnza
-                            .toString();
-                        controller.setPrecioOro(precioOroCtrl.text);
-                        setState(() {});
-                        break;
-                      default:
-                        // No-op para otras acciones (si existen)
-                        break;
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              /// Tipo de cambio
-              TipoCambioField(
-                controller: tipoCambioCtrl,
-                menu: buildMenu<GeneralAction>(
-                  icon: Icons.settings,
-                  options: generalMenuOptions,
-                  onSelected: (a) {
-                    switch (a) {
-                      case GeneralAction.actualizar:
-                        tipoCambioCtrl.text = sugeridos.tipoCambio.toString();
-                        controller.setTipoCambio(tipoCambioCtrl.text);
-                        setState(() {});
-                        break;
-                      default:
-                        break;
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              /// Descuento
-              DescuentoField(
-                controller: descuentoCtrl,
-                menu: buildMenu<DescuentoAction>(
-                  icon: Icons.help_outline,
-                  options: descuentoMenuOptions,
-                  onSelected: (a) async {
-                    switch (a) {
-                      case DescuentoAction.ayuda:
-                      case DescuentoAction.desdePrecio:
-                        final ok = await showDescuentoDialog(
-                          context: context,
-                          precioOroCtrl: precioOroCtrl,
-                          tipoCambioCtrl: tipoCambioCtrl,
-                          descuentoCtrl: descuentoCtrl,
-                          leyCtrl: leyCtrl,
-                          sugeridos: sugeridos,
-                        );
-                        if (ok) {
-                          controller
-                            ..setDescuento(descuentoCtrl.text)
-                            ..setLey(leyCtrl.text);
-                          setState(() {});
-                        }
-                        break;
-                      case DescuentoAction.predeterminado:
-                        descuentoCtrl.text = sugeridos.descuentoSugerido
-                            .toString();
-                        controller.setDescuento(descuentoCtrl.text);
-                        setState(() {});
-                        break;
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              /// Ley
-              LeyField(
-                controller: leyCtrl,
-                menu: buildMenu<LeyAction>(
-                  icon: Icons.help_outline,
-                  options: leyMenuOptions,
-                  onSelected: (a) {
-                    switch (a) {
-                      case LeyAction.ayuda:
-                        // TODO: flujo de ayuda de ley (si aplica)
-                        break;
-                      case LeyAction.predeterminado:
-                        leyCtrl.text = sugeridos.leySugerida.toString();
-                        controller.setLey(leyCtrl.text);
-                        setState(() {});
-                        break;
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              /// Cantidad
-              CantidadField(
-                controller: cantidadCtrl,
-                menu: IconButton(
-                  icon: const Icon(Icons.info_outline),
-                  onPressed: () => showDialog(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (_) => const AlertDialog(
-                      content: Text(
-                        'Coloque la cantidad de oro bruto en gramos que desea vender o calcular',
-                      ),
-                    ),
-                  ),
-                ),
+              _CalculadoraForm(
+                precioOroCtrl: precioOroCtrl,
+                tipoCambioCtrl: tipoCambioCtrl,
+                descuentoCtrl: descuentoCtrl,
+                leyCtrl: leyCtrl,
+                cantidadCtrl: cantidadCtrl,
+                sugeridos: sugeridos,
+                vm: vm,
+                onCalcular: _calcular,
+                buildMenu: buildMenu,
               ),
               const SizedBox(height: 24),
-
-              /// Botón calcular
-              ElevatedButton(
-                onPressed: _calcular,
-                child: const Text('Calcular'),
-              ),
-              const SizedBox(height: 24),
-
-              /// --- RESULTADOS COMO "ANTES" ---
-              if (state.precioPorGramo != null)
-                Text(
-                  'Precio por gramo: ${soles(state.precioPorGramo!)}',
-                  style: const TextStyle(fontSize: 18),
-                ),
-              if (state.total != null)
-                Text(
-                  'Precio total: ${soles(state.total!)}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              _Resultados(state: state),
             ],
           ),
         ),
@@ -327,5 +188,177 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     leyCtrl.dispose();
     cantidadCtrl.dispose();
     super.dispose();
+  }
+}
+
+class _CalculadoraForm extends StatelessWidget {
+  const _CalculadoraForm({
+    required this.precioOroCtrl,
+    required this.tipoCambioCtrl,
+    required this.descuentoCtrl,
+    required this.leyCtrl,
+    required this.cantidadCtrl,
+    required this.sugeridos,
+    required this.vm,
+    required this.onCalcular,
+    required this.buildMenu,
+  });
+
+  final TextEditingController precioOroCtrl;
+  final TextEditingController tipoCambioCtrl;
+  final TextEditingController descuentoCtrl;
+  final TextEditingController leyCtrl;
+  final TextEditingController cantidadCtrl;
+  final ParametrosRecomendados sugeridos;
+  final CalculadoraViewModel vm;
+  final Future<void> Function() onCalcular;
+  final PopupMenuButton<T> Function<T>({
+    required IconData icon,
+    required List<MenuOption<T>> options,
+    required void Function(T) onSelected,
+  }) buildMenu;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        PrecioOroField(
+          controller: precioOroCtrl,
+          menu: buildMenu<GeneralAction>(
+            icon: Icons.settings,
+            options: generalMenuOptions,
+            onSelected: (a) {
+              switch (a) {
+                case GeneralAction.actualizar:
+                  precioOroCtrl.text = sugeridos.precioOroUsdOnza.toString();
+                  vm.setPrecioOro(precioOroCtrl.text);
+                  break;
+                default:
+                  break;
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        TipoCambioField(
+          controller: tipoCambioCtrl,
+          menu: buildMenu<GeneralAction>(
+            icon: Icons.settings,
+            options: generalMenuOptions,
+            onSelected: (a) {
+              switch (a) {
+                case GeneralAction.actualizar:
+                  tipoCambioCtrl.text = sugeridos.tipoCambio.toString();
+                  vm.setTipoCambio(tipoCambioCtrl.text);
+                  break;
+                default:
+                  break;
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        DescuentoField(
+          controller: descuentoCtrl,
+          menu: buildMenu<DescuentoAction>(
+            icon: Icons.help_outline,
+            options: descuentoMenuOptions,
+            onSelected: (a) async {
+              switch (a) {
+                case DescuentoAction.ayuda:
+                case DescuentoAction.desdePrecio:
+                  final ok = await showDescuentoDialog(
+                    context: context,
+                    precioOroCtrl: precioOroCtrl,
+                    tipoCambioCtrl: tipoCambioCtrl,
+                    descuentoCtrl: descuentoCtrl,
+                    leyCtrl: leyCtrl,
+                    sugeridos: sugeridos,
+                  );
+                  if (ok) {
+                    vm
+                      ..setDescuento(descuentoCtrl.text)
+                      ..setLey(leyCtrl.text);
+                  }
+                  break;
+                case DescuentoAction.predeterminado:
+                  descuentoCtrl.text = sugeridos.descuentoSugerido.toString();
+                  vm.setDescuento(descuentoCtrl.text);
+                  break;
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        LeyField(
+          controller: leyCtrl,
+          menu: buildMenu<LeyAction>(
+            icon: Icons.help_outline,
+            options: leyMenuOptions,
+            onSelected: (a) async {
+              switch (a) {
+                case LeyAction.ayuda:
+                  await showDialog(
+                    context: context,
+                    builder: (_) => const AlertDialog(
+                      content: Text('La ley representa la pureza del oro. Consulta a un perito para obtenerla.'),
+                    ),
+                  );
+                  break;
+                case LeyAction.predeterminado:
+                  leyCtrl.text = sugeridos.leySugerida.toString();
+                  vm.setLey(leyCtrl.text);
+                  break;
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        CantidadField(
+          controller: cantidadCtrl,
+          menu: IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => const AlertDialog(
+                content: Text('Coloque la cantidad de oro bruto en gramos que desea vender o calcular'),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: onCalcular,
+          child: const Text('Calcular'),
+        ),
+      ],
+    );
+  }
+}
+
+class _Resultados extends StatelessWidget {
+  const _Resultados({required this.state});
+  final CalculadoraState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (state.precioPorGramo != null)
+          Text(
+            'Precio por gramo: ${soles(state.precioPorGramo!)}',
+            style: const TextStyle(fontSize: 18),
+          ),
+        if (state.total != null)
+          Text(
+            'Precio total: ${soles(state.total!)}',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+      ],
+    );
   }
 }

@@ -6,11 +6,13 @@ import '../../app_shell.dart';
 import '../../core/notifications/calendario_notifications.dart';
 import '../../presentation/providers/calendario_providers.dart';
 import '../../presentation/providers/mis_eventos_providers.dart';
+import '../../init_dependencies.dart';
 import '../../domain/value_objects/date_range_entity.dart';
 import '../../routes.dart';
 import '../../domain/usecases/schedule_notifications_usecase.dart';
 import 'eventos_calendario.dart';
-import 'calendario_view_model.dart';
+import '../../presentation/viewmodels/calendario_view_model.dart';
+import '../../presentation/shared/event_filter.dart';
 
 // Eventos privados del usuario
 import 'mi_evento.dart';
@@ -130,7 +132,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           icon: const Icon(Icons.add),
           tooltip: 'Nuevo evento',
           onPressed: () async {
-            final repo = ref.read(misEventosRepoProvider);
+            final repo = ref.read(misEventosRepositoryProvider);
             if (repo.anonDisabled) {
               if (mounted) {
                 showDialog(
@@ -180,10 +182,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
         child: Column(
           children: [
 
-            const SizedBox(height: 12),
-
-            // TODO en una sola zona con scroll para evitar overflow
-            Expanded(
+            const SizedBox(height: 12),            Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -298,16 +297,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                     const SizedBox(height: 8),
 
                     // Leyenda (responsive)
-                    const Wrap(
-                      spacing: 16,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _LegendItem(icon: Icons.assignment_outlined, color: Colors.amber, label: 'Obligaciones'),
-                        _LegendItem(icon: Icons.event,               color: Colors.blue,  label: 'Mis eventos'),
-                        _LegendItem(icon: Icons.flag,                color: Colors.red,   label: 'Feriados'),
-                      ],
-                    ),
+                    const _Legend(),
                     const SizedBox(height: 8),
 
                     // Lista del día seleccionado (unificada + filtro)
@@ -394,7 +384,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                                 trailing: IconButton(
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: () async {
-                                    await ref.read(misEventosRepoProvider).borrar(e.id);
+                                    await ref.read(misEventosRepositoryProvider).borrar(e.id);
                                     ref.invalidate(
                                       misEventosRangoProvider(
                                         DateRange(start: _mesRango.start, end: _mesRango.end),
@@ -428,7 +418,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                           children: meses.map((mes) {
                             final items = grupos[mes]!..sort((a, b) => vm.fechaVenc(a)!.compareTo(vm.fechaVenc(b)!));
                             return ExpansionTile(
-                              title: Text(vm.mesNombre(mes), style: const TextStyle(fontWeight: FontWeight.w600)),
+                              title: Text(vm.mesNombrePublic(mes), style: const TextStyle(fontWeight: FontWeight.w600)),
                               children: items.map((e) {
                                 final f = vm.fechaVenc(e)!;
                                 final fechaStr = '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}';
@@ -497,7 +487,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
   // Función: _nuevoEventoDialog - diálogo para crear evento privado.
   Future<bool?> _nuevoEventoDialog(BuildContext context) async {
-    final repo = ref.read(misEventosRepoProvider);
+    final repo = ref.read(misEventosRepositoryProvider);
     final titulo = TextEditingController();
     final desc = TextEditingController();
     DateTime fecha = _selected;
@@ -614,6 +604,24 @@ class _LegendItem extends StatelessWidget {
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
         Text(label),
+      ],
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: const [
+        _LegendItem(icon: Icons.assignment_outlined, color: Colors.amber, label: 'Obligaciones'),
+        _LegendItem(icon: Icons.event, color: Colors.blue, label: 'Mis eventos'),
+        _LegendItem(icon: Icons.flag, color: Colors.red, label: 'Feriados'),
       ],
     );
   }
