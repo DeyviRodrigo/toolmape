@@ -1,27 +1,20 @@
 import 'package:flutter/material.dart';
-import '../features/calculadora/calculadora_screen.dart';
-import '../features/calendario/calendario_screen.dart';
 
 /// Widget: AppDrawer - menú lateral de navegación.
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  const AppDrawer({
+    super.key,
+    required this.onGoToCalculadora,
+    required this.onGoToCalendario,
+  });
 
-  /// Función: _go - navega a la pantalla indicada.
-  void _go(BuildContext context, Widget screen) {
+  final VoidCallback onGoToCalculadora;
+  final VoidCallback onGoToCalendario;
+
+  /// Función: _go - ejecuta el callback y cierra el drawer.
+  void _go(BuildContext context, VoidCallback callback) {
     Navigator.pop(context); // cierra el drawer
-
-    // Evita duplicar la misma ruta
-    final current = ModalRoute.of(context)?.settings.name;
-    final target  = screen.runtimeType.toString();
-    if (current == target) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        settings: RouteSettings(name: target),
-        builder: (_) => screen,
-      ),
-    );
+    callback();
   }
 
   @override
@@ -34,12 +27,12 @@ class AppDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.calculate_outlined),
               title: const Text('Calcular precio del oro'),
-              onTap: () => _go(context, const ScreenCalculadora()),
+              onTap: () => _go(context, onGoToCalculadora),
             ),
             ListTile(
               leading: const Icon(Icons.calendar_month),
               title: const Text('Calendario minero'),
-              onTap: () => _go(context, const CalendarioMineroScreen()),
+              onTap: () => _go(context, onGoToCalendario),
             ),
             ListTile(
               leading: const Icon(Icons.menu_book_outlined),

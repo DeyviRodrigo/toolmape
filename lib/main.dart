@@ -7,6 +7,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/notifications/calendario_notifications.dart';
 import 'features/calculadora/calculadora_screen.dart';
+import 'features/calendario/calendario_screen.dart';
+import 'routes.dart';
 
 /// Función: main - punto de entrada de la aplicación.
 Future<void> main() async {
@@ -68,7 +70,11 @@ class ToolMAPEApp extends StatelessWidget {
         Locale('es', 'ES'),
         Locale('en', 'US'),
       ],
-      home: const ScreenCalculadora(),
+      initialRoute: routeCalculadora,
+      routes: {
+        routeCalculadora: (_) => const ScreenCalculadora(),
+        routeCalendario: (_) => const CalendarioMineroScreen(),
+      },
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../app_shell.dart';
 import '../../core/notifications/calendario_notifications.dart';
 import '../../presentation/providers/calendario_providers.dart';
 import '../../presentation/providers/mis_eventos_providers.dart';
+import '../../routes.dart';
 import '../../domain/usecases/schedule_notifications_usecase.dart';
 import 'eventos_calendario.dart';
 import 'calendario_view_model.dart';
@@ -82,6 +83,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
 
     return AppShell(
       title: 'Calendario minero',
+      onGoToCalculadora: () =>
+          Navigator.pushReplacementNamed(context, routeCalculadora),
+      onGoToCalendario: () =>
+          Navigator.pushReplacementNamed(context, routeCalendario),
       actions: [
         // Filtro
         PopupMenuButton<EventFilter>(

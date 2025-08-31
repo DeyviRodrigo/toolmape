@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app_shell.dart';
 import '../../presentation/controllers/calculadora_controller.dart';
 import '../../presentation/providers/parametros_providers.dart';
+import '../../routes.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/dialogs.dart';
 import '../../widgets/campo_numerico.dart';
@@ -156,6 +157,10 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
 
     return AppShell(
       title: 'Calcular precio del oro',
+      onGoToCalculadora: () =>
+          Navigator.pushReplacementNamed(context, routeCalculadora),
+      onGoToCalendario: () =>
+          Navigator.pushReplacementNamed(context, routeCalendario),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
