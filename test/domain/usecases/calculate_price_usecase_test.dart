@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
-import 'package:toolmape/domain/usecases/calculate_total_usecase.dart';
+import 'package:toolmape/domain/usecases/calculate_price_usecase.dart';
 
 void main() {
-  test('calculate total returns expected values', () {
-    const usecase = CalculateTotal();
-    final prefs = const CalculatorPrefs(
+  test('calculate price returns expected values', () {
+    const usecase = CalculatePrice();
+    const prefs = CalculatorPrefs(
       precioOro: '2000',
       tipoCambio: '3.5',
       descuento: '10',

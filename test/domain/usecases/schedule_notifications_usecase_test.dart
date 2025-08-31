@@ -38,7 +38,7 @@ void main() {
       fuente: null,
     );
 
-    await usecase(eventos: [event1, event2], rucLastDigit: 1, regimen: null);
+    await usecase(eventos: [event1, event2], rucLastDigit: 1, regimen: null, isWeb: false);
 
     expect(cancelCount, 1);
     expect(scheduled.length, 3);

@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/calculator_prefs_entity.dart';
-import '../../domain/usecases/calculate_total_usecase.dart';
+import '../../domain/usecases/calculate_price_usecase.dart';
 import '../../domain/usecases/load_prefs_usecase.dart';
 import '../../domain/usecases/save_prefs_usecase.dart';
 import '../../init_dependencies.dart';
+import '../../core/utils/number_parsing.dart';
 
 class CalculadoraState {
   final String precioOro;
@@ -47,19 +48,19 @@ class CalculadoraState {
 
 class CalculadoraViewModel extends StateNotifier<CalculadoraState> {
   CalculadoraViewModel({
-    required CalculateTotal calcularTotal,
+    required CalculatePrice calcularPrecio,
     required SavePrefs guardarPrefs,
     required LoadPrefs cargarPrefs,
-  })  : _calcularTotal = calcularTotal,
+  })  : _calcularPrecio = calcularPrecio,
         _guardarPrefs = guardarPrefs,
         _cargarPrefs = cargarPrefs,
         super(const CalculadoraState());
 
-  final CalculateTotal _calcularTotal;
+  final CalculatePrice _calcularPrecio;
   final SavePrefs _guardarPrefs;
   final LoadPrefs _cargarPrefs;
 
-  bool _isNumeric(String v) => double.tryParse(v) != null;
+  bool _isNumeric(String v) => parseDouble(v) != null;
 
   Future<void> cargar() async {
     final prefs = await _cargarPrefs();
@@ -107,7 +108,7 @@ class CalculadoraViewModel extends StateNotifier<CalculadoraState> {
       ley: state.ley,
       cantidad: state.cantidad,
     );
-    final res = _calcularTotal(prefs);
+    final res = _calcularPrecio(prefs);
     state = state.copyWith(
       precioPorGramo: res.precioPorGramo,
       total: res.total,
@@ -120,7 +121,7 @@ final calculadoraViewModelProvider =
     StateNotifierProvider<CalculadoraViewModel, CalculadoraState>((ref) {
   final repo = ref.read(preferenciasRepositoryProvider);
   return CalculadoraViewModel(
-    calcularTotal: const CalculateTotal(),
+    calcularPrecio: const CalculatePrice(),
     guardarPrefs: SavePrefs(repo),
     cargarPrefs: LoadPrefs(repo),
   );

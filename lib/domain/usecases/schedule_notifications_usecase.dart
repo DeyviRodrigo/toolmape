@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 import '../entities/evento_entity.dart';
 
 typedef _CancelAll = Future<void> Function();
@@ -25,8 +23,9 @@ class ScheduleNotifications {
     required List<EventoEntity> eventos,
     required int? rucLastDigit,
     required String? regimen,
+    required bool isWeb,
   }) async {
-    if (kIsWeb) return;
+    if (isWeb) return;
 
     await _cancelAll();
     int id = 3000;

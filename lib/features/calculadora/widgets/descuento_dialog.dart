@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants.dart';
+import '../../../core/utils/number_parsing.dart';
+import '../../../domain/usecases/calculate_discount_from_offered_price_usecase.dart';
 import '../../../presentation/providers/parametros_providers.dart';
 import '../options/index.dart';
 
@@ -18,15 +19,7 @@ Future<bool> showDescuentoDialog({
     text: leyCtrl.text.isNotEmpty ? leyCtrl.text : sugeridos.leySugerida.toString(),
   );
 
-  double baseSolesPorGramo({
-    required double precioOroUsdOnza,
-    required double tipoCambio,
-    required double leyPct,
-  }) {
-    final usdPorGramo = precioOroUsdOnza / kGramosPorOnza;
-    final usdAjustado = usdPorGramo * (leyPct / 100.0);
-    return usdAjustado * tipoCambio;
-  }
+  final calcDiscount = const CalculateDiscountFromOfferedPrice();
 
   while (true) {
     final ok = await showDialog<bool>(
@@ -101,19 +94,23 @@ Future<bool> showDescuentoDialog({
 
     if (ok != true) return false;
 
-    final ofrecido = double.tryParse(precioOfrecidoCtrl.text.replaceAll(',', '.'));
-    final leyUsada = double.tryParse(leyInputCtrl.text.replaceAll(',', '.')) ?? sugeridos.leySugerida;
+    final ofrecido = parseDouble(precioOfrecidoCtrl.text);
     if (ofrecido == null || ofrecido <= 0) return false;
 
-    final base = baseSolesPorGramo(
-      precioOroUsdOnza: double.tryParse(precioOroCtrl.text.replaceAll(',', '.')) ?? sugeridos.precioOroUsdOnza,
-      tipoCambio: double.tryParse(tipoCambioCtrl.text.replaceAll(',', '.')) ?? sugeridos.tipoCambio,
-      leyPct: leyUsada,
+    final leyStr = leyInputCtrl.text.isNotEmpty
+        ? leyInputCtrl.text
+        : sugeridos.leySugerida.toString();
+    final d = calcDiscount(
+      precioOfrecido: precioOfrecidoCtrl.text,
+      precioOro: precioOroCtrl.text.isNotEmpty
+          ? precioOroCtrl.text
+          : sugeridos.precioOroUsdOnza.toString(),
+      tipoCambio: tipoCambioCtrl.text.isNotEmpty
+          ? tipoCambioCtrl.text
+          : sugeridos.tipoCambio.toString(),
+      ley: leyStr,
     );
-
-    double d = 100 * (1 - (ofrecido / base));
-    if (d < 0) d = 0;
-    if (d > 100) d = 100;
+    final leyUsada = parseDouble(leyStr) ?? sugeridos.leySugerida;
 
     final next = await showDialog<String>(
       context: context,

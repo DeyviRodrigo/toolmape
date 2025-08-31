@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../app_shell.dart';
@@ -119,6 +120,7 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
               eventos: events,
               rucLastDigit: null,
               regimen: null,
+              isWeb: kIsWeb,
             );
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(

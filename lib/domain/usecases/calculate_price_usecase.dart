@@ -1,4 +1,5 @@
-import '../../services/calculadora_service.dart';
+import '../../core/calculadora_formulas.dart';
+import '../../core/utils/number_parsing.dart';
 import '../entities/calculator_prefs_entity.dart';
 
 class PriceResult {
@@ -7,24 +8,23 @@ class PriceResult {
   const PriceResult({required this.precioPorGramo, required this.total});
 }
 
-class CalculateTotal {
-  const CalculateTotal();
+class CalculatePrice {
+  const CalculatePrice();
 
   PriceResult call(CalculatorPrefs prefs) {
-    double parse(String s) => double.parse(s.replaceAll(',', '.'));
-    final precioOro = parse(prefs.precioOro);
-    final tipoCambio = parse(prefs.tipoCambio);
-    final descuento = parse(prefs.descuento);
-    final ley = parse(prefs.ley);
-    final cantidad = parse(prefs.cantidad);
+    final precioOro = parseDouble(prefs.precioOro) ?? 0;
+    final tipoCambio = parseDouble(prefs.tipoCambio) ?? 0;
+    final descuento = parseDouble(prefs.descuento) ?? 0;
+    final ley = parseDouble(prefs.ley) ?? 0;
+    final cantidad = parseDouble(prefs.cantidad) ?? 0;
 
-    final precioPorGramo = CalculadoraService.precioPorGramoEnSoles(
+    final precioPorGramo = precioPorGramoEnSoles(
       precioOro: precioOro,
       tipoCambio: tipoCambio,
       descuento: descuento,
       ley: ley,
     );
-    final total = CalculadoraService.calcularTotal(
+    final total = calcularTotal(
       precioOro: precioOro,
       tipoCambio: tipoCambio,
       descuento: descuento,
