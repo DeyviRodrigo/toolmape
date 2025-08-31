@@ -33,16 +33,33 @@ class _FakeCrearEvento {
   }
 }
 
+class _FakeScheduleNotifications {
+  List<EventoEntity>? eventos;
+  int? rucDigit;
+  String? regimen;
+  Future<void> call({
+    required List<EventoEntity> eventos,
+    required int? rucLastDigit,
+    required String? regimen,
+  }) async {
+    this.eventos = eventos;
+    rucDigit = rucLastDigit;
+    this.regimen = regimen;
+  }
+}
+
 void main() {
   test('controller delegates to use cases', () async {
     final g = _FakeGetEventosMes();
     final m = _FakeGetMisEventos();
     final c = _FakeCrearEvento();
+    final s = _FakeScheduleNotifications();
 
     final controller = CalendarioController(
       getEventosMes: g.call,
       getMisEventos: m.call,
       crearEvento: c.call,
+      scheduleNotifications: s.call,
     );
 
     final mes = DateTime(2024, 1, 1);
@@ -55,5 +72,21 @@ void main() {
 
     await controller.crearEvento(titulo: 'test', inicio: DateTime(2024, 1, 1));
     expect(c.titulo, 'test');
+
+    final ev = EventoEntity(
+      id: '1',
+      titulo: 't',
+      descripcion: null,
+      categoria: null,
+      inicio: null,
+      fin: null,
+      recordatorio: null,
+      alcance: const {},
+      fuente: null,
+    );
+    await controller.programarNotificaciones(eventos: [ev], rucLastDigit: 1, regimen: 'RMT');
+    expect(s.eventos, [ev]);
+    expect(s.rucDigit, 1);
+    expect(s.regimen, 'RMT');
   });
 }

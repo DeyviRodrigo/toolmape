@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app_shell.dart';
-import '../../state/parametros.dart';
+import '../../presentation/providers/parametros_providers.dart';
 import 'calculadora_controller.dart';
 import 'calculadora_options.dart';
 import '../../core/utils/formatters.dart';

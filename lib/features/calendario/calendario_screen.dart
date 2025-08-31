@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../app_shell.dart';
-import 'calendario_controller.dart';
+import '../../core/notifications/calendario_notifications.dart';
+import '../../presentation/providers/calendario_providers.dart';
+import '../../presentation/providers/mis_eventos_providers.dart';
+import '../../domain/usecases/schedule_notifications_usecase.dart';
 import 'eventos_calendario.dart';
 import 'calendario_view_model.dart';
 
 // Eventos privados del usuario
-import 'mis_eventos_provider.dart';
 import 'mi_evento.dart';
 
 /// Clase: _Marker - marcador para el calendario (icono + color).
@@ -97,7 +99,11 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           icon: const Icon(Icons.notifications_active_outlined),
           onPressed: () async {
             final events = await ref.read(eventosMesProvider(_focused).future);
-            await programarNotificacionesPara(
+            final schedule = ScheduleNotifications(
+              cancelAll: CalendarioNotifications.cancelAll,
+              scheduleOnce: CalendarioNotifications.scheduleOnce,
+            );
+            await schedule(
               eventos: events,
               rucLastDigit: null,
               regimen: null,

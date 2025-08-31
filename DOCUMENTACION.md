@@ -27,6 +27,6 @@ Este documento resume los principales bloques del código y su propósito.
 - Revisar los manejadores `onTap` con `// TODO` en `lib/widgets/app_drawer.dart` (líneas 45, 50, 56 y 61) que no realizan acciones visibles.
 - En `lib/features/calculadora/calculadora_screen.dart` existe un `// TODO` pendiente para el flujo de ayuda de ley (línea 240).
 - `lib/features/calendario/calendario_screen.dart` contiene un `// TODO` sobre manejar overflow en una zona con scroll (línea 186).
-- `lib/state/parametros.dart` incluye `// TODO` para cargar parámetros desde BD (línea 43).
+- `lib/presentation/providers/parametros_providers.dart` incluye `// TODO` para cargar parámetros desde BD (línea 43).
 
 Estas secciones pueden eliminarse o completarse si ya no son necesarias.
