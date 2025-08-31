@@ -8,7 +8,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/dialogs.dart';
 import '../../widgets/campo_numerico.dart';
 
-import 'calculadora_options.dart';
+import 'options/index.dart';
 import 'widgets/precio_oro_field.dart';
 import 'widgets/tipo_cambio_field.dart';
 import 'widgets/descuento_field.dart';
