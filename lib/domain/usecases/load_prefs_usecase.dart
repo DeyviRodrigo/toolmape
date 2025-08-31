@@ -1,18 +1,9 @@
 import '../entities/calculator_prefs_entity.dart';
-
-typedef GetString = Future<String?> Function(String key);
+import '../repositories/preferencias_repository.dart';
 
 class LoadPrefs {
-  final GetString getString;
-  LoadPrefs({required this.getString});
+  final PreferenciasRepository repository;
+  LoadPrefs(this.repository);
 
-  Future<CalculatorPrefs> call() async {
-    return CalculatorPrefs(
-      precioOro: await getString('precioOro') ?? '',
-      tipoCambio: await getString('tipoCambio') ?? '',
-      descuento: await getString('descuento') ?? '',
-      ley: await getString('ley') ?? '',
-      cantidad: await getString('cantidad') ?? '',
-    );
-  }
+  Future<CalculatorPrefs> call() => repository.load();
 }

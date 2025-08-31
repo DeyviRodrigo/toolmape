@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/calculator_prefs_entity.dart';
-import '../../domain/usecases/calculate_price_usecase.dart';
+import '../../domain/usecases/calculate_total_usecase.dart';
 import '../../domain/usecases/save_prefs_usecase.dart';
 import '../../domain/usecases/load_prefs_usecase.dart';
+import '../../infrastructure/datasources/preferencias_local_ds.dart';
+import '../../infrastructure/repositories/preferencias_repository_impl.dart';
 
 class CalculadoraState {
   final String precioOro;
@@ -47,15 +48,15 @@ class CalculadoraState {
 
 class CalculadoraController extends StateNotifier<CalculadoraState> {
   CalculadoraController({
-    required CalculatePrice calcularPrecio,
+    required CalculateTotal calcularTotal,
     required SavePrefs guardarPrefs,
     required LoadPrefs cargarPrefs,
-  })  : _calcularPrecio = calcularPrecio,
+  })  : _calcularTotal = calcularTotal,
         _guardarPrefs = guardarPrefs,
         _cargarPrefs = cargarPrefs,
         super(const CalculadoraState());
 
-  final CalculatePrice _calcularPrecio;
+  final CalculateTotal _calcularTotal;
   final SavePrefs _guardarPrefs;
   final LoadPrefs _cargarPrefs;
 
@@ -77,36 +78,25 @@ class CalculadoraController extends StateNotifier<CalculadoraState> {
   void setCantidad(String v) => state = state.copyWith(cantidad: v);
 
   Future<void> calcular() async {
-    double parse(String s) => double.parse(s.replaceAll(',', '.'));
-    final res = _calcularPrecio(
-      precioOro: parse(state.precioOro),
-      tipoCambio: parse(state.tipoCambio),
-      descuento: parse(state.descuento),
-      ley: parse(state.ley),
-      cantidad: parse(state.cantidad),
-    );
-    state = state.copyWith(precioPorGramo: res.precioPorGramo, total: res.total);
-    await _guardarPrefs(CalculatorPrefs(
+    final prefs = CalculatorPrefs(
       precioOro: state.precioOro,
       tipoCambio: state.tipoCambio,
       descuento: state.descuento,
       ley: state.ley,
       cantidad: state.cantidad,
-    ));
+    );
+    final res = _calcularTotal(prefs);
+    state = state.copyWith(precioPorGramo: res.precioPorGramo, total: res.total);
+    await _guardarPrefs(prefs);
   }
 }
 
 final calculadoraControllerProvider =
     StateNotifierProvider<CalculadoraController, CalculadoraState>((ref) {
+  final repo = PreferenciasRepositoryImpl(PreferenciasLocalDatasource());
   return CalculadoraController(
-    calcularPrecio: const CalculatePrice(),
-    guardarPrefs: SavePrefs(setString: (k, v) async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(k, v);
-    }),
-    cargarPrefs: LoadPrefs(getString: (k) async {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(k);
-    }),
+    calcularTotal: const CalculateTotal(),
+    guardarPrefs: SavePrefs(repo),
+    cargarPrefs: LoadPrefs(repo),
   );
 });

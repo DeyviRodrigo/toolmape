@@ -1,16 +1,9 @@
 import '../entities/calculator_prefs_entity.dart';
-
-typedef SetString = Future<void> Function(String key, String value);
+import '../repositories/preferencias_repository.dart';
 
 class SavePrefs {
-  final SetString setString;
-  SavePrefs({required this.setString});
+  final PreferenciasRepository repository;
+  SavePrefs(this.repository);
 
-  Future<void> call(CalculatorPrefs prefs) async {
-    await setString('precioOro', prefs.precioOro);
-    await setString('tipoCambio', prefs.tipoCambio);
-    await setString('descuento', prefs.descuento);
-    await setString('ley', prefs.ley);
-    await setString('cantidad', prefs.cantidad);
-  }
+  Future<void> call(CalculatorPrefs prefs) => repository.save(prefs);
 }
