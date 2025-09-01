@@ -80,7 +80,9 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
       state = AsyncData((state.value ?? ParametrosRecomendados.defaults()).copyWith(leySugerida: v));
 }
 
-/// Provider: parametrosProvider - expone ParametrosNotifier.
-final parametrosProvider = AsyncNotifierProvider<ParametrosNotifier, ParametrosRecomendados>(
-      () => ParametrosNotifier(),
+/// Provider: parametrosProvider - expone ParametrosNotifier y siempre
+/// consulta valores actualizados desde Supabase.
+final parametrosProvider =
+    AsyncNotifierProvider.autoDispose<ParametrosNotifier, ParametrosRecomendados>(
+  () => ParametrosNotifier(),
 );

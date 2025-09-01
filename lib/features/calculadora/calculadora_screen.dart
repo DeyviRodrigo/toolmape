@@ -44,7 +44,7 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
       leyCtrl.text = s.ley;
       cantidadCtrl.text = s.cantidad;
       try {
-        final p = await ref.read(parametrosProvider.future);
+        final p = await ref.refresh(parametrosProvider.future);
         precioOroCtrl.text = p.precioOroUsdOnza.toString();
         tipoCambioCtrl.text = p.tipoCambio.toString();
       } catch (_) {
