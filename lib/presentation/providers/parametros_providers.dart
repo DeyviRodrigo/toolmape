@@ -38,7 +38,7 @@ class ParametrosRecomendados {
 }
 
 /// Notifier: ParametrosNotifier - gestiona los parámetros recomendados.
-class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
+class ParametrosNotifier extends AutoDisposeAsyncNotifier<ParametrosRecomendados> {
   @override
   Future<ParametrosRecomendados> build() async {
     try {
@@ -82,7 +82,5 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
 
 /// Provider: parametrosProvider - expone ParametrosNotifier y siempre
 /// consulta valores actualizados desde Supabase.
-final parametrosProvider =
-    AsyncNotifierProvider.autoDispose<ParametrosNotifier, ParametrosRecomendados>(
-  () => ParametrosNotifier(),
-);
+final parametrosProvider = AutoDisposeAsyncNotifierProvider<ParametrosNotifier,
+    ParametrosRecomendados>(ParametrosNotifier.new);
