@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Clase: ParametrosRecomendados - modelo con valores recomendados.
 class ParametrosRecomendados {
@@ -39,7 +40,28 @@ class ParametrosRecomendados {
 /// Notifier: ParametrosNotifier - gestiona los parámetros recomendados.
 class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
   @override
-  Future<ParametrosRecomendados> build() async {    // fallback a defaults
+  Future<ParametrosRecomendados> build() async {
+    try {
+      final client = Supabase.instance.client;
+      final data = await client
+          .from('stg_latest_ticks')
+          .select('gold_price, pen_usd')
+          .order('captured_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (data != null) {
+        final gold = (data['gold_price'] as num?)?.toDouble();
+        final penUsd = (data['pen_usd'] as num?)?.toDouble();
+        if (gold != null && penUsd != null && penUsd != 0) {
+          final tc = 1 / penUsd;
+          return ParametrosRecomendados.defaults()
+              .copyWith(precioOroUsdOnza: gold, tipoCambio: tc);
+        }
+      }
+    } catch (_) {
+      // Ignorar errores y usar valores predeterminados
+    }
+    // fallback a defaults
     return ParametrosRecomendados.defaults();
   }
 

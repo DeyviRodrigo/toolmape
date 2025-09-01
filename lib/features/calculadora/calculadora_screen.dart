@@ -38,13 +38,18 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   @override
   void initState() {
     super.initState();
-    ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) {
+    ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) async {
       final s = ref.read(calculadoraViewModelProvider);
-      precioOroCtrl.text = s.precioOro;
-      tipoCambioCtrl.text = s.tipoCambio;
       descuentoCtrl.text = s.descuento;
       leyCtrl.text = s.ley;
       cantidadCtrl.text = s.cantidad;
+      try {
+        final p = await ref.read(parametrosProvider.future);
+        precioOroCtrl.text = p.precioOroUsdOnza.toString();
+        tipoCambioCtrl.text = p.tipoCambio.toString();
+      } catch (_) {
+        // En caso de error, los campos quedan vacíos para usar defaults.
+      }
       setState(() {});
     });
   }
