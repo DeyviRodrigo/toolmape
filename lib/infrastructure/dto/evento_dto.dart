@@ -1,3 +1,5 @@
+import '../../domain/value_objects/event_scope.dart';
+
 class EventoDto {
   final String id;
   final String titulo;
@@ -6,7 +8,7 @@ class EventoDto {
   final DateTime? inicio;
   final DateTime? fin;
   final DateTime? recordatorio;
-  final Map<String, dynamic> alcance;
+  final EventScope alcance;
   final String? fuente;
 
   EventoDto({
@@ -32,7 +34,7 @@ class EventoDto {
         recordatorio: json['recordatorio'] != null
             ? DateTime.parse(json['recordatorio'] as String)
             : null,
-        alcance: (json['alcance'] as Map?)?.cast<String, dynamic>() ?? const {},
+        alcance: EventScope.fromJson(json['alcance'] as Map<String, dynamic>?),
         fuente: json['fuente'] as String?,
       );
 
@@ -44,7 +46,7 @@ class EventoDto {
         'inicio': inicio?.toIso8601String(),
         'fin': fin?.toIso8601String(),
         'recordatorio': recordatorio?.toIso8601String(),
-        'alcance': alcance,
+        'alcance': alcance.toJson(),
         'fuente': fuente,
       };
 }

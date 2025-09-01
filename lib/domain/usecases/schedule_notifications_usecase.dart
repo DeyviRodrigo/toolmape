@@ -62,10 +62,10 @@ class ScheduleNotifications {
   }
 
   bool _aplicaA(EventoEntity e, int? rucDigit, String? regimen) {
-    final digits = (e.alcance['ruc_digits'] as List?)?.cast<int>();
-    if (digits != null && digits.isNotEmpty && rucDigit != null && !digits.contains(rucDigit)) return false;
-    final regs = (e.alcance['regimen'] as List?)?.cast<String>();
-    if (regs != null && regs.isNotEmpty && regimen != null && !regs.contains(regimen)) return false;
+    final digits = e.alcance.rucDigits;
+    if (digits.isNotEmpty && rucDigit != null && !digits.contains(rucDigit)) return false;
+    final regs = e.alcance.regimen;
+    if (regs.isNotEmpty && regimen != null && !regs.contains(regimen)) return false;
     return true;
   }
 }

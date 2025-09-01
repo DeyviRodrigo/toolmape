@@ -1,6 +1,6 @@
 import '../entities/mi_evento_entity.dart';
 import '../repositories/mis_eventos_repository.dart';
-import '../value_objects/date_range_entity.dart';
+import '../value_objects/date_range.dart';
 
 /// Use case to obtain personal events for a given range.
 class GetMisEventos {

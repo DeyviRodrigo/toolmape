@@ -5,7 +5,7 @@ import '../../domain/entities/evento_entity.dart';
 import '../../domain/entities/mi_evento_entity.dart';
 import '../../domain/repositories/calendario_repository.dart';
 import '../../domain/repositories/mis_eventos_repository.dart';
-import '../../domain/value_objects/date_range_entity.dart';
+import '../../domain/value_objects/date_range.dart';
 import '../../init_dependencies.dart';
 import '../shared/event_filter.dart';
 import '../shared/meses.dart';

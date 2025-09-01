@@ -8,7 +8,7 @@ import '../../core/notifications/calendario_notifications.dart';
 import '../../presentation/providers/calendario_providers.dart';
 import '../../presentation/providers/mis_eventos_providers.dart';
 import '../../init_dependencies.dart';
-import '../../domain/value_objects/date_range_entity.dart';
+import '../../domain/value_objects/date_range.dart';
 import '../../routes.dart';
 import '../../domain/usecases/schedule_notifications_usecase.dart';
 import 'eventos_calendario.dart';

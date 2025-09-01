@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toolmape/domain/entities/evento_entity.dart';
+import 'package:toolmape/domain/value_objects/event_scope.dart';
 import 'package:toolmape/domain/usecases/schedule_notifications_usecase.dart';
 
 void main() {
@@ -22,7 +23,7 @@ void main() {
       inicio: now.add(const Duration(days: 1)),
       fin: now.add(const Duration(days: 2)),
       recordatorio: now.add(const Duration(days: 3)),
-      alcance: const {},
+      alcance: const EventScope(),
       fuente: null,
     );
 
@@ -34,7 +35,7 @@ void main() {
       inicio: now.add(const Duration(days: 1)),
       fin: null,
       recordatorio: null,
-      alcance: const {'ruc_digits': [9]},
+      alcance: const EventScope(rucDigits: [9]),
       fuente: null,
     );
 

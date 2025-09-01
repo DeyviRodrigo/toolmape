@@ -1,5 +1,5 @@
 import '../entities/mi_evento_entity.dart';
-import '../value_objects/date_range_entity.dart';
+import '../value_objects/date_range.dart';
 
 /// Repository contract for personal user events.
 abstract class MisEventosRepository {

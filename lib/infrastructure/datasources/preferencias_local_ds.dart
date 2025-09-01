@@ -1,25 +1,27 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/calculator_prefs_entity.dart';
+import '../mappers/calculator_prefs_mapper.dart';
 
 class PreferenciasLocalDatasource {
   Future<CalculatorPrefs> load() async {
     final prefs = await SharedPreferences.getInstance();
-    return CalculatorPrefs(
-      precioOro: prefs.getString('precioOro') ?? '',
-      tipoCambio: prefs.getString('tipoCambio') ?? '',
-      descuento: prefs.getString('descuento') ?? '',
-      ley: prefs.getString('ley') ?? '',
-      cantidad: prefs.getString('cantidad') ?? '',
-    );
+    return CalculatorPrefsMapper.fromMap({
+      'precioOro': prefs.getString('precioOro'),
+      'tipoCambio': prefs.getString('tipoCambio'),
+      'descuento': prefs.getString('descuento'),
+      'ley': prefs.getString('ley'),
+      'cantidad': prefs.getString('cantidad'),
+    });
   }
 
   Future<void> save(CalculatorPrefs data) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('precioOro', data.precioOro);
-    await prefs.setString('tipoCambio', data.tipoCambio);
-    await prefs.setString('descuento', data.descuento);
-    await prefs.setString('ley', data.ley);
-    await prefs.setString('cantidad', data.cantidad);
+    final map = CalculatorPrefsMapper.toMap(data);
+    await prefs.setString('precioOro', map['precioOro'] as String);
+    await prefs.setString('tipoCambio', map['tipoCambio'] as String);
+    await prefs.setString('descuento', map['descuento'] as String);
+    await prefs.setString('ley', map['ley'] as String);
+    await prefs.setString('cantidad', map['cantidad'] as String);
   }
 }

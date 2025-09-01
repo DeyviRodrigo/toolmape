@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 import 'package:toolmape/domain/entities/evento_entity.dart';
 import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
-import 'package:toolmape/domain/value_objects/date_range_entity.dart';
+import 'package:toolmape/domain/value_objects/date_range.dart';
 import 'package:toolmape/infrastructure/datasources/calendario_supabase_ds.dart';
 import 'package:toolmape/infrastructure/datasources/mis_eventos_supabase_ds.dart';
 import 'package:toolmape/infrastructure/datasources/preferencias_local_ds.dart';

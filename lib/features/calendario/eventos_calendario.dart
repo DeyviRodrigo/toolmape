@@ -8,12 +8,10 @@ extension EventoCalendarX on EventoEntity {
   /// Whether this event applies to the user given optional [rucDigit] and
   /// [regimen] filters.
   bool aplicaA({int? rucDigit, String? regimen}) {
-    final digits = (alcance['ruc_digits'] as List?)?.cast<int>();
-    if (digits != null && digits.isNotEmpty && rucDigit != null &&
-        !digits.contains(rucDigit)) return false;
-    final regs = (alcance['regimen'] as List?)?.cast<String>();
-    if (regs != null && regs.isNotEmpty && regimen != null &&
-        !regs.contains(regimen)) return false;
+    final digits = alcance.rucDigits;
+    if (digits.isNotEmpty && rucDigit != null && !digits.contains(rucDigit)) return false;
+    final regs = alcance.regimen;
+    if (regs.isNotEmpty && regimen != null && !regs.contains(regimen)) return false;
     return true;
   }
 }

@@ -6,7 +6,8 @@ import 'package:toolmape/domain/entities/evento_entity.dart';
 import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/domain/repositories/calendario_repository.dart';
 import 'package:toolmape/domain/repositories/mis_eventos_repository.dart';
-import 'package:toolmape/domain/value_objects/date_range_entity.dart';
+import 'package:toolmape/domain/value_objects/date_range.dart';
+import 'package:toolmape/domain/value_objects/event_scope.dart';
 import 'package:toolmape/init_dependencies.dart';
 
 class _FakeCalRepo implements CalendarioRepository {
@@ -24,7 +25,7 @@ class _FakeCalRepo implements CalendarioRepository {
         inicio: start,
         fin: end,
         recordatorio: null,
-        alcance: const {},
+        alcance: const EventScope(),
         fuente: null,
       ),
     ];

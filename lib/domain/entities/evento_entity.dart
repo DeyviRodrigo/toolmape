@@ -1,3 +1,5 @@
+import '../value_objects/event_scope.dart';
+
 class EventoEntity {
   final String id;
   final String titulo;
@@ -6,7 +8,7 @@ class EventoEntity {
   final DateTime? inicio;
   final DateTime? fin;
   final DateTime? recordatorio;
-  final Map<String, dynamic> alcance;
+  final EventScope alcance;
   final String? fuente;
 
   EventoEntity({
