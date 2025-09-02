@@ -48,9 +48,9 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
         .limit(1)
         .single();
 
-    final gold = (res['gold_price'] as num?)?.toDouble() ?? 0;
-    final penUsd = (res['pen_usd'] as num?)?.toDouble() ?? 0;
-    final tipoCambio = penUsd == 0 ? 0 : 1 / penUsd;
+    final gold = (res['gold_price'] as num?)?.toDouble() ?? 0.0;
+    final penUsd = (res['pen_usd'] as num?)?.toDouble() ?? 0.0;
+    final tipoCambio = penUsd == 0.0 ? 0.0 : 1 / penUsd;
 
     return ParametrosRecomendados.defaults()
         .copyWith(precioOroUsdOnza: gold, tipoCambio: tipoCambio);
