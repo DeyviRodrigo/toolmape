@@ -35,9 +35,36 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
 
   static const Offset _menuOffsetUp = Offset(0, -36);
 
+  bool _warnedOffline = false;
+
   @override
   void initState() {
     super.initState();
+    ref.listen<AsyncValue<ParametrosRecomendados>>(parametrosProvider,
+        (prev, next) {
+      next.whenOrNull(error: (err, stack) {
+        if (!_warnedOffline) {
+          _warnedOffline = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: const Text('No pudimos conectarnos a internet'),
+                content: const Text(
+                    'Es probable que los valores que muestre el aplicativo no correspondan al último valor registrado del oro y el tipo de cambio, no utilice el aplicativo para hacer cálculos para la compra y venta de oro.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          });
+        }
+      });
+    });
+    ref.read(parametrosProvider);
     ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) {
       final s = ref.read(calculadoraViewModelProvider);
       precioOroCtrl.text = s.precioOro;

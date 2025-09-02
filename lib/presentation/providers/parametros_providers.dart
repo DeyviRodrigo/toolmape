@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Clase: ParametrosRecomendados - modelo con valores recomendados.
 class ParametrosRecomendados {
@@ -15,11 +16,11 @@ class ParametrosRecomendados {
   });
 
   factory ParametrosRecomendados.defaults() => const ParametrosRecomendados(
-    precioOroUsdOnza: 3373.1,
-    tipoCambio: 3.50,
-    descuentoSugerido: 7,
-    leySugerida: 93,
-  );
+        precioOroUsdOnza: 0,
+        tipoCambio: 0,
+        descuentoSugerido: 7,
+        leySugerida: 93,
+      );
 
   ParametrosRecomendados copyWith({
     double? precioOroUsdOnza,
@@ -39,8 +40,20 @@ class ParametrosRecomendados {
 /// Notifier: ParametrosNotifier - gestiona los parámetros recomendados.
 class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
   @override
-  Future<ParametrosRecomendados> build() async {    // fallback a defaults
-    return ParametrosRecomendados.defaults();
+  Future<ParametrosRecomendados> build() async {
+    final res = await Supabase.instance.client
+        .from('stg_latest_ticks')
+        .select('gold_price,pen_usd')
+        .order('captured_at', ascending: false)
+        .limit(1)
+        .single();
+
+    final gold = (res['gold_price'] as num?)?.toDouble() ?? 0;
+    final penUsd = (res['pen_usd'] as num?)?.toDouble() ?? 0;
+    final tipoCambio = penUsd == 0 ? 0 : 1 / penUsd;
+
+    return ParametrosRecomendados.defaults()
+        .copyWith(precioOroUsdOnza: gold, tipoCambio: tipoCambio);
   }
 
   // Métodos para actualizar desde BD o UI
