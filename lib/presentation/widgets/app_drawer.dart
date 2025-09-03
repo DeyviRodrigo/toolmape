@@ -6,10 +6,12 @@ class AppDrawer extends StatelessWidget {
   const AppDrawer({
     super.key,
     required this.onGoToCalculadora,
+    required this.onGoToCalcularDescuento,
     required this.onGoToCalendario,
   });
 
   final VoidCallback onGoToCalculadora;
+  final VoidCallback onGoToCalcularDescuento;
   final VoidCallback onGoToCalendario;
 
   /// Función: _go - ejecuta el callback y cierra el drawer.
@@ -29,6 +31,11 @@ class AppDrawer extends StatelessWidget {
               icon: Icons.calculate_outlined,
               title: 'Calcular precio del oro',
               onTap: () => _go(context, onGoToCalculadora),
+            ),
+            AppDrawerItem(
+              icon: Icons.percent,
+              title: 'Tengo el precio, quiero calcular el descuento',
+              onTap: () => _go(context, onGoToCalcularDescuento),
             ),
             AppDrawerItem(
               icon: Icons.calendar_month,

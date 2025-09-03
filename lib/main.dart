@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/notifications/calendario_notifications.dart';
 import 'features/calculadora/calculadora_screen.dart';
+import 'features/calculadora/descuento_screen.dart';
 import 'features/calendario/calendario_screen.dart';
 import 'routes.dart';
 import 'core_foundation/core_foundation.dart';
@@ -78,6 +79,7 @@ class ToolMAPEApp extends StatelessWidget {
       initialRoute: routeCalculadora,
       routes: {
         routeCalculadora: (_) => const ScreenCalculadora(),
+        routeCalcularDescuento: (_) => const ScreenCalcularDescuento(),
         routeCalendario: (_) => const CalendarioMineroScreen(),
       },
     );

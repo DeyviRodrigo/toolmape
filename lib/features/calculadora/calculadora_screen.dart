@@ -11,6 +11,7 @@ import '../../presentation/shared/general_action.dart';
 import '../../presentation/shared/descuento_action.dart';
 import '../../presentation/shared/ley_action.dart';
 import '../../presentation/shared/menu_option.dart';
+import '../../presentation/shared/menu_builder.dart';
 
 import 'widgets/precio_oro_field.dart';
 import 'widgets/precio_oro_avanzadas_dialog.dart';
@@ -33,8 +34,6 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   final descuentoCtrl = TextEditingController();
   final leyCtrl = TextEditingController();
   final cantidadCtrl = TextEditingController();
-
-  static const Offset _menuOffsetUp = Offset(0, -36);
 
   bool _warnedOffline = false;
 
@@ -63,31 +62,6 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     });
   }
 
-  PopupMenuButton<T> buildMenu<T>({
-    required IconData icon,
-    required List<MenuOption<T>> options,
-    required void Function(T) onSelected,
-  }) {
-    return PopupMenuButton<T>(
-      icon: Icon(icon),
-      offset: _menuOffsetUp,
-      itemBuilder: (_) => options
-          .map(
-            (o) => PopupMenuItem<T>(
-              value: o.value,
-              child: Row(
-                children: [
-                  Icon(o.icon, size: 20),
-                  const SizedBox(width: 10),
-                  Text(o.label),
-                ],
-              ),
-            ),
-          )
-          .toList(),
-      onSelected: onSelected,
-    );
-  }
 
   Future<void> _calcular() async {
     final sugeridos =
@@ -189,6 +163,8 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
       title: 'Calcular precio del oro',
       onGoToCalculadora: () =>
           Navigator.pushReplacementNamed(context, routeCalculadora),
+      onGoToCalcularDescuento: () =>
+          Navigator.pushReplacementNamed(context, routeCalcularDescuento),
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
       body: Padding(

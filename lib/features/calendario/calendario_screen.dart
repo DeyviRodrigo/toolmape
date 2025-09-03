@@ -93,6 +93,8 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
       title: 'Calendario minero',
       onGoToCalculadora: () =>
           Navigator.pushReplacementNamed(context, routeCalculadora),
+      onGoToCalcularDescuento: () =>
+          Navigator.pushReplacementNamed(context, routeCalcularDescuento),
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
       actions: [
