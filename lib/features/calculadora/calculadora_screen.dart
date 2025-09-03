@@ -13,6 +13,7 @@ import '../../presentation/shared/ley_action.dart';
 import '../../presentation/shared/menu_option.dart';
 
 import 'widgets/precio_oro_field.dart';
+import 'widgets/precio_oro_avanzadas_dialog.dart';
 import 'widgets/tipo_cambio_field.dart';
 import 'widgets/descuento_field.dart';
 import 'widgets/ley_field.dart';
@@ -262,12 +263,19 @@ class _CalculadoraForm extends StatelessWidget {
           menu: buildMenu<GeneralAction>(
             icon: Icons.settings,
             options: generalMenuOptions,
-            onSelected: (a) {
+            onSelected: (a) async {
               switch (a) {
-                  case GeneralAction.actualizar:
-                    precioOroCtrl.text =
-                        sugeridos.precioOroUsdOnza.toStringAsFixed(2);
+                case GeneralAction.actualizar:
+                  precioOroCtrl.text =
+                      sugeridos.precioOroUsdOnza.toStringAsFixed(2);
+                  vm.setPrecioOro(precioOroCtrl.text);
+                  break;
+                case GeneralAction.avanzadas:
+                  final sel = await showPrecioOroAvanzadasDialog(context);
+                  if (sel != null) {
+                    precioOroCtrl.text = sel.toStringAsFixed(2);
                     vm.setPrecioOro(precioOroCtrl.text);
+                  }
                   break;
                 default:
                   break;
