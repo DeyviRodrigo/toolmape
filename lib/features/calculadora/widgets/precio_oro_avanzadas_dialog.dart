@@ -43,14 +43,17 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
           .maybeSingle();
       final spotRes = await client
           .from('stg_spot_ticks')
-          .select('price, ask, bid, high, low, change_abs, change_pct')
+          .select(
+              'price, ask, bid, high, low, change_abs, change_pct')
           .eq('metal_code', 'XAU')
+          .eq('currency', 'USD')
           .order('captured_at', ascending: false)
           .limit(1)
           .maybeSingle();
+
       setState(() {
-        latest = latestRes;
-        spot = spotRes;
+        latest = latestRes?.map((k, v) => MapEntry(k, _toDouble(v)));
+        spot = spotRes?.map((k, v) => MapEntry(k, _toDouble(v)));
         loading = false;
       });
     } catch (_) {
@@ -58,6 +61,11 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
         loading = false;
       });
     }
+  }
+
+  double? _toDouble(dynamic v) {
+    if (v is num) return v.toDouble();
+    return double.tryParse('$v');
   }
 
   Widget _selectableBox(String label, num? value) {
