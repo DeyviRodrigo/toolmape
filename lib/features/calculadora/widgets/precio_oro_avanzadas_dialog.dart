@@ -17,7 +17,8 @@ class _PrecioOroAvanzadasDialog extends StatefulWidget {
 }
 
 class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
-  Map<String, dynamic>? data;
+  Map<String, dynamic>? latest;
+  Map<String, dynamic>? spot;
   bool loading = true;
 
   @override
@@ -28,7 +29,14 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
 
   Future<void> _load() async {
     try {
-      final res = await Supabase.instance.client
+      final client = Supabase.instance.client;
+      final latestRes = await client
+          .from('stg_latest_ticks')
+          .select('gold_price, lbma_gold_am, lbma_gold_pm')
+          .order('captured_at', ascending: false)
+          .limit(1)
+          .single();
+      final spotRes = await client
           .from('stg_spot_ticks')
           .select('price, ask, bid, high, low, change_abs, change_pct')
           .eq('metal_code', 'XAU')
@@ -36,7 +44,8 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
           .limit(1)
           .single();
       setState(() {
-        data = res;
+        latest = latestRes;
+        spot = spotRes;
         loading = false;
       });
     } catch (_) {
@@ -48,11 +57,12 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
 
   Widget _selectableBox(String label, num? value) {
     final v = value?.toDouble();
-    return Expanded(
+    return SizedBox(
+      width: 80,
       child: InkWell(
         onTap: v == null ? null : () => Navigator.pop(context, v),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade400),
             borderRadius: BorderRadius.circular(8),
@@ -60,9 +70,13 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 4),
-              Text(v?.toStringAsFixed(2) ?? '-'),
+              Text(v?.toStringAsFixed(2) ?? '-', textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -72,9 +86,10 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
 
   Widget _infoBox(String label, num? value) {
     final v = value?.toDouble();
-    return Expanded(
+    return SizedBox(
+      width: 80,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey.shade400),
           borderRadius: BorderRadius.circular(8),
@@ -82,13 +97,20 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 4),
-            Text(v == null
-                ? '-'
-                : label.contains('%')
-                    ? '${v.toStringAsFixed(2)}%'
-                    : v.toStringAsFixed(2)),
+            Text(
+              v == null
+                  ? '-'
+                  : label.contains('%')
+                      ? '${v.toStringAsFixed(2)}%'
+                      : v.toStringAsFixed(2),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -102,42 +124,63 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
         padding: const EdgeInsets.all(16),
         child: loading
             ? const SizedBox(
-                height: 100,
+                width: 80,
+                height: 80,
                 child: Center(child: CircularProgressIndicator()),
               )
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
-                  _selectableBox('Precio', data?['price']),
+                  Text('Latest', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _selectableBox('Ask', data?['ask']),
+                      _selectableBox('Gold', latest?['gold_price']),
                       const SizedBox(width: 8),
-                      _selectableBox('Bid', data?['bid']),
+                      _selectableBox('LBMA AM', latest?['lbma_gold_am']),
+                      const SizedBox(width: 8),
+                      _selectableBox('LBMA PM', latest?['lbma_gold_pm']),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Spot', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  _selectableBox('Precio', spot?['price']),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _selectableBox('Ask', spot?['ask']),
+                      const SizedBox(width: 8),
+                      _selectableBox('Bid', spot?['bid']),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _selectableBox('High', data?['high']),
+                      _selectableBox('High', spot?['high']),
                       const SizedBox(width: 8),
-                      _selectableBox('Low', data?['low']),
+                      _selectableBox('Low', spot?['low']),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _infoBox('Cambio', data?['change_abs']),
+                      _infoBox('Cambio', spot?['change_abs']),
                       const SizedBox(width: 8),
-                      _infoBox('Cambio %', data?['change_pct']),
+                      _infoBox('Cambio %', spot?['change_pct']),
                     ],
                   ),
                 ],
@@ -146,4 +189,5 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
     );
   }
 }
+
 
