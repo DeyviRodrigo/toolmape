@@ -47,7 +47,10 @@ class PriceDatasource {
         .from('stg_spot_ticks')
         .select('price, ask, bid, high, low, change_abs, change_pct')
         // Accept common variants of the metal code in a case-insensitive manner
-        .in_('metal_code', ['XAU', 'xau', 'GOLD', 'Gold', 'gold'])
+        // `filter(..., 'in', ...)` used for compatibility with Postgrest 2.x
+        // where `in_` was renamed. The filter is robust to case variations.
+        .filter('metal_code', 'in',
+            '("XAU","xau","GOLD","Gold","gold")')
         // Currency filter tolerant to case
         .ilike('currency', 'usd')
         .order('captured_at', ascending: false)

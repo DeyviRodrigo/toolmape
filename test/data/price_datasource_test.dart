@@ -23,7 +23,7 @@ void main() {
     test('fetchSpotGoldUsd maps values to double', () async {
       when(() => client.from(any())).thenReturn(builder);
       when(() => builder.select(any())).thenReturn(builder);
-      when(() => builder.in_(any(), any())).thenReturn(builder);
+      when(() => builder.filter(any(), any(), any())).thenReturn(builder);
       when(() => builder.ilike(any(), any())).thenReturn(builder);
       when(() => builder.order(any(), ascending: any(named: 'ascending')))
           .thenReturn(builder);
