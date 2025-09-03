@@ -40,7 +40,6 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
   @override
   void initState() {
     super.initState();
-    ref.read(parametrosProvider);
     ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) {
       final s = ref.read(calculadoraViewModelProvider);
       precioOroCtrl.text = s.precioOro;
@@ -48,6 +47,17 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
       descuentoCtrl.text = s.descuento;
       leyCtrl.text = s.ley;
       cantidadCtrl.text = s.cantidad;
+      setState(() {});
+    });
+    ref.read(parametrosProvider.future).then((p) {
+      final gold = p.precioOroUsdOnza.toStringAsFixed(2);
+      final tc = p.tipoCambio.toStringAsFixed(2);
+      precioOroCtrl.text = gold;
+      tipoCambioCtrl.text = tc;
+      final vm = ref.read(calculadoraViewModelProvider.notifier);
+      vm
+        ..setPrecioOro(gold)
+        ..setTipoCambio(tc);
       setState(() {});
     });
   }
@@ -84,10 +94,10 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
     final vm = ref.read(calculadoraViewModelProvider.notifier);
 
     if (precioOroCtrl.text.trim().isEmpty) {
-      precioOroCtrl.text = sugeridos.precioOroUsdOnza.toString();
+      precioOroCtrl.text = sugeridos.precioOroUsdOnza.toStringAsFixed(2);
     }
     if (tipoCambioCtrl.text.trim().isEmpty) {
-      tipoCambioCtrl.text = sugeridos.tipoCambio.toString();
+      tipoCambioCtrl.text = sugeridos.tipoCambio.toStringAsFixed(2);
     }
     if (descuentoCtrl.text.trim().isEmpty) {
       final sel = await choiceDialog(
@@ -146,29 +156,26 @@ class _ScreenCalculadoraState extends ConsumerState<ScreenCalculadora> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<ParametrosRecomendados>>(parametrosProvider,
-        (prev, next) {
-      next.whenOrNull(error: (err, stack) {
-        if (!_warnedOffline) {
-          _warnedOffline = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            showDialog(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('No pudimos conectarnos a internet'),
-                content: const Text(
-                    'Es probable que los valores que muestre el aplicativo no correspondan al último valor registrado del oro y el tipo de cambio, no utilice el aplicativo para hacer cálculos para la compra y venta de oro.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          });
-        }
-      });
+    ref.listen<bool>(parametrosOfflineProvider, (prev, next) {
+      if (next && !_warnedOffline) {
+        _warnedOffline = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('No pudimos conectarnos a internet'),
+              content: const Text(
+                  'Es probable que los valores que muestre el aplicativo no correspondan al último valor registrado del oro y el tipo de cambio, no utilice el aplicativo para hacer cálculos para la compra y venta de oro.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        });
+      }
     });
 
     final sugeridos =
@@ -257,9 +264,10 @@ class _CalculadoraForm extends StatelessWidget {
             options: generalMenuOptions,
             onSelected: (a) {
               switch (a) {
-                case GeneralAction.actualizar:
-                  precioOroCtrl.text = sugeridos.precioOroUsdOnza.toString();
-                  vm.setPrecioOro(precioOroCtrl.text);
+                  case GeneralAction.actualizar:
+                    precioOroCtrl.text =
+                        sugeridos.precioOroUsdOnza.toStringAsFixed(2);
+                    vm.setPrecioOro(precioOroCtrl.text);
                   break;
                 default:
                   break;
@@ -275,9 +283,10 @@ class _CalculadoraForm extends StatelessWidget {
             options: generalMenuOptions,
             onSelected: (a) {
               switch (a) {
-                case GeneralAction.actualizar:
-                  tipoCambioCtrl.text = sugeridos.tipoCambio.toString();
-                  vm.setTipoCambio(tipoCambioCtrl.text);
+                  case GeneralAction.actualizar:
+                    tipoCambioCtrl.text =
+                        sugeridos.tipoCambio.toStringAsFixed(2);
+                    vm.setTipoCambio(tipoCambioCtrl.text);
                   break;
                 default:
                   break;
