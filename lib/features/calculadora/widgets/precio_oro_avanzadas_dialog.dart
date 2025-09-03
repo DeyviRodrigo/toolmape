@@ -17,6 +17,11 @@ class _PrecioOroAvanzadasDialog extends StatefulWidget {
 }
 
 class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
+  static const double _boxWidth = 80;
+  static const double _spacing = 8;
+  static const double _rowWidth = _boxWidth * 2 + _spacing;
+  static const double _dialogWidth = _rowWidth + 32;
+
   Map<String, dynamic>? latest;
   Map<String, dynamic>? spot;
   bool loading = true;
@@ -35,14 +40,14 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
           .select('gold_price, lbma_gold_am, lbma_gold_pm')
           .order('captured_at', ascending: false)
           .limit(1)
-          .single();
+          .maybeSingle();
       final spotRes = await client
           .from('stg_spot_ticks')
           .select('price, ask, bid, high, low, change_abs, change_pct')
           .eq('metal_code', 'XAU')
           .order('captured_at', ascending: false)
           .limit(1)
-          .single();
+          .maybeSingle();
       setState(() {
         latest = latestRes;
         spot = spotRes;
@@ -58,7 +63,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   Widget _selectableBox(String label, num? value) {
     final v = value?.toDouble();
     return SizedBox(
-      width: 80,
+      width: _boxWidth,
       child: InkWell(
         onTap: v == null ? null : () => Navigator.pop(context, v),
         child: Container(
@@ -87,7 +92,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   Widget _infoBox(String label, num? value) {
     final v = value?.toDouble();
     return SizedBox(
-      width: 80,
+      width: _boxWidth,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -120,71 +125,104 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: loading
-            ? const SizedBox(
-                width: 80,
-                height: 80,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+      child: SizedBox(
+        width: _dialogWidth,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: loading
+              ? const SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    Text('Latest',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: _rowWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _selectableBox('Gold', latest?['gold_price']),
+                        ],
                       ),
-                    ],
-                  ),
-                  Text('Latest', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _selectableBox('Gold', latest?['gold_price']),
-                      const SizedBox(width: 8),
-                      _selectableBox('LBMA AM', latest?['lbma_gold_am']),
-                      const SizedBox(width: 8),
-                      _selectableBox('LBMA PM', latest?['lbma_gold_pm']),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Spot', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  _selectableBox('Precio', spot?['price']),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _selectableBox('Ask', spot?['ask']),
-                      const SizedBox(width: 8),
-                      _selectableBox('Bid', spot?['bid']),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _selectableBox('High', spot?['high']),
-                      const SizedBox(width: 8),
-                      _selectableBox('Low', spot?['low']),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _infoBox('Cambio', spot?['change_abs']),
-                      const SizedBox(width: 8),
-                      _infoBox('Cambio %', spot?['change_pct']),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: _rowWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _selectableBox('LBMA AM', latest?['lbma_gold_am']),
+                          const SizedBox(width: _spacing),
+                          _selectableBox('LBMA PM', latest?['lbma_gold_pm']),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Spot',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: _rowWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _selectableBox('Precio', spot?['price']),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: _rowWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _selectableBox('Ask', spot?['ask']),
+                          const SizedBox(width: _spacing),
+                          _selectableBox('Bid', spot?['bid']),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: _rowWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _selectableBox('High', spot?['high']),
+                          const SizedBox(width: _spacing),
+                          _selectableBox('Low', spot?['low']),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: _rowWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _infoBox('Cambio', spot?['change_abs']),
+                          const SizedBox(width: _spacing),
+                          _infoBox('Cambio %', spot?['change_pct']),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
