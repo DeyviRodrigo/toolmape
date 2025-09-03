@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:toolmape/data/price_datasource.dart';
 
-Future<double?> showPrecioOroAvanzadasDialog(BuildContext context) async {
+Future<double?> showPrecioOroAvanzadasDialog(BuildContext context,
+    {PriceDatasource? datasource}) async {
   return showDialog<double>(
     context: context,
     barrierDismissible: true,
-    builder: (_) => const _PrecioOroAvanzadasDialog(),
+    builder: (_) => _PrecioOroAvanzadasDialog(datasource: datasource),
   );
 }
 
 class _PrecioOroAvanzadasDialog extends StatefulWidget {
-  const _PrecioOroAvanzadasDialog();
+  const _PrecioOroAvanzadasDialog({this.datasource});
+
+  final PriceDatasource? datasource;
 
   @override
   State<_PrecioOroAvanzadasDialog> createState() => _PrecioOroAvanzadasDialogState();
@@ -21,51 +25,49 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   static const double _spacing = 8;
   static const double _rowWidth = _boxWidth * 2 + _spacing;
   static const double _dialogWidth = _rowWidth + 32;
-
-  Map<String, dynamic>? latest;
-  Map<String, dynamic>? spot;
+  Map<String, double?>? latest;
+  Map<String, double?>? spot;
   bool loading = true;
+  bool spotError = false;
+  late final PriceDatasource _datasource;
 
   @override
   void initState() {
     super.initState();
+    _datasource =
+        widget.datasource ?? PriceDatasource(Supabase.instance.client);
     _load();
   }
 
   Future<void> _load() async {
+    Map<String, double?>? latestRes;
+    Map<String, double?>? spotRes;
+    var spotErr = false;
     try {
-      final client = Supabase.instance.client;
-      final latestRes = await client
-          .from('stg_latest_ticks')
-          .select('gold_price, lbma_gold_am, lbma_gold_pm')
-          .order('captured_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      final spotRes = await client
-          .from('stg_spot_ticks')
-          .select(
-              'price, ask, bid, high, low, change_abs, change_pct')
-          .eq('metal_code', 'XAU')
-          .eq('currency', 'USD')
-          .order('captured_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      setState(() {
-        latest = latestRes?.map((k, v) => MapEntry(k, _toDouble(v)));
-        spot = spotRes?.map((k, v) => MapEntry(k, _toDouble(v)));
-        loading = false;
-      });
+      latestRes = await _datasource.fetchLatestGold();
     } catch (_) {
-      setState(() {
-        loading = false;
-      });
+      // ignore, latest will remain null
     }
-  }
+    try {
+      spotRes = await _datasource.fetchSpotGoldUsd();
+    } catch (_) {
+      spotErr = true;
+    }
 
-  double? _toDouble(dynamic v) {
-    if (v is num) return v.toDouble();
-    return double.tryParse('$v');
+    if (spotErr) {
+      // Show a discreet error but do not block UI
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo cargar Spot')),
+      );
+    }
+
+    setState(() {
+      latest = latestRes;
+      spot = spotRes;
+      loading = false;
+      spotError = spotErr;
+    });
   }
 
   Widget _selectableBox(String label, num? value) {
@@ -182,6 +184,15 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
                     const SizedBox(height: 12),
                     Text('Spot',
                         style: Theme.of(context).textTheme.titleMedium),
+                    if (spotError)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          'No se pudo cargar Spot',
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.red),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     SizedBox(
                       width: _rowWidth,
