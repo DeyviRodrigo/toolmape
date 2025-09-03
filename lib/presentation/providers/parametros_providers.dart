@@ -48,10 +48,12 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
     state = AsyncData(p);
   }
 
-  void setPrecioOro(double v) =>
-      state = AsyncData((state.value ?? ParametrosRecomendados.defaults()).copyWith(precioOroUsdOnza: v));
-  void setTipoCambio(double v) =>
-      state = AsyncData((state.value ?? ParametrosRecomendados.defaults()).copyWith(tipoCambio: v));
+  void setPrecioOro(double gold) => state = AsyncData(
+      (state.value ?? ParametrosRecomendados.defaults())
+          .copyWith(precioOroUsdOnza: (gold * 100).roundToDouble() / 100));
+  void setTipoCambio(double tipoCambio) => state = AsyncData(
+      (state.value ?? ParametrosRecomendados.defaults())
+          .copyWith(tipoCambio: ((1 / tipoCambio) * 100).roundToDouble() / 100));
   void setDescuento(double v) =>
       state = AsyncData((state.value ?? ParametrosRecomendados.defaults()).copyWith(descuentoSugerido: v));
   void setLey(double v) =>
