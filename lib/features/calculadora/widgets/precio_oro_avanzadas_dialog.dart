@@ -79,7 +79,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -106,7 +106,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -185,12 +185,14 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
                     Text('Spot',
                         style: Theme.of(context).textTheme.titleMedium),
                     if (spotError)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           'No se pudo cargar Spot',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.red),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     const SizedBox(height: 8),

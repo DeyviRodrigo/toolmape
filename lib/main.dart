@@ -9,7 +9,8 @@ import 'core/notifications/calendario_notifications.dart';
 import 'features/calculadora/calculadora_screen.dart';
 import 'features/calendario/calendario_screen.dart';
 import 'routes.dart';
-import 'core_foundation/core_foundation.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
 /// Función: main - punto de entrada de la aplicación.
 Future<void> main() async {
@@ -47,23 +48,32 @@ Future<void> main() async {
     await CalendarioNotifications.init();
   }
 
-  runApp(const ProviderScope(child: ToolMAPEApp()));
+  final themeController = ThemeController();
+  await themeController.load();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        themeControllerProvider.overrideWithValue(themeController),
+      ],
+      child: const ToolMAPEApp(),
+    ),
+  );
 }
 
 /// Widget: ToolMAPEApp - configuración base de MaterialApp.
-class ToolMAPEApp extends StatelessWidget {
+class ToolMAPEApp extends ConsumerWidget {
   const ToolMAPEApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.watch(themeControllerProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ToolMAPE',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFFFFC107),
-        extensions: const [ToolmapeTheme(brandGold: Color(0xFFFFC107))],
-      ),
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
+      themeMode: controller.themeMode,
       locale: const Locale('es', 'PE'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

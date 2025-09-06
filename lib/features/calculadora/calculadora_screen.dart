@@ -393,15 +393,15 @@ class _Resultados extends StatelessWidget {
         if (state.precioPorGramo != null)
           Text(
             'Precio por gramo: ${soles(state.precioPorGramo!)}',
-            style: const TextStyle(fontSize: 18),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         if (state.total != null)
           Text(
             'Precio total: ${soles(state.total!)}',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
       ],
     );

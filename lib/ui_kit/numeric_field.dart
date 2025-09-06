@@ -17,7 +17,6 @@ class NumericField extends StatelessWidget {
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
-        border: const OutlineInputBorder(),
         labelText: etiqueta,
         isDense: true,
       ),

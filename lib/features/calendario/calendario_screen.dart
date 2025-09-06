@@ -14,6 +14,7 @@ import '../../domain/usecases/schedule_notifications_usecase.dart';
 import 'eventos_calendario.dart';
 import '../../presentation/viewmodels/calendario_view_model.dart';
 import '../../presentation/shared/event_filter.dart';
+import '../../theme/color_schemes.dart';
 
 // Eventos privados del usuario
 import 'mi_evento.dart';
@@ -66,15 +67,19 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
   // Función: _cellRectBorder - borde cuadriculado de cada celda.
   BoxDecoration _cellRectBorder(BuildContext ctx, {Color? color}) => BoxDecoration(
     shape: BoxShape.rectangle,
-    border: Border.all(color: color ?? Colors.grey.shade300, width: 0.6),
+    border: Border.all(
+      color: color ?? Theme.of(ctx).colorScheme.outline,
+      width: 0.6,
+    ),
   );
 
   // Función: _cellRectFilled - celda con relleno y borde.
   BoxDecoration _cellRectFilled(BuildContext ctx, {required Color bg, Color? border}) {
+    final scheme = Theme.of(ctx).colorScheme;
     return BoxDecoration(
       shape: BoxShape.rectangle,
       color: bg,
-      border: Border.all(color: border ?? Colors.grey.shade300, width: 0.6),
+      border: Border.all(color: border ?? scheme.outline, width: 0.6),
     );
   }
 
@@ -220,13 +225,16 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                           // Cuadriculado base
                           defaultDecoration: _cellRectBorder(context),
                           weekendDecoration: _cellRectBorder(context),
-                          outsideDecoration: _cellRectBorder(context, color: Colors.grey.shade200),
+                          outsideDecoration: _cellRectBorder(
+                            context,
+                            color: Theme.of(context).colorScheme.surfaceVariant,
+                          ),
 
                           // "Hoy" cuando no está seleccionado
                           todayDecoration: _cellRectFilled(
                             context,
                             bg: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.18),
-                            border: Colors.grey.shade400,
+                            border: Theme.of(context).colorScheme.outline,
                           ),
                           todayTextStyle: const TextStyle(fontWeight: FontWeight.w700),
 
@@ -242,12 +250,12 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                           ),
 
                           // Feriados en rojo
-                          holidayDecoration: const BoxDecoration(
-                            color: Color(0xFFD32F2F),
+                          holidayDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
                             shape: BoxShape.rectangle,
                           ),
-                          holidayTextStyle: const TextStyle(
-                            color: Colors.white,
+                          holidayTextStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.onError,
                             fontWeight: FontWeight.w700,
                           ),
 
@@ -261,11 +269,19 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
                             final f = vm.fechaVenc(e);
                             return f != null && isSameDay(f, day) && !vm.esFeriado(e);
                           })
-                              .map((e) => _Marker(vm.iconoPara(e), Colors.amber.shade800));
+                              .map((e) => _Marker(
+                                    vm.iconoPara(e),
+                                    Theme.of(context)
+                                        .extension<AppColors>()!
+                                        .warning,
+                                  ));
 
                           final propios = (userEventosAsync.value ?? [])
                               .where((e) => isSameDay(e.inicio, day))
-                              .map((_) => const _Marker(Icons.event, Colors.blue));
+                              .map((_) => _Marker(
+                                    Icons.event,
+                                    Theme.of(context).colorScheme.primary,
+                                  ));
 
                           final List<_Marker> list = [];
                           if (_filtro == EventFilter.all || _filtro == EventFilter.general) list.addAll(generales);
@@ -478,7 +494,13 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
       value: value,
       child: Row(
         children: [
-          Icon(icon, size: 20, color: current == value ? Colors.amber[800] : null),
+          Icon(
+            icon,
+            size: 20,
+            color: current == value
+                ? Theme.of(context).extension<AppColors>()!.warning
+                : null,
+          ),
           const SizedBox(width: 8),
           Expanded(child: Text(label)),
           if (current == value) const Icon(Icons.check, size: 18),
@@ -616,15 +638,24 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 6,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: const [
-        _LegendItem(icon: Icons.assignment_outlined, color: Colors.amber, label: 'Obligaciones'),
-        _LegendItem(icon: Icons.event, color: Colors.blue, label: 'Mis eventos'),
-        _LegendItem(icon: Icons.flag, color: Colors.red, label: 'Feriados'),
-      ],
-    );
+      return Wrap(
+        spacing: 16,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _LegendItem(
+              icon: Icons.assignment_outlined,
+              color: Theme.of(context).extension<AppColors>()!.warning,
+              label: 'Obligaciones'),
+          _LegendItem(
+              icon: Icons.event,
+              color: Theme.of(context).colorScheme.primary,
+              label: 'Mis eventos'),
+          _LegendItem(
+              icon: Icons.flag,
+              color: Theme.of(context).colorScheme.error,
+              label: 'Feriados'),
+        ],
+      );
+    }
   }
-}
