@@ -7,20 +7,23 @@ final themeControllerProvider = ChangeNotifierProvider<ThemeController>((ref) {
 });
 
 class ThemeController extends ChangeNotifier {
+  static const _prefKey = 'theme_mode';
   ThemeMode themeMode = ThemeMode.system;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final index = prefs.getInt('theme_mode');
+    final index = prefs.getInt(_prefKey);
     if (index != null && index >= 0 && index < ThemeMode.values.length) {
       themeMode = ThemeMode.values[index];
     }
+    // Notificar para que MaterialApp recoja el valor cargado si se crea luego
+    notifyListeners();
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('theme_mode', mode.index);
+    await prefs.setInt(_prefKey, mode.index);
     notifyListeners();
   }
 

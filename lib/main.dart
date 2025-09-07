@@ -12,56 +12,43 @@ import 'routes.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
-/// Función: main - punto de entrada de la aplicación.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1) Cargar variables de entorno (.env). No detiene la app si no existe.
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (_) {
-    // Ignorar si el asset no está disponible (p. ej., en web sin .env)
-  }
+  // .env (no detiene si falta)
+  try { await dotenv.load(fileName: ".env"); } catch (_) {}
 
-  // 2) Inicializar Supabase solo si hay claves válidas.
+  // Supabase si hay claves válidas
   final supaUrl = dotenv.env['SUPABASE_URL'];
   final supaKey = dotenv.env['SUPABASE_ANON_KEY'];
-  if (supaUrl != null &&
-      supaKey != null &&
-      supaUrl.isNotEmpty &&
-      supaKey.isNotEmpty) {
-    await Supabase.initialize(url: supaUrl, anonKey: supaKey);
-
-    // 2.1) Asegurar sesión anónima para poder guardar eventos privados por usuario.
+  if ((supaUrl ?? '').isNotEmpty && (supaKey ?? '').isNotEmpty) {
+    await Supabase.initialize(url: supaUrl!, anonKey: supaKey!);
     final supa = Supabase.instance.client;
     if (supa.auth.currentUser == null) {
-      try {
-        await supa.auth.signInAnonymously();
-      } catch (_) {
-        // Si falla, la app igual arranca; solo afectará guardar eventos privados.
-      }
+      try { await supa.auth.signInAnonymously(); } catch (_) {}
     }
   }
 
-  // 3) Notificaciones locales: NO en web (el plugin no está soportado).
+  // Notificaciones locales (no web)
   if (!kIsWeb) {
     await CalendarioNotifications.init();
   }
 
+  // Theme controller (persistencia)
   final themeController = ThemeController();
   await themeController.load();
 
   runApp(
     ProviderScope(
       overrides: [
-        themeControllerProvider.overrideWithValue(themeController),
+        // ANTES: themeControllerProvider.overrideWithValue(themeController)
+        themeControllerProvider.overrideWith((ref) => themeController),
       ],
       child: const ToolMAPEApp(),
     ),
   );
 }
 
-/// Widget: ToolMAPEApp - configuración base de MaterialApp.
 class ToolMAPEApp extends ConsumerWidget {
   const ToolMAPEApp({super.key});
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'color_schemes.dart';
 import 'typography.dart';
 
@@ -29,6 +28,10 @@ ThemeData buildLightTheme() {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: cs.outline),
       ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.primary, width: 1.5),
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -36,10 +39,14 @@ ThemeData buildLightTheme() {
         foregroundColor: cs.onPrimary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: buildTextTheme(cs).labelLarge,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     ),
-    cardTheme: CardTheme(
+    // ← Ajuste requerido por Flutter 3.32: usar CardThemeData
+    cardTheme: CardThemeData(
       elevation: 2,
+      color: cs.surface,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     drawerTheme: DrawerThemeData(
@@ -48,7 +55,7 @@ ThemeData buildLightTheme() {
     ),
     iconTheme: IconThemeData(color: cs.onSurface),
     primaryIconTheme: IconThemeData(color: cs.primary),
-    dividerTheme: DividerThemeData(color: cs.outline),
+    dividerTheme: DividerThemeData(color: cs.outline, thickness: 1),
   );
 }
 
@@ -78,6 +85,10 @@ ThemeData buildDarkTheme() {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: cs.outline),
       ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.primary, width: 1.5),
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -85,10 +96,14 @@ ThemeData buildDarkTheme() {
         foregroundColor: cs.onPrimary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: buildTextTheme(cs).labelLarge,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     ),
-    cardTheme: CardTheme(
-      elevation: 2,
+    // ← Ajuste requerido por Flutter 3.32: usar CardThemeData
+    cardTheme: CardThemeData(
+      elevation: 1,
+      color: cs.surface,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     drawerTheme: DrawerThemeData(
@@ -97,6 +112,6 @@ ThemeData buildDarkTheme() {
     ),
     iconTheme: IconThemeData(color: cs.onSurface),
     primaryIconTheme: IconThemeData(color: cs.primary),
-    dividerTheme: DividerThemeData(color: cs.outline),
+    dividerTheme: DividerThemeData(color: cs.outline, thickness: 1),
   );
 }
