@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../ui_kit/app_drawer_item.dart';
-import '../../theme/theme_controller.dart';
+import 'package:toolmape/design_system/molecules/app_drawer_item.dart';
+import 'package:toolmape/theme/theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Widget: AppDrawer - menú lateral de navegación.
@@ -26,8 +26,8 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Consumer(
           builder: (context, ref, _) {
-            final controller = ref.watch(themeControllerProvider);
-            final isDark = controller.themeMode == ThemeMode.dark;
+            final mode = ref.watch(themeModeProvider);
+            final isDark = mode == ThemeMode.dark;
             return ListView(
               padding: EdgeInsets.zero,
               children: [
@@ -66,9 +66,9 @@ class AppDrawer extends StatelessWidget {
                   value: isDark,
                   title: const Text('Tema oscuro'),
                   secondary: const Icon(Icons.brightness_6),
-                  onChanged: (v) => ref
-                      .read(themeControllerProvider)
-                      .setThemeMode(v ? ThemeMode.dark : ThemeMode.light),
+                  onChanged: (v) =>
+                      ref.read(themeModeProvider.notifier).state =
+                          v ? ThemeMode.dark : ThemeMode.light,
                 ),
               ],
             );
