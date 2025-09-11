@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/domain/usecases/calculate_discount_from_offered_price_usecase.dart';
+import 'package:toolmape/features/calculator/domain/usecases/calculate_discount_from_offered_price_usecase.dart';
 
 void main() {
   test('calculates discount from offered price', () {

@@ -1,4 +1,4 @@
-import 'package:toolmape/domain/entities/evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
 
 /// Alias for [EventoEntity] used within calendar features.
 typedef EventoCalendar = EventoEntity;

@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:toolmape/features/calculator/presentation/controllers/calculadora_controller.dart';
-import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
-import 'package:toolmape/domain/repositories/preferencias_repository.dart';
+import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
+import 'package:toolmape/features/general/domain/repositories/preferencias_repository.dart';
 import 'package:toolmape/app/init_dependencies.dart';
 
 class _FakePrefsRepo implements PreferenciasRepository {

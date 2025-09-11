@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:toolmape/data/price_datasource.dart';
+import 'package:toolmape/features/calculator/data/price_datasource.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 

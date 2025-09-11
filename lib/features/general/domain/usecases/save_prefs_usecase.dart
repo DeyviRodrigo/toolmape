@@ -1,4 +1,4 @@
-import '../entities/calculator_prefs_entity.dart';
+import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
 import '../repositories/preferencias_repository.dart';
 
 class SavePrefs {

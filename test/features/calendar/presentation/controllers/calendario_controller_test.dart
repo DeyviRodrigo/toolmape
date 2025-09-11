@@ -2,12 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:toolmape/features/calendar/presentation/controllers/calendario_controller.dart';
-import 'package:toolmape/domain/entities/evento_entity.dart';
-import 'package:toolmape/domain/entities/mi_evento_entity.dart';
-import 'package:toolmape/domain/repositories/calendario_repository.dart';
-import 'package:toolmape/domain/repositories/mis_eventos_repository.dart';
-import 'package:toolmape/domain/value_objects/date_range.dart';
-import 'package:toolmape/domain/value_objects/event_scope.dart';
+import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/entities/mi_evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/repositories/calendario_repository.dart';
+import 'package:toolmape/features/calendar/domain/repositories/mis_eventos_repository.dart';
+import 'package:toolmape/features/calendar/domain/value_objects/date_range.dart';
+import 'package:toolmape/features/calendar/domain/value_objects/event_scope.dart';
 import 'package:toolmape/app/init_dependencies.dart';
 
 class _FakeCalRepo implements CalendarioRepository {

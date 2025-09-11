@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
-import 'package:toolmape/domain/repositories/preferencias_repository.dart';
-import 'package:toolmape/domain/usecases/save_prefs_usecase.dart';
+import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
+import 'package:toolmape/features/general/domain/repositories/preferencias_repository.dart';
+import 'package:toolmape/features/general/domain/usecases/save_prefs_usecase.dart';
 
 class _FakeRepo implements PreferenciasRepository {
   CalculatorPrefs? saved;

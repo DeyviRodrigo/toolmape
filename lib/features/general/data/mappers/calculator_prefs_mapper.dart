@@ -1,4 +1,4 @@
-import '../../domain/entities/calculator_prefs_entity.dart';
+import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
 
 /// Mapper to convert [CalculatorPrefs] to and from raw data structures.
 class CalculatorPrefsMapper {

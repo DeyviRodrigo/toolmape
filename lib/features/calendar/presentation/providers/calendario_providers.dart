@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:toolmape/domain/entities/evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
 import 'package:toolmape/app/init_dependencies.dart';
 
 /// Provider: eventosMesProvider - eventos del MES visible (usa rango 1..último día).

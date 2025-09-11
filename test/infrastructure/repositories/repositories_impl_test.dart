@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:toolmape/domain/entities/evento_entity.dart';
-import 'package:toolmape/domain/entities/mi_evento_entity.dart';
-import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
-import 'package:toolmape/domain/value_objects/date_range.dart';
-import 'package:toolmape/infrastructure/datasources/calendario_supabase_ds.dart';
-import 'package:toolmape/infrastructure/datasources/mis_eventos_supabase_ds.dart';
-import 'package:toolmape/infrastructure/datasources/preferencias_local_ds.dart';
-import 'package:toolmape/infrastructure/repositories/calendario_repository_impl.dart';
-import 'package:toolmape/infrastructure/repositories/mis_eventos_repository_impl.dart';
-import 'package:toolmape/infrastructure/repositories/preferencias_repository_impl.dart';
+import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/entities/mi_evento_entity.dart';
+import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
+import 'package:toolmape/features/calendar/domain/value_objects/date_range.dart';
+import 'package:toolmape/features/calendar/data/datasources/calendario_supabase_ds.dart';
+import 'package:toolmape/features/calendar/data/datasources/mis_eventos_supabase_ds.dart';
+import 'package:toolmape/features/general/data/datasources/preferencias_local_ds.dart';
+import 'package:toolmape/features/calendar/data/repositories/calendario_repository_impl.dart';
+import 'package:toolmape/features/calendar/data/repositories/mis_eventos_repository_impl.dart';
+import 'package:toolmape/features/general/data/repositories/preferencias_repository_impl.dart';
 
 class _FakeCalendarioDs implements CalendarioDatasource {
   DateTime? start;

@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/domain/entities/evento_entity.dart';
-import 'package:toolmape/domain/entities/mi_evento_entity.dart';
-import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';
-import 'package:toolmape/infrastructure/dto/evento_dto.dart';
-import 'package:toolmape/infrastructure/dto/mi_evento_dto.dart';
-import 'package:toolmape/infrastructure/mappers/evento_mapper.dart';
-import 'package:toolmape/infrastructure/mappers/mi_evento_mapper.dart';
-import 'package:toolmape/infrastructure/mappers/calculator_prefs_mapper.dart';
+import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/entities/mi_evento_entity.dart';
+import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
+import 'package:toolmape/features/calendar/data/dto/evento_dto.dart';
+import 'package:toolmape/features/calendar/data/dto/mi_evento_dto.dart';
+import 'package:toolmape/features/calendar/data/mappers/evento_mapper.dart';
+import 'package:toolmape/features/calendar/data/mappers/mi_evento_mapper.dart';
+import 'package:toolmape/features/general/data/mappers/calculator_prefs_mapper.dart';
 
 void main() {
   test('EventoMapper maps between dto and entity', () {

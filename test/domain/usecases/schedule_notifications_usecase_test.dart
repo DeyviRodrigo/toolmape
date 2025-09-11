@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/domain/entities/evento_entity.dart';
-import 'package:toolmape/domain/value_objects/event_scope.dart';
-import 'package:toolmape/domain/usecases/schedule_notifications_usecase.dart';
+import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
+import 'package:toolmape/features/calendar/domain/value_objects/event_scope.dart';
+import 'package:toolmape/features/calendar/domain/usecases/schedule_notifications_usecase.dart';
 
 void main() {
   test('schedules notifications for matching events', () async {
