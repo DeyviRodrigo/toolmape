@@ -34,6 +34,7 @@ flutter:
   uses-material-design: true
   assets:
     - .env
-    - assets/LoadingTrazMAPE.png
+    - assets/TrazMAPE1.png
+    - assets/TrazMAPE2.png
     - assets/TrazMAPE1.png
     - assets/TrazMAPE2.png
