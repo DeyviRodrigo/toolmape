@@ -47,6 +47,21 @@ class _FakeMisRepo implements MisEventosRepository {
       ),
     ];
   }
+
+  @override
+  bool get anonDisabled => false;
+
+  @override
+  Future<void> borrar(String id) async {}
+
+  @override
+  Future<void> crear({
+    required String titulo,
+    String? descripcion,
+    required DateTime inicio,
+    DateTime? fin,
+    bool allDay = false,
+  }) async {}
 }
 
 void main() {

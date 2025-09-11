@@ -18,7 +18,6 @@ import '../molecules/tipo_cambio_field.dart';
 import '../molecules/descuento_field.dart';
 import '../molecules/ley_field.dart';
 import '../molecules/cantidad_field.dart';
-import '../organisms/result_panel.dart';
 import '../molecules/descuento_dialog.dart';
 
 class CalculadoraPage extends ConsumerStatefulWidget {
@@ -102,7 +101,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
       tipoCambioCtrl.text = sugeridos.tipoCambio.toStringAsFixed(2);
     }
     if (descuentoCtrl.text.trim().isEmpty) {
-      final sel = await choiceDialog(
+      final sel = await showConfirmDialog(
         context: context,
         title: 'Descuento faltante',
         message: 'No pusiste valores en descuento.',
@@ -128,7 +127,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
     if (leyCtrl.text.trim().isEmpty) {
       const optAyuda = 'Requiero ayuda';
       const optPred = 'Utilizar predeterminado';
-      final sel = await choiceDialog(
+      final sel = await showConfirmDialog(
         context: context,
         title: 'Ley faltante',
         message: 'No pusiste valores en ley.',

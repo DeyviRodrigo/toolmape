@@ -11,7 +11,7 @@ class MockPostgrestFilterBuilder extends Mock
 void main() {
   group('PriceDatasource', () {
     late MockSupabaseClient client;
-    late MockPostgrestFilterBuilder builder;
+    late dynamic builder;
     late PriceDatasource datasource;
 
     setUp(() {
@@ -29,7 +29,7 @@ void main() {
           .thenReturn(builder);
       when(() => builder.limit(any())).thenReturn(builder);
       when(() => builder.maybeSingle())
-          .thenAnswer((_) async => {'price': '1.1'});
+          .thenAnswer((_) async => {'price': '1.1'} as Map<String, dynamic>);
 
       final res = await datasource.fetchSpotGoldUsd();
       expect(res['price'], 1.1);
@@ -42,7 +42,7 @@ void main() {
           .thenReturn(builder);
       when(() => builder.limit(any())).thenReturn(builder);
       when(() => builder.maybeSingle())
-          .thenAnswer((_) async => {'gold_price': 2});
+          .thenAnswer((_) async => {'gold_price': 2} as Map<String, dynamic>);
 
       final res = await datasource.fetchLatestGold();
       expect(res['gold_price'], 2.0);

@@ -1,4 +1,4 @@
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:toolmape/domain/entities/evento_entity.dart';
 import 'package:toolmape/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/domain/entities/calculator_prefs_entity.dart';

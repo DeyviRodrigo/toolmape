@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'themes/index.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.system);
