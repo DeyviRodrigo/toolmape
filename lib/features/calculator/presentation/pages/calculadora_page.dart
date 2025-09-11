@@ -79,7 +79,12 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
                 children: [
                   Icon(o.icon, size: 20),
                   const SizedBox(width: 10),
-                  Text(o.label),
+                  Expanded(
+                    child: Text(
+                      o.label,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ),
