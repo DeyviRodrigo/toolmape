@@ -261,9 +261,10 @@ class _CalculadoraForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        PrecioOroField(
+    final size = MediaQuery.of(context).size;
+    final horizontal = size.width >= size.height;
+
+    Widget buildPrecioOro() => PrecioOroField(
           controller: precioOroCtrl,
           menu: buildMenu<GeneralAction>(
             icon: Icons.settings,
@@ -287,28 +288,28 @@ class _CalculadoraForm extends StatelessWidget {
               }
             },
           ),
-        ),
-        const SizedBox(height: 12),
-        TipoCambioField(
+        );
+
+    Widget buildTipoCambio() => TipoCambioField(
           controller: tipoCambioCtrl,
           menu: buildMenu<GeneralAction>(
             icon: Icons.settings,
             options: generalMenuOptions,
             onSelected: (a) {
               switch (a) {
-                  case GeneralAction.actualizar:
-                    tipoCambioCtrl.text =
-                        sugeridos.tipoCambio.toStringAsFixed(2);
-                    vm.setTipoCambio(tipoCambioCtrl.text);
+                case GeneralAction.actualizar:
+                  tipoCambioCtrl.text =
+                      sugeridos.tipoCambio.toStringAsFixed(2);
+                  vm.setTipoCambio(tipoCambioCtrl.text);
                   break;
                 default:
                   break;
               }
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        DescuentoField(
+        );
+
+    Widget buildDescuento() => DescuentoField(
           controller: descuentoCtrl,
           menu: buildMenu<DescuentoAction>(
             icon: Icons.help_outline,
@@ -332,15 +333,16 @@ class _CalculadoraForm extends StatelessWidget {
                   }
                   break;
                 case DescuentoAction.predeterminado:
-                  descuentoCtrl.text = sugeridos.descuentoSugerido.toString();
+                  descuentoCtrl.text =
+                      sugeridos.descuentoSugerido.toString();
                   vm.setDescuento(descuentoCtrl.text);
                   break;
               }
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        LeyField(
+        );
+
+    Widget buildLey() => LeyField(
           controller: leyCtrl,
           menu: buildMenu<LeyAction>(
             icon: Icons.help_outline,
@@ -351,7 +353,8 @@ class _CalculadoraForm extends StatelessWidget {
                   await showDialog(
                     context: context,
                     builder: (_) => const AlertDialog(
-                      content: Text('La ley representa la pureza del oro. Consulta a un perito para obtenerla.'),
+                      content: Text(
+                          'La ley representa la pureza del oro. Consulta a un perito para obtenerla.'),
                     ),
                   );
                   break;
@@ -362,9 +365,9 @@ class _CalculadoraForm extends StatelessWidget {
               }
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        CantidadField(
+        );
+
+    Widget buildCantidad() => CantidadField(
           controller: cantidadCtrl,
           menu: IconButton(
             icon: const Icon(Icons.info_outline),
@@ -372,22 +375,63 @@ class _CalculadoraForm extends StatelessWidget {
               context: context,
               barrierDismissible: true,
               builder: (_) => const AlertDialog(
-                content: Text('Coloque la cantidad de oro bruto en gramos que desea vender o calcular'),
+                content: Text(
+                    'Coloque la cantidad de oro bruto en gramos que desea vender o calcular'),
               ),
             ),
           ),
-        ),
+        );
+
+    final button = FilledButton(
+      onPressed: onCalcular,
+      style: Theme.of(context).brightness == Brightness.dark
+          ? FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+            )
+          : null,
+      child: const Text('Calcular'),
+    );
+
+    if (horizontal) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: buildPrecioOro()),
+              const SizedBox(width: 16),
+              Expanded(child: buildTipoCambio()),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: buildDescuento()),
+              const SizedBox(width: 16),
+              Expanded(child: buildLey()),
+            ],
+          ),
+          const SizedBox(height: 16),
+          buildCantidad(),
+          const SizedBox(height: 24),
+          button,
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        buildPrecioOro(),
+        const SizedBox(height: 12),
+        buildTipoCambio(),
+        const SizedBox(height: 16),
+        buildDescuento(),
+        const SizedBox(height: 16),
+        buildLey(),
+        const SizedBox(height: 16),
+        buildCantidad(),
         const SizedBox(height: 24),
-        FilledButton(
-          onPressed: onCalcular,
-          style: Theme.of(context).brightness == Brightness.dark
-              ? FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                )
-              : null,
-          child: const Text('Calcular'),
-        ),
+        button,
       ],
     );
   }
