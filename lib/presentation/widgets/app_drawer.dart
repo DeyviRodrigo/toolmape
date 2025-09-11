@@ -69,7 +69,7 @@ class AppDrawer extends StatelessWidget {
                       DropdownMenuItem(value: 'dark', child: Text('Oscuro')),
                       DropdownMenuItem(value: 'light', child: Text('Claro')),
                       DropdownMenuItem(value: 'gold', child: Text('Dorado')),
-                      DropdownMenuItem(value: 'black', child: Text('Negro')),
+                      DropdownMenuItem(value: 'black', child: Text('Black')),
                     ],
                     onChanged: (v) {
                       if (v != null) {

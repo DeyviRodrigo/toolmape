@@ -9,27 +9,37 @@ final blackTheme = ThemeData(
   useMaterial3: true,
   colorScheme: blackColorScheme,
   textTheme: buildTextTheme(blackColorScheme),
+  scaffoldBackgroundColor: Colors.black,
   extensions: const [
     AppColors(success: Color(0xFF34D399), warning: Color(0xFFFBBF24)),
   ],
   filledButtonTheme: FilledButtonThemeData(
     style: const ButtonStyle(
       shape: MaterialStatePropertyAll(shapeMd),
+      backgroundColor: MaterialStatePropertyAll(Colors.white),
+      foregroundColor: MaterialStatePropertyAll(Colors.black),
     ),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: const ButtonStyle(
       shape: MaterialStatePropertyAll(shapeMd),
+      backgroundColor: MaterialStatePropertyAll(Colors.white),
+      foregroundColor: MaterialStatePropertyAll(Colors.black),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: const ButtonStyle(
       shape: MaterialStatePropertyAll(shapeMd),
+      backgroundColor: MaterialStatePropertyAll(Colors.white),
+      foregroundColor: MaterialStatePropertyAll(Colors.black),
+      side: MaterialStatePropertyAll(BorderSide(color: Colors.black)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: const ButtonStyle(
       shape: MaterialStatePropertyAll(shapeMd),
+      backgroundColor: MaterialStatePropertyAll(Colors.white),
+      foregroundColor: MaterialStatePropertyAll(Colors.black),
     ),
   ),
   inputDecorationTheme: const InputDecorationTheme(

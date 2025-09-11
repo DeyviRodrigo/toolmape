@@ -35,16 +35,33 @@ class _SplashPageState extends State<SplashPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = (_controller.value * 100).round();
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.grey[200],
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const _SplashImage(),
             const SizedBox(height: 24),
+            Text(
+              'LOADING',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(
+                      color: Theme.of(context).colorScheme.onBackground,
+                      letterSpacing: 2),
+            ),
+            const SizedBox(height: 16),
             SizedBox(
-              width: 200,
-              child: LinearProgressIndicator(value: _controller.value),
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: LinearProgressIndicator(
+                value: _controller.value,
+                minHeight: 10,
+                backgroundColor:
+                    isDark ? Colors.white24 : Colors.black26,
+                valueColor: AlwaysStoppedAnimation(
+                    isDark ? Colors.white : Colors.black),
+              ),
             ),
             const SizedBox(height: 8),
             Text('$progress%'),
@@ -61,10 +78,10 @@ class _SplashImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final imagePath = isDark
-        ? 'assets/TrazMAPE1.png'
-        : 'assets/TrazMAPE2.png';
-    return Image.asset(imagePath, width: 200);
+    final imagePath =
+        isDark ? 'assets/TrazMAPE1.png' : 'assets/TrazMAPE2.png';
+    final width = MediaQuery.of(context).size.width * 0.8;
+    return Image.asset(imagePath, width: width);
   }
 }
 
