@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:table_calendar/table_calendar.dart';
 
 import 'package:toolmape/app/app_shell.dart';
-import 'package:toolmape/core/notifications/calendario_notifications.dart';
+import '../../core/calendario_notifications.dart';
 import 'package:toolmape/features/calendar/presentation/providers/calendario_providers.dart';
 import 'package:toolmape/features/calendar/presentation/providers/mis_eventos_providers.dart';
 import 'package:toolmape/app/init_dependencies.dart';

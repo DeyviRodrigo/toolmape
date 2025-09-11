@@ -5,7 +5,7 @@ import 'package:toolmape/features/calculator/domain/usecases/calculate_price_use
 import 'package:toolmape/features/general/domain/usecases/load_prefs_usecase.dart';
 import 'package:toolmape/features/general/domain/usecases/save_prefs_usecase.dart';
 import 'package:toolmape/app/init_dependencies.dart';
-import 'package:toolmape/core/utils/number_parsing.dart';
+import '../../core/utils/number_parsing.dart';
 
 class CalculadoraState {
   final String precioOro;

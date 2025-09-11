@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/core/utils/number_parsing.dart';
+import 'package:toolmape/features/calculator/core/utils/number_parsing.dart';
 
 void main() {
   test('parseDouble parses commas', () {
