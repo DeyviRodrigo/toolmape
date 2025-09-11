@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:toolmape/core/notifications/calendario_notifications.dart';
 import 'package:toolmape/features/calculator/presentation/pages/calculadora_page.dart';
 import 'package:toolmape/features/calendar/presentation/pages/calendario_page.dart';
+import 'package:toolmape/presentation/pages/splash_page.dart';
 import 'package:toolmape/app/routes.dart';
 import 'package:toolmape/theme/theme_provider.dart';
 import 'package:toolmape/theme/themes/index.dart';
@@ -61,8 +62,9 @@ class ToolMAPEApp extends ConsumerWidget {
         Locale('es', 'ES'),
         Locale('en', 'US'),
       ],
-      initialRoute: routeCalculadora,
+      initialRoute: routeSplash,
       routes: {
+        routeSplash: (_) => const SplashPage(),
         routeCalculadora: (_) => const CalculadoraPage(),
         routeCalendario: (_) => const CalendarioPage(),
       },
