@@ -380,6 +380,12 @@ class _CalculadoraForm extends StatelessWidget {
         const SizedBox(height: 24),
         FilledButton(
           onPressed: onCalcular,
+          style: Theme.of(context).brightness == Brightness.dark
+              ? FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                )
+              : null,
           child: const Text('Calcular'),
         ),
       ],

@@ -26,8 +26,6 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Consumer(
           builder: (context, ref, _) {
-            final mode = ref.watch(themeModeProvider);
-            final isDark = mode == ThemeMode.dark;
             return ListView(
               padding: EdgeInsets.zero,
               children: [
@@ -62,13 +60,23 @@ class AppDrawer extends StatelessWidget {
                   title: 'Dejar feedback sobre la app',
                   onTap: () { Navigator.pop(context); },
                 ),
-                SwitchListTile(
-                  value: isDark,
-                  title: const Text('Tema oscuro'),
-                  secondary: const Icon(Icons.brightness_6),
-                  onChanged: (v) =>
-                      ref.read(themeModeProvider.notifier).state =
-                          v ? ThemeMode.dark : ThemeMode.light,
+                ListTile(
+                  leading: const Icon(Icons.brightness_6),
+                  title: const Text('Tema'),
+                  trailing: DropdownButton<String>(
+                    value: ref.watch(themeProfileProvider).value ?? 'dark',
+                    items: const [
+                      DropdownMenuItem(value: 'dark', child: Text('Oscuro')),
+                      DropdownMenuItem(value: 'light', child: Text('Claro')),
+                      DropdownMenuItem(value: 'gold', child: Text('Dorado')),
+                      DropdownMenuItem(value: 'black', child: Text('Negro')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        ref.read(themeProfileProvider.notifier).setTheme(v);
+                      }
+                    },
+                  ),
                 ),
               ],
             );
