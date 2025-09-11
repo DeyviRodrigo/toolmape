@@ -34,6 +34,6 @@ final goldBrandTheme = ThemeData(
   inputDecorationTheme: const InputDecorationTheme(
     border: OutlineInputBorder(borderRadius: borderRadiusMd),
   ),
-  cardTheme: const CardTheme(shape: shapeMd),
-  dialogTheme: const DialogTheme(shape: shapeMd),
+  cardTheme: const CardThemeData(shape: shapeMd),
+  dialogTheme: const DialogThemeData(shape: shapeMd),
 );
