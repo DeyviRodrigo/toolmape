@@ -378,7 +378,7 @@ class _CalculadoraForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        ElevatedButton(
+        FilledButton(
           onPressed: onCalcular,
           child: const Text('Calcular'),
         ),
