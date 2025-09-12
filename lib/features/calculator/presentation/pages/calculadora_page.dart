@@ -284,6 +284,16 @@ class _CalculadoraForm extends StatelessWidget {
       }
     }
 
+    Future<void> _actualizarTipoCambio() async {
+      final ds = ExchangeRateDatasource(Supabase.instance.client);
+      final res = await ds.fetchLatest();
+      final tc = res.value;
+      if (tc != null) {
+        tipoCambioCtrl.text = tc.toStringAsFixed(2);
+        vm.setTipoCambio(tipoCambioCtrl.text);
+      }
+    }
+
     Widget buildPrecioOro() => PrecioOroField(
           controller: precioOroCtrl,
           menu: buildMenu<PrecioOroAction>(
@@ -313,16 +323,6 @@ class _CalculadoraForm extends StatelessWidget {
             },
           ),
         );
-
-    Future<void> _actualizarTipoCambio() async {
-      final ds = ExchangeRateDatasource(Supabase.instance.client);
-      final res = await ds.fetchLatest();
-      final tc = res.value;
-      if (tc != null) {
-        tipoCambioCtrl.text = tc.toStringAsFixed(2);
-        vm.setTipoCambio(tipoCambioCtrl.text);
-      }
-    }
 
     Widget buildTipoCambio() => TipoCambioField(
           controller: tipoCambioCtrl,
