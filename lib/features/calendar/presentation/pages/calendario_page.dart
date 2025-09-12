@@ -14,6 +14,7 @@ import 'package:toolmape/features/calendar/domain/usecases/schedule_notification
 import '../molecules/eventos_calendario_helpers.dart';
 import 'package:toolmape/features/calendar/presentation/controllers/calendario_controller.dart';
 import 'package:toolmape/presentation/shared/event_filter.dart';
+import 'package:toolmape/presentation/shared/menu_option.dart';
 import 'package:toolmape/theme/extensions/app_colors.dart';
 
 // Eventos privados del usuario
@@ -24,6 +25,56 @@ class _Marker {
   final IconData icon;
   final Color color;
   const _Marker(this.icon, this.color);
+}
+
+class _SearchEvent {
+  final String title;
+  final DateTime date;
+  const _SearchEvent(this.title, this.date);
+}
+
+class _EventSearchDelegate extends SearchDelegate<DateTime?> {
+  final List<_SearchEvent> events;
+  _EventSearchDelegate(this.events);
+
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () => query = '',
+        ),
+      ];
+
+  @override
+  Widget? buildLeading(BuildContext context) => IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => close(context, null),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => _buildList(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildList(context);
+
+  Widget _buildList(BuildContext context) {
+    final lower = query.toLowerCase();
+    final matches = events
+        .where((e) => e.title.toLowerCase().contains(lower))
+        .toList();
+    return ListView.builder(
+      itemCount: matches.length,
+      itemBuilder: (_, i) {
+        final e = matches[i];
+        final dateStr = '${e.date.day}/${e.date.month}/${e.date.year}';
+        return ListTile(
+          title: Text(e.title),
+          subtitle: Text(dateStr),
+          onTap: () => close(context, e.date),
+        );
+      },
+    );
+  }
 }
 
 /// Widget: CalendarioPage - pantalla principal del calendario.
@@ -94,6 +145,18 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
     );
     final vm = ref.read(calendarioViewModelProvider.notifier);
 
+    final generalesSearch = (eventosAsync.value ?? [])
+        .map((e) {
+          final f = vm.fechaVenc(e);
+          if (f == null) return null;
+          return _SearchEvent(e.titulo, f);
+        })
+        .whereType<_SearchEvent>()
+        .toList();
+    final propiosSearch =
+        (userEventosAsync.value ?? []).map((e) => _SearchEvent(e.titulo, e.inicio)).toList();
+    final searchEvents = [...generalesSearch, ...propiosSearch];
+
     return AppShell(
       title: 'Calendario minero',
       onGoToCalculadora: () =>
@@ -101,21 +164,35 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
       actions: [
-        // Filtro
-        PopupMenuButton<EventFilter>(
-          tooltip: 'Filtrar',
-          icon: const Icon(Icons.filter_list),
-          onSelected: (f) => setState(() => _filtro = f),
-          itemBuilder: (_) => [
-            _itemFiltro(EventFilter.all, 'Todo', Icons.layers, _filtro),
-            _itemFiltro(EventFilter.general, 'Obligaciones', Icons.assignment_outlined, _filtro),
-            _itemFiltro(EventFilter.personal, 'Mis eventos', Icons.event, _filtro),
-          ],
+        MenuOption<VoidCallback>(
+          value: () async {
+            final sel = await showDialog<EventFilter>(
+              context: context,
+              builder: (_) => SimpleDialog(
+                title: const Text('Filtrar'),
+                children: [
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, EventFilter.all),
+                    child: const Text('Todo'),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, EventFilter.general),
+                    child: const Text('Obligaciones'),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, EventFilter.personal),
+                    child: const Text('Mis eventos'),
+                  ),
+                ],
+              ),
+            );
+            if (sel != null) setState(() => _filtro = sel);
+          },
+          label: 'Filtrar',
+          icon: Icons.filter_list,
         ),
-        IconButton(
-          tooltip: 'Programar recordatorios',
-          icon: const Icon(Icons.notifications_active_outlined),
-          onPressed: () async {
+        MenuOption<VoidCallback>(
+          value: () async {
             final events = await ref.read(eventosMesProvider(_focused).future);
             final schedule = ScheduleNotifications(
               cancelAll: CalendarioNotifications.cancelAll,
@@ -133,12 +210,11 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
               );
             }
           },
+          label: 'Programar recordatorios',
+          icon: Icons.notifications_active_outlined,
         ),
-        // Nuevo evento (privado)
-        IconButton(
-          icon: const Icon(Icons.add),
-          tooltip: 'Nuevo evento',
-          onPressed: () async {
+        MenuOption<VoidCallback>(
+          value: () async {
             final repo = ref.read(misEventosRepositoryProvider);
             if (repo.anonDisabled) {
               if (mounted) {
@@ -146,7 +222,8 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
                   context: context,
                   builder: (_) => const AlertDialog(
                     title: Text('Eventos privados desactivados'),
-                    content: Text('Activa Anonymous sign-in en Supabase (Auth → Providers) para guardar tus eventos personales.'),
+                    content: Text(
+                        'Activa Anonymous sign-in en Supabase (Auth → Providers) para guardar tus eventos personales.'),
                   ),
                 );
               }
@@ -166,12 +243,11 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
               }
             }
           },
+          label: 'Nuevo evento',
+          icon: Icons.add,
         ),
-
-        IconButton(
-          tooltip: 'Actualizar calendario',
-          icon: const Icon(Icons.sync),
-          onPressed: () async {
+        MenuOption<VoidCallback>(
+          value: () async {
             final mes = DateTime(_focused.year, _focused.month, 1);
             ref.invalidate(eventosMesProvider(mes));
             await ref.read(eventosMesProvider(mes).future);
@@ -181,8 +257,25 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
               );
             }
           },
+          label: 'Actualizar calendario',
+          icon: Icons.sync,
         ),
-
+        MenuOption<VoidCallback>(
+          value: () async {
+            final res = await showSearch<DateTime?>(
+              context: context,
+              delegate: _EventSearchDelegate(searchEvents),
+            );
+            if (res != null) {
+              setState(() {
+                _focused = res;
+                _selected = res;
+              });
+            }
+          },
+          label: 'Buscar eventos',
+          icon: Icons.search,
+        ),
       ],
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -486,28 +579,6 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
     );
   }
 
-  /// Función: _itemFiltro - elemento de menú para filtrar eventos.
-  PopupMenuItem<EventFilter> _itemFiltro(
-      EventFilter value, String label, IconData icon, EventFilter current,
-      ) {
-    return PopupMenuItem<EventFilter>(
-      value: value,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: current == value
-                ? Theme.of(context).extension<AppColors>()!.warning
-                : null,
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(label)),
-          if (current == value) const Icon(Icons.check, size: 18),
-        ],
-      ),
-    );
-  }
 
   // Función: _nuevoEventoDialog - diálogo para crear evento privado.
   Future<bool?> _nuevoEventoDialog(BuildContext context) async {

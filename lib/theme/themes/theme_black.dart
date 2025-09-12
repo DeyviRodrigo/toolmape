@@ -10,6 +10,9 @@ final blackTheme = ThemeData(
   colorScheme: blackColorScheme,
   textTheme: buildTextTheme(blackColorScheme),
   scaffoldBackgroundColor: Colors.black,
+  drawerTheme: const DrawerThemeData(
+    backgroundColor: Color(0xFF1C1C1C),
+  ),
   extensions: const [
     AppColors(success: Color(0xFF34D399), warning: Color(0xFFFBBF24)),
   ],
