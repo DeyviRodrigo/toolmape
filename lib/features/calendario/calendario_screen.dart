@@ -96,21 +96,39 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
       actions: [
-        // Filtro
-        PopupMenuButton<EventFilter>(
-          tooltip: 'Filtrar',
-          icon: const Icon(Icons.filter_list),
-          onSelected: (f) => setState(() => _filtro = f),
-          itemBuilder: (_) => [
-            _itemFiltro(EventFilter.all, 'Todo', Icons.layers, _filtro),
-            _itemFiltro(EventFilter.general, 'Obligaciones', Icons.assignment_outlined, _filtro),
-            _itemFiltro(EventFilter.personal, 'Mis eventos', Icons.event, _filtro),
-          ],
+        AppShellAction(
+          label: 'Filtrar',
+          icon: Icons.filter_list,
+          onSelected: () async {
+            final f = await showDialog<EventFilter>(
+              context: context,
+              builder: (_) => SimpleDialog(
+                title: const Text('Filtrar'),
+                children: [
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, EventFilter.all),
+                    child: const Text('Todo'),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, EventFilter.general),
+                    child: const Text('Obligaciones'),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, EventFilter.personal),
+                    child: const Text('Mis eventos'),
+                  ),
+                ],
+              ),
+            );
+            if (f != null) {
+              setState(() => _filtro = f);
+            }
+          },
         ),
-        IconButton(
-          tooltip: 'Programar recordatorios',
-          icon: const Icon(Icons.notifications_active_outlined),
-          onPressed: () async {
+        AppShellAction(
+          label: 'Programar recordatorios',
+          icon: Icons.notifications_active_outlined,
+          onSelected: () async {
             final events = await ref.read(eventosMesProvider(_focused).future);
             final schedule = ScheduleNotifications(
               cancelAll: CalendarioNotifications.cancelAll,
@@ -129,11 +147,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
             }
           },
         ),
-        // Nuevo evento (privado)
-        IconButton(
-          icon: const Icon(Icons.add),
-          tooltip: 'Nuevo evento',
-          onPressed: () async {
+        AppShellAction(
+          label: 'Nuevo evento',
+          icon: Icons.add,
+          onSelected: () async {
             final repo = ref.read(misEventosRepositoryProvider);
             if (repo.anonDisabled) {
               if (mounted) {
@@ -162,11 +179,10 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
             }
           },
         ),
-
-        IconButton(
-          tooltip: 'Actualizar calendario',
-          icon: const Icon(Icons.sync),
-          onPressed: () async {
+        AppShellAction(
+          label: 'Actualizar calendario',
+          icon: Icons.sync,
+          onSelected: () async {
             final mes = DateTime(_focused.year, _focused.month, 1);
             ref.invalidate(eventosMesProvider(mes));
             await ref.read(eventosMesProvider(mes).future);
@@ -177,7 +193,28 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
             }
           },
         ),
-
+        AppShellAction(
+          label: 'Buscar eventos',
+          icon: Icons.search,
+          onSelected: () async {
+            final events = await ref.read(eventosMesProvider(_focused).future);
+            final userEvents = await ref.read(
+              misEventosRangoProvider(
+                DateRange(start: _mesRango.start, end: _mesRango.end),
+              ).future,
+            );
+            final titles = [
+              ...events.map((e) => e.titulo),
+              ...userEvents.map((e) => e.titulo),
+            ];
+            if (mounted) {
+              await showSearch(
+                context: context,
+                delegate: _EventoSearchDelegate(titles),
+              );
+            }
+          },
+        ),
       ],
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -587,6 +624,42 @@ class _CalendarioMineroScreenState extends ConsumerState<CalendarioMineroScreen>
           );
         },
       ),
+    );
+  }
+}
+
+class _EventoSearchDelegate extends SearchDelegate<void> {
+  final List<String> eventos;
+  _EventoSearchDelegate(this.eventos);
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(onPressed: () => query = '', icon: const Icon(Icons.clear)),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) => _buildList();
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildList();
+
+  Widget _buildList() {
+    final results = eventos
+        .where((e) => e.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    return ListView(
+      children: results.map((e) => ListTile(title: Text(e))).toList(),
     );
   }
 }

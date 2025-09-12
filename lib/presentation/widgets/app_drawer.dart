@@ -7,10 +7,12 @@ class AppDrawer extends StatelessWidget {
     super.key,
     required this.onGoToCalculadora,
     required this.onGoToCalendario,
+    this.username,
   });
 
   final VoidCallback onGoToCalculadora;
   final VoidCallback onGoToCalendario;
+  final String? username;
 
   /// Función: _go - ejecuta el callback y cierra el drawer.
   void _go(BuildContext context, VoidCallback callback) {
@@ -20,41 +22,92 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userLabel = username ?? 'Iniciar sesión';
     return Drawer(
       child: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            AppDrawerItem(
-              icon: Icons.calculate_outlined,
-              title: 'Calcular precio del oro',
-              onTap: () => _go(context, onGoToCalculadora),
+            const DrawerHeader(
+              child: Text(
+                'ToolMAPE',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
-            AppDrawerItem(
-              icon: Icons.calendar_month,
-              title: 'Calendario minero',
-              onTap: () => _go(context, onGoToCalendario),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  AppDrawerItem(
+                    icon: Icons.calculate_outlined,
+                    title: 'Calcular precio del oro',
+                    onTap: () => _go(context, onGoToCalculadora),
+                  ),
+                  AppDrawerItem(
+                    icon: Icons.calendar_month,
+                    title: 'Calendario minero',
+                    onTap: () => _go(context, onGoToCalendario),
+                  ),
+                  AppDrawerItem(
+                    icon: Icons.menu_book_outlined,
+                    title: 'Biblioteca Minera',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  AppDrawerItem(
+                    icon: Icons.support_agent,
+                    title: 'Consultoría personalizada',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const Divider(),
+                  AppDrawerItem(
+                    icon: Icons.info_outline,
+                    title: 'Información de la app',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  AppDrawerItem(
+                    icon: Icons.comment_outlined,
+                    title: 'Dejar comentarios',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  AppDrawerItem(
+                    icon: Icons.share_outlined,
+                    title: 'Compartir aplicativo',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-            AppDrawerItem(
-              icon: Icons.menu_book_outlined,
-              title: 'Biblioteca Minera',
-              onTap: () { Navigator.pop(context); },
-            ),
-            AppDrawerItem(
-              icon: Icons.support_agent,
-              title: 'Consultoría personalizada',
-              onTap: () { Navigator.pop(context); },
-            ),
-            const Divider(),
-            AppDrawerItem(
-              icon: Icons.settings,
-              title: 'Configuración de la cuenta',
-              onTap: () { Navigator.pop(context); },
-            ),
-            AppDrawerItem(
-              icon: Icons.feedback_outlined,
-              title: 'Dejar feedback sobre la app',
-              onTap: () { Navigator.pop(context); },
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: Text(userLabel),
+              trailing: PopupMenuButton<String>(
+                icon: const Icon(Icons.arrow_drop_up),
+                onSelected: (value) {
+                  Navigator.pop(context);
+                  // TODO: manejar acciones de la cuenta
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'config',
+                    child: Text('Configurar la cuenta'),
+                  ),
+                  PopupMenuItem(
+                    value: 'logout',
+                    child: Text('Cerrar sesión'),
+                  ),
+                ],
+              ),
+              onTap: () => Navigator.pop(context),
             ),
           ],
         ),

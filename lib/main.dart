@@ -64,6 +64,18 @@ class ToolMAPEApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFFFFC107),
         extensions: const [ToolmapeTheme(brandGold: Color(0xFFFFC107))],
       ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFFC107),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: Colors.black,
+        drawerTheme: DrawerThemeData(backgroundColor: Colors.grey.shade900),
+        extensions: const [ToolmapeTheme(brandGold: Color(0xFFFFC107))],
+      ),
+      themeMode: ThemeMode.system,
       locale: const Locale('es', 'PE'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
