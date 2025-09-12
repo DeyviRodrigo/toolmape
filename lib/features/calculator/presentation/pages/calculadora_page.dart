@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -268,6 +270,13 @@ class _CalculadoraForm extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final horizontal = size.width >= size.height;
 
+    Future<void> _forceUpdates(Future<void> Function() update) async {
+      await update();
+      Timer(const Duration(seconds: 5), () => unawaited(update()));
+      Timer(const Duration(seconds: 10), () => unawaited(update()));
+      Timer(const Duration(minutes: 1), () => unawaited(update()));
+    }
+
     Future<void> _actualizarPrecioOro() async {
       final row = await Supabase.instance.client
           .from('stg_spot_ticks')
@@ -315,7 +324,7 @@ class _CalculadoraForm extends StatelessWidget {
                 case PrecioOroAction.tiempoReal:
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks'));
-                  await _actualizarPrecioOro();
+                  await _forceUpdates(_actualizarPrecioOro);
                   break;
                 case PrecioOroAction.analisis:
                   break;
@@ -352,7 +361,7 @@ class _CalculadoraForm extends StatelessWidget {
                 case TipoCambioAction.tiempoReal:
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks'));
-                  await _actualizarTipoCambio();
+                  await _forceUpdates(_actualizarTipoCambio);
                   break;
               }
             },
