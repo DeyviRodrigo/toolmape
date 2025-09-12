@@ -11,6 +11,7 @@ import 'package:toolmape/presentation/shared/general_action.dart';
 import 'package:toolmape/presentation/shared/descuento_action.dart';
 import 'package:toolmape/presentation/shared/ley_action.dart';
 import 'package:toolmape/presentation/shared/menu_option.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../molecules/precio_oro_field.dart';
 import '../molecules/precio_oro_avanzadas_dialog.dart';
@@ -232,7 +233,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
   }
 }
 
-class _CalculadoraForm extends StatelessWidget {
+class _CalculadoraForm extends ConsumerWidget {
   const _CalculadoraForm({
     required this.precioOroCtrl,
     required this.tipoCambioCtrl,
@@ -260,7 +261,7 @@ class _CalculadoraForm extends StatelessWidget {
   }) buildMenu;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
     final horizontal = size.width >= size.height;
 
@@ -272,8 +273,9 @@ class _CalculadoraForm extends StatelessWidget {
             onSelected: (a) async {
               switch (a) {
                 case GeneralAction.actualizar:
+                  final p = await ref.refresh(parametrosProvider.future);
                   precioOroCtrl.text =
-                      sugeridos.precioOroUsdOnza.toStringAsFixed(2);
+                      p.precioOroUsdOnza.toStringAsFixed(2);
                   vm.setPrecioOro(precioOroCtrl.text);
                   break;
                 case GeneralAction.avanzadas:
@@ -283,7 +285,15 @@ class _CalculadoraForm extends StatelessWidget {
                     vm.setPrecioOro(precioOroCtrl.text);
                   }
                   break;
-                default:
+                case GeneralAction.solicitarValorTiempoReal:
+                  final supabase = Supabase.instance.client;
+                  await supabase.functions.invoke('ingest_spot_ticks');
+                  final p = await ref.refresh(parametrosProvider.future);
+                  precioOroCtrl.text =
+                      p.precioOroUsdOnza.toStringAsFixed(2);
+                  vm.setPrecioOro(precioOroCtrl.text);
+                  break;
+                case GeneralAction.solicitarAnalisis:
                   break;
               }
             },
@@ -295,14 +305,24 @@ class _CalculadoraForm extends StatelessWidget {
           menu: buildMenu<GeneralAction>(
             icon: Icons.settings,
             options: generalMenuOptions,
-            onSelected: (a) {
+            onSelected: (a) async {
               switch (a) {
                 case GeneralAction.actualizar:
+                  final p = await ref.refresh(parametrosProvider.future);
                   tipoCambioCtrl.text =
-                      sugeridos.tipoCambio.toStringAsFixed(2);
+                      p.tipoCambio.toStringAsFixed(2);
                   vm.setTipoCambio(tipoCambioCtrl.text);
                   break;
-                default:
+                case GeneralAction.solicitarValorTiempoReal:
+                  final supabase = Supabase.instance.client;
+                  await supabase.functions.invoke('ingest_spot_ticks');
+                  final p = await ref.refresh(parametrosProvider.future);
+                  tipoCambioCtrl.text =
+                      p.tipoCambio.toStringAsFixed(2);
+                  vm.setTipoCambio(tipoCambioCtrl.text);
+                  break;
+                case GeneralAction.avanzadas:
+                case GeneralAction.solicitarAnalisis:
                   break;
               }
             },
