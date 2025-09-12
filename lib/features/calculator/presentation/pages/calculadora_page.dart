@@ -12,6 +12,7 @@ import 'package:toolmape/presentation/shared/descuento_action.dart';
 import 'package:toolmape/presentation/shared/ley_action.dart';
 import 'package:toolmape/presentation/shared/menu_option.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import '../molecules/precio_oro_field.dart';
 import '../molecules/precio_oro_avanzadas_dialog.dart';
@@ -334,9 +335,22 @@ class _CalculadoraForm extends StatelessWidget {
                 case TipoCambioAction.avanzadas:
                   final sel = await showTipoCambioAvanzadasDialog(context);
                   if (sel != null) {
-                    tipoCambioCtrl.text = sel.toStringAsFixed(2);
-                    vm.setTipoCambio(tipoCambioCtrl.text);
+                    final rate = sel.rate;
+                    final gold = sel.goldPrice;
+                    if (rate != null) {
+                      tipoCambioCtrl.text = rate.toStringAsFixed(2);
+                      vm.setTipoCambio(tipoCambioCtrl.text);
+                    }
+                    if (gold != null) {
+                      precioOroCtrl.text = gold.toStringAsFixed(2);
+                      vm.setPrecioOro(precioOroCtrl.text);
+                    }
                   }
+                  break;
+                case TipoCambioAction.tiempoReal:
+                  await http.post(Uri.parse(
+                      'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks'));
+                  await _actualizarTipoCambio();
                   break;
               }
             },

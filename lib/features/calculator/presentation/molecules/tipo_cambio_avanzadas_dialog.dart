@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/exchange_rate_datasource.dart';
 
-Future<double?> showTipoCambioAvanzadasDialog(
+typedef TipoCambioSelection = ({double? rate, double? goldPrice});
+
+Future<TipoCambioSelection?> showTipoCambioAvanzadasDialog(
   BuildContext context, {
   ExchangeRateDatasource? datasource,
 }) async {
-  return showDialog<double>(
+  return showDialog<TipoCambioSelection>(
     context: context,
     barrierDismissible: true,
     builder: (_) => _TipoCambioAvanzadasDialog(datasource: datasource),
@@ -27,6 +29,7 @@ class _TipoCambioAvanzadasDialog extends StatefulWidget {
 class _TipoCambioAvanzadasDialogState
     extends State<_TipoCambioAvanzadasDialog> {
   double? rate;
+  double? goldPrice;
   DateTime? capturedAt;
   DateTime? selectedDate;
   bool loading = true;
@@ -63,6 +66,7 @@ class _TipoCambioAvanzadasDialogState
       setState(() {
         selectedDate = picked;
         rate = res.value;
+        goldPrice = res.goldPrice;
         capturedAt = res.capturedAt;
         loading = false;
       });
@@ -70,9 +74,14 @@ class _TipoCambioAvanzadasDialogState
   }
 
   String _title() {
-    if (capturedAt == null) return 'PEN/USD';
-    final date = DateFormat('yyyy-MM-dd HH:mm').format(capturedAt!);
-    return 'PEN/USD ($date)';
+    if (selectedDate != null) {
+      return 'PEN/USD (' + DateFormat('yyyy-MM-dd').format(selectedDate!) + ')';
+    }
+    if (capturedAt != null) {
+      final date = DateFormat('yyyy-MM-dd HH:mm').format(capturedAt!);
+      return 'PEN/USD ($date)';
+    }
+    return 'PEN/USD';
   }
 
   @override
@@ -108,7 +117,8 @@ class _TipoCambioAvanzadasDialogState
                     InkWell(
                       onTap: rate == null
                           ? null
-                          : () => Navigator.pop(context, rate),
+                          : () =>
+                              Navigator.pop(context, (rate: rate, goldPrice: goldPrice)),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
