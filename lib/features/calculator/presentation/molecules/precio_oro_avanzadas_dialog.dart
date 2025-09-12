@@ -54,9 +54,9 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
       spotErr = true;
     }
 
+    if (!mounted) return;
     if (spotErr) {
       // Show a discreet error but do not block UI
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo cargar Spot')),
       );

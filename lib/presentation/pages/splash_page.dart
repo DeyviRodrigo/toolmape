@@ -20,8 +20,10 @@ class _SplashPageState extends State<SplashPage>
       duration: const Duration(seconds: 3),
     )
       ..addListener(() => setState(() {}))
-      ..forward().whenComplete(
-          () => Navigator.pushReplacementNamed(context, routeCalculadora));
+      ..forward().whenComplete(() {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, routeCalculadora);
+      });
   }
 
   @override

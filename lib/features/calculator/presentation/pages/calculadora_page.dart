@@ -42,6 +42,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
   void initState() {
     super.initState();
     ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) {
+      if (!mounted) return;
       final s = ref.read(calculadoraViewModelProvider);
       precioOroCtrl.text = s.precioOro;
       tipoCambioCtrl.text = s.tipoCambio;
@@ -51,6 +52,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
       setState(() {});
     });
     ref.read(parametrosProvider.future).then((p) {
+      if (!mounted) return;
       final gold = p.precioOroUsdOnza.toStringAsFixed(2);
       final tc = p.tipoCambio.toStringAsFixed(2);
       precioOroCtrl.text = gold;
@@ -157,6 +159,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
       ..setCantidad(cantidadCtrl.text);
 
     await vm.calcular();
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -166,6 +169,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
       if (next && !_warnedOffline) {
         _warnedOffline = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
