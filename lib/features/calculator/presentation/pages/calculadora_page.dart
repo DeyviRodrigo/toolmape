@@ -11,6 +11,7 @@ import 'package:toolmape/presentation/shared/general_action.dart';
 import 'package:toolmape/presentation/shared/descuento_action.dart';
 import 'package:toolmape/presentation/shared/ley_action.dart';
 import 'package:toolmape/presentation/shared/menu_option.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../molecules/precio_oro_field.dart';
 import '../molecules/precio_oro_avanzadas_dialog.dart';
@@ -264,45 +265,73 @@ class _CalculadoraForm extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final horizontal = size.width >= size.height;
 
+    Future<void> _actualizarPrecioOro() async {
+      final row = await Supabase.instance.client
+          .from('stg_spot_ticks')
+          .select('price')
+          .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
+          .ilike('currency', 'usd')
+          .order('captured_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      final price = (row?['price'] as num?)?.toDouble();
+      if (price != null) {
+        precioOroCtrl.text = price.toStringAsFixed(2);
+        vm.setPrecioOro(precioOroCtrl.text);
+      }
+    }
+
     Widget buildPrecioOro() => PrecioOroField(
           controller: precioOroCtrl,
-          menu: buildMenu<GeneralAction>(
+          menu: buildMenu<PrecioOroAction>(
             icon: Icons.settings,
-            options: generalMenuOptions,
+            options: precioOroMenuOptions,
             onSelected: (a) async {
               switch (a) {
-                case GeneralAction.actualizar:
-                  precioOroCtrl.text =
-                      sugeridos.precioOroUsdOnza.toStringAsFixed(2);
-                  vm.setPrecioOro(precioOroCtrl.text);
+                case PrecioOroAction.actualizar:
+                  await _actualizarPrecioOro();
                   break;
-                case GeneralAction.avanzadas:
+                case PrecioOroAction.avanzadas:
                   final sel = await showPrecioOroAvanzadasDialog(context);
                   if (sel != null) {
                     precioOroCtrl.text = sel.toStringAsFixed(2);
                     vm.setPrecioOro(precioOroCtrl.text);
                   }
                   break;
-                default:
+                case PrecioOroAction.tiempoReal:
+                  await Supabase.instance.client.rpc('rpc_ingest_spot');
+                  await _actualizarPrecioOro();
+                  break;
+                case PrecioOroAction.analisis:
                   break;
               }
             },
           ),
         );
 
+    Future<void> _actualizarTipoCambio() async {
+      final row = await Supabase.instance.client
+          .from('stg_latest_ticks')
+          .select('pen_usd')
+          .order('captured_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      final tc = (row?['pen_usd'] as num?)?.toDouble();
+      if (tc != null) {
+        tipoCambioCtrl.text = tc.toStringAsFixed(2);
+        vm.setTipoCambio(tipoCambioCtrl.text);
+      }
+    }
+
     Widget buildTipoCambio() => TipoCambioField(
           controller: tipoCambioCtrl,
-          menu: buildMenu<GeneralAction>(
+          menu: buildMenu<TipoCambioAction>(
             icon: Icons.settings,
-            options: generalMenuOptions,
-            onSelected: (a) {
+            options: tipoCambioMenuOptions,
+            onSelected: (a) async {
               switch (a) {
-                case GeneralAction.actualizar:
-                  tipoCambioCtrl.text =
-                      sugeridos.tipoCambio.toStringAsFixed(2);
-                  vm.setTipoCambio(tipoCambioCtrl.text);
-                  break;
-                default:
+                case TipoCambioAction.actualizar:
+                  await _actualizarTipoCambio();
                   break;
               }
             },

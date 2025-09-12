@@ -2,24 +2,41 @@ import 'package:flutter/material.dart';
 
 import 'menu_option.dart';
 
-/// General actions available in the calculator menus.
-enum GeneralAction { actualizar, avanzadas, personalizados }
+/// Acciones disponibles para el precio del oro en los menús de la calculadora.
+enum PrecioOroAction { actualizar, avanzadas, tiempoReal, analisis }
 
-/// Menu options for [GeneralAction].
-const generalMenuOptions = <MenuOption<GeneralAction>>[
+/// Opciones de menú para [PrecioOroAction].
+const precioOroMenuOptions = <MenuOption<PrecioOroAction>>[
   MenuOption(
-    value: GeneralAction.actualizar,
+    value: PrecioOroAction.actualizar,
     label: 'Actualizar datos',
     icon: Icons.sync,
   ),
   MenuOption(
-    value: GeneralAction.avanzadas,
+    value: PrecioOroAction.avanzadas,
     label: 'Opciones avanzadas',
     icon: Icons.tune,
   ),
   MenuOption(
-    value: GeneralAction.personalizados,
-    label: 'Valores personalizados',
-    icon: Icons.edit,
+    value: PrecioOroAction.tiempoReal,
+    label: 'Solicitar valor en tiempo real',
+    icon: Icons.bolt,
+  ),
+  MenuOption(
+    value: PrecioOroAction.analisis,
+    label: 'Solicitar análisis para la compra-venta de oro',
+    icon: Icons.analytics,
+  ),
+];
+
+/// Acciones disponibles para el tipo de cambio en los menús de la calculadora.
+enum TipoCambioAction { actualizar }
+
+/// Opciones de menú para [TipoCambioAction].
+const tipoCambioMenuOptions = <MenuOption<TipoCambioAction>>[
+  MenuOption(
+    value: TipoCambioAction.actualizar,
+    label: 'Actualizar datos',
+    icon: Icons.sync,
   ),
 ];
