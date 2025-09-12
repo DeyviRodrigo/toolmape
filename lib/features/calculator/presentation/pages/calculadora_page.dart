@@ -16,10 +16,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../molecules/precio_oro_field.dart';
 import '../molecules/precio_oro_avanzadas_dialog.dart';
 import '../molecules/tipo_cambio_field.dart';
+import '../molecules/tipo_cambio_avanzadas_dialog.dart';
 import '../molecules/descuento_field.dart';
 import '../molecules/ley_field.dart';
 import '../molecules/cantidad_field.dart';
 import '../molecules/descuento_dialog.dart';
+import '../../data/exchange_rate_datasource.dart';
 
 class CalculadoraPage extends ConsumerStatefulWidget {
   const CalculadoraPage({super.key});
@@ -310,13 +312,9 @@ class _CalculadoraForm extends StatelessWidget {
         );
 
     Future<void> _actualizarTipoCambio() async {
-      final row = await Supabase.instance.client
-          .from('stg_latest_ticks')
-          .select('pen_usd')
-          .order('captured_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      final tc = (row?['pen_usd'] as num?)?.toDouble();
+      final ds = ExchangeRateDatasource(Supabase.instance.client);
+      final res = await ds.fetchLatest();
+      final tc = res.value;
       if (tc != null) {
         tipoCambioCtrl.text = tc.toStringAsFixed(2);
         vm.setTipoCambio(tipoCambioCtrl.text);
@@ -332,6 +330,13 @@ class _CalculadoraForm extends StatelessWidget {
               switch (a) {
                 case TipoCambioAction.actualizar:
                   await _actualizarTipoCambio();
+                  break;
+                case TipoCambioAction.avanzadas:
+                  final sel = await showTipoCambioAvanzadasDialog(context);
+                  if (sel != null) {
+                    tipoCambioCtrl.text = sel.toStringAsFixed(2);
+                    vm.setTipoCambio(tipoCambioCtrl.text);
+                  }
                   break;
               }
             },

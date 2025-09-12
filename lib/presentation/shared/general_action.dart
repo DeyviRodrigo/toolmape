@@ -30,7 +30,7 @@ const precioOroMenuOptions = <MenuOption<PrecioOroAction>>[
 ];
 
 /// Acciones disponibles para el tipo de cambio en los menús de la calculadora.
-enum TipoCambioAction { actualizar }
+enum TipoCambioAction { actualizar, avanzadas }
 
 /// Opciones de menú para [TipoCambioAction].
 const tipoCambioMenuOptions = <MenuOption<TipoCambioAction>>[
@@ -38,5 +38,10 @@ const tipoCambioMenuOptions = <MenuOption<TipoCambioAction>>[
     value: TipoCambioAction.actualizar,
     label: 'Actualizar datos',
     icon: Icons.sync,
+  ),
+  MenuOption(
+    value: TipoCambioAction.avanzadas,
+    label: 'Opciones avanzadas',
+    icon: Icons.tune,
   ),
 ];
