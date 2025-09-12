@@ -61,15 +61,28 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
   @override
   Future<ParametrosRecomendados> build() async {
     try {
-      final res = await Supabase.instance.client
+      final client = Supabase.instance.client;
+
+      final latestF = client
           .from('stg_latest_ticks')
-          .select('gold_price,pen_usd')
+          .select('pen_usd')
           .order('captured_at', ascending: false)
           .limit(1)
-          .single();
+          .maybeSingle();
 
-      final gold = (res['gold_price'] as num?)?.toDouble() ?? 0.0;
-      final penUsd = (res['pen_usd'] as num?)?.toDouble() ?? 0.0;
+      final spotF = client
+          .from('stg_spot_ticks')
+          .select('price')
+          .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
+          .ilike('currency', 'usd')
+          .order('captured_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      final results = await Future.wait([latestF, spotF]);
+
+      final penUsd = (results[0]?['pen_usd'] as num?)?.toDouble() ?? 0.0;
+      final gold = (results[1]?['price'] as num?)?.toDouble() ?? 0.0;
       final tipoCambio = penUsd;
 
       final data = ParametrosRecomendados.defaults().copyWith(
