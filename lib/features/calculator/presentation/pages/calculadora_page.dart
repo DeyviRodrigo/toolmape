@@ -23,6 +23,7 @@ import '../molecules/ley_field.dart';
 import '../molecules/cantidad_field.dart';
 import '../molecules/descuento_dialog.dart';
 import '../../data/exchange_rate_datasource.dart';
+import '../../data/price_datasource.dart';
 
 class CalculadoraPage extends ConsumerStatefulWidget {
   const CalculadoraPage({super.key});
@@ -268,29 +269,58 @@ class _CalculadoraForm extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final horizontal = size.width >= size.height;
 
-    Future<void> _actualizarPrecioOro() async {
-      final row = await Supabase.instance.client
-          .from('stg_spot_ticks')
-          .select('price')
-          .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
-          .ilike('currency', 'usd')
-          .order('captured_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      final price = (row?['price'] as num?)?.toDouble();
+    Future<DateTime?> _actualizarPrecioOro() async {
+      final ds = PriceDatasource(Supabase.instance.client);
+      final res = await ds.fetchSpotGoldUsd();
+      final price = res.data['price'];
+      final capturedAt = res.capturedAt;
       if (price != null) {
         precioOroCtrl.text = price.toStringAsFixed(2);
         vm.setPrecioOro(precioOroCtrl.text);
       }
+      return capturedAt;
     }
 
-    Future<void> _actualizarTipoCambio() async {
+    Future<DateTime?> _actualizarTipoCambio() async {
       final ds = ExchangeRateDatasource(Supabase.instance.client);
       final res = await ds.fetchLatest();
       final tc = res.value;
       if (tc != null) {
         tipoCambioCtrl.text = tc.toStringAsFixed(2);
         vm.setTipoCambio(tipoCambioCtrl.text);
+      }
+      return res.capturedAt;
+    }
+
+    Future<void> _forceUpdatePrecioOro() async {
+      const attempts = [
+        Duration(seconds: 0),
+        Duration(seconds: 5),
+        Duration(seconds: 10),
+        Duration(minutes: 1),
+      ];
+      for (final d in attempts) {
+        if (d.inSeconds > 0) await Future.delayed(d);
+        final ts = await _actualizarPrecioOro();
+        if (ts != null && DateTime.now().difference(ts) < const Duration(minutes: 2)) {
+          break;
+        }
+      }
+    }
+
+    Future<void> _forceUpdateTipoCambio() async {
+      const attempts = [
+        Duration(seconds: 0),
+        Duration(seconds: 5),
+        Duration(seconds: 10),
+        Duration(minutes: 1),
+      ];
+      for (final d in attempts) {
+        if (d.inSeconds > 0) await Future.delayed(d);
+        final ts = await _actualizarTipoCambio();
+        if (ts != null && DateTime.now().difference(ts) < const Duration(minutes: 2)) {
+          break;
+        }
       }
     }
 
@@ -315,7 +345,7 @@ class _CalculadoraForm extends StatelessWidget {
                 case PrecioOroAction.tiempoReal:
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks'));
-                  await _actualizarPrecioOro();
+                  await _forceUpdatePrecioOro();
                   break;
                 case PrecioOroAction.analisis:
                   break;
@@ -352,7 +382,7 @@ class _CalculadoraForm extends StatelessWidget {
                 case TipoCambioAction.tiempoReal:
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks'));
-                  await _actualizarTipoCambio();
+                  await _forceUpdateTipoCambio();
                   break;
               }
             },
