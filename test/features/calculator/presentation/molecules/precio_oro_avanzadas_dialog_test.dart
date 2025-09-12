@@ -9,19 +9,26 @@ class MockPriceDatasource extends Mock implements PriceDatasource {}
 void main() {
   testWidgets('dialog shows data', (tester) async {
     final ds = MockPriceDatasource();
-    when(() => ds.fetchLatestGold())
-        .thenAnswer((_) async => {'gold_price': 1});
-    when(() => ds.fetchSpotGoldUsd())
-        .thenAnswer((_) async => {'price': 2});
+    when(() => ds.fetchLatestGold()).thenAnswer(
+      (_) async => (data: {'gold_price': 1.0}, capturedAt: DateTime(2024)),
+    );
+    when(() => ds.fetchSpotGoldUsd()).thenAnswer(
+      (_) async => (data: {'price': 2.0}, capturedAt: DateTime(2024)),
+    );
 
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(builder: (context) {
-        return ElevatedButton(
-          onPressed: () => showPrecioOroAvanzadasDialog(context, datasource: ds),
-          child: const Text('open'),
-        );
-      }),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () =>
+                  showPrecioOroAvanzadasDialog(context, datasource: ds),
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -32,17 +39,26 @@ void main() {
 
   testWidgets('dialog handles empty data', (tester) async {
     final ds = MockPriceDatasource();
-    when(() => ds.fetchLatestGold()).thenAnswer((_) async => {});
-    when(() => ds.fetchSpotGoldUsd()).thenAnswer((_) async => {});
+    when(
+      () => ds.fetchLatestGold(),
+    ).thenAnswer((_) async => (data: <String, double?>{}, capturedAt: null));
+    when(
+      () => ds.fetchSpotGoldUsd(),
+    ).thenAnswer((_) async => (data: <String, double?>{}, capturedAt: null));
 
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(builder: (context) {
-        return ElevatedButton(
-          onPressed: () => showPrecioOroAvanzadasDialog(context, datasource: ds),
-          child: const Text('open'),
-        );
-      }),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () =>
+                  showPrecioOroAvanzadasDialog(context, datasource: ds),
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();

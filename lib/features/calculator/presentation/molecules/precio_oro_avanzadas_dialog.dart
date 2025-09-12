@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:toolmape/features/calculator/data/price_datasource.dart';
 
-Future<double?> showPrecioOroAvanzadasDialog(BuildContext context,
-    {PriceDatasource? datasource}) async {
+Future<double?> showPrecioOroAvanzadasDialog(
+  BuildContext context, {
+  PriceDatasource? datasource,
+}) async {
   return showDialog<double>(
     context: context,
     barrierDismissible: true,
@@ -17,7 +20,8 @@ class _PrecioOroAvanzadasDialog extends StatefulWidget {
   final PriceDatasource? datasource;
 
   @override
-  State<_PrecioOroAvanzadasDialog> createState() => _PrecioOroAvanzadasDialogState();
+  State<_PrecioOroAvanzadasDialog> createState() =>
+      _PrecioOroAvanzadasDialogState();
 }
 
 class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
@@ -27,6 +31,9 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   static const double _dialogWidth = _rowWidth + 32;
   Map<String, double?>? latest;
   Map<String, double?>? spot;
+  DateTime? latestCapturedAt;
+  DateTime? spotCapturedAt;
+  DateTime? selectedDate;
   bool loading = true;
   bool spotError = false;
   late final PriceDatasource _datasource;
@@ -42,14 +49,20 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   Future<void> _load() async {
     Map<String, double?>? latestRes;
     Map<String, double?>? spotRes;
+    DateTime? latestTs;
+    DateTime? spotTs;
     var spotErr = false;
     try {
-      latestRes = await _datasource.fetchLatestGold();
+      final res = await _datasource.fetchLatestGold();
+      latestRes = res.data;
+      latestTs = res.capturedAt;
     } catch (_) {
       // ignore, latest will remain null
     }
     try {
-      spotRes = await _datasource.fetchSpotGoldUsd();
+      final res = await _datasource.fetchSpotGoldUsd();
+      spotRes = res.data;
+      spotTs = res.capturedAt;
     } catch (_) {
       spotErr = true;
     }
@@ -57,17 +70,47 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
     if (spotErr) {
       // Show a discreet error but do not block UI
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo cargar Spot')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No se pudo cargar Spot')));
     }
 
     setState(() {
       latest = latestRes;
       spot = spotRes;
+      latestCapturedAt = latestTs;
+      spotCapturedAt = spotTs;
       loading = false;
       spotError = spotErr;
     });
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2022, 1, 1),
+      lastDate: now,
+      initialDate: selectedDate ?? now,
+    );
+    if (picked != null) {
+      final res = await _datasource.fetchDailySummary(picked);
+      setState(() {
+        latest = res.latest;
+        spot = res.spot;
+        selectedDate = picked;
+        latestCapturedAt = null;
+        spotCapturedAt = null;
+      });
+    }
+  }
+
+  Widget _titleWithDate(String label, DateTime? ts) {
+    final date = ts == null ? null : DateFormat('yyyy-MM-dd HH:mm').format(ts);
+    return Text(
+      date == null ? label : '$label ($date)',
+      style: Theme.of(context).textTheme.titleMedium,
+    );
   }
 
   Widget _selectableBox(String label, num? value) {
@@ -87,7 +130,10 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
@@ -122,8 +168,8 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
               v == null
                   ? '-'
                   : label.contains('%')
-                      ? '${v.toStringAsFixed(2)}%'
-                      : v.toStringAsFixed(2),
+                  ? '${v.toStringAsFixed(2)}%'
+                  : v.toStringAsFixed(2),
               textAlign: TextAlign.center,
             ),
           ],
@@ -157,8 +203,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
                         ),
                       ],
                     ),
-                    Text('Latest',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    _titleWithDate('Latest', latestCapturedAt),
                     const SizedBox(height: 8),
                     SizedBox(
                       width: _rowWidth,
@@ -182,8 +227,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text('Spot',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    _titleWithDate('Spot', spotCapturedAt),
                     if (spotError)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -200,9 +244,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
                       width: _rowWidth,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _selectableBox('Precio', spot?['price']),
-                        ],
+                        children: [_selectableBox('Precio', spot?['price'])],
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -241,6 +283,15 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: _pickDate,
+                      child: Text(
+                        selectedDate == null
+                            ? 'Elegir fecha'
+                            : DateFormat('yyyy-MM-dd').format(selectedDate!),
+                      ),
+                    ),
                   ],
                 ),
         ),
@@ -248,5 +299,3 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
     );
   }
 }
-
-
