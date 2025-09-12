@@ -303,6 +303,11 @@ class _CalculadoraForm extends StatelessWidget {
       }
     }
 
+    Future<void> _actualizarAmbos() async {
+      await _actualizarPrecioOro();
+      await _actualizarTipoCambio();
+    }
+
     Widget buildPrecioOro() => PrecioOroField(
           controller: precioOroCtrl,
           menu: buildMenu<PrecioOroAction>(
@@ -311,8 +316,7 @@ class _CalculadoraForm extends StatelessWidget {
             onSelected: (a) async {
               switch (a) {
                 case PrecioOroAction.actualizar:
-                  await _actualizarPrecioOro();
-                  await _actualizarTipoCambio();
+                  await _actualizarAmbos();
                   break;
                 case PrecioOroAction.avanzadas:
                   final sel = await showPrecioOroAvanzadasDialog(context);
@@ -324,7 +328,7 @@ class _CalculadoraForm extends StatelessWidget {
                 case PrecioOroAction.tiempoReal:
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks'));
-                  await _forceUpdates(_actualizarPrecioOro);
+                  await _forceUpdates(_actualizarAmbos);
                   break;
                 case PrecioOroAction.analisis:
                   break;
