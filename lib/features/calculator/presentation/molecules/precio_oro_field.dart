@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:toolmape/design_system/atoms/numeric_field.dart';
+import 'package:toolmape/features/general/presentation/atoms/numeric_field.dart';
 
 class PrecioOroField extends StatelessWidget {
   final TextEditingController controller;

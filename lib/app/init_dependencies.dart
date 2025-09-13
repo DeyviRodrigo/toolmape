@@ -5,14 +5,14 @@ import 'package:toolmape/features/general/domain/repositories/preferencias_repos
 import 'package:toolmape/features/calendar/domain/repositories/calendario_repository.dart';
 import 'package:toolmape/features/calendar/domain/repositories/mis_eventos_repository.dart';
 import 'package:toolmape/features/general/domain/repositories/diccionario_repository.dart';
-import 'package:toolmape/features/general/data/datasources/preferencias_local_ds.dart';
+import 'package:toolmape/features/general/infrastructure/datasources/preferencias_local_ds.dart';
 import 'package:toolmape/features/calendar/data/datasources/calendario_supabase_ds.dart';
 import 'package:toolmape/features/calendar/data/datasources/mis_eventos_supabase_ds.dart';
-import 'package:toolmape/features/general/data/datasources/diccionario_supabase_ds.dart';
-import 'package:toolmape/features/general/data/repositories/preferencias_repository_impl.dart';
+import 'package:toolmape/features/general/infrastructure/datasources/diccionario_supabase_ds.dart';
+import 'package:toolmape/features/general/infrastructure/repositories/preferencias_repository_impl.dart';
 import 'package:toolmape/features/calendar/data/repositories/calendario_repository_impl.dart';
 import 'package:toolmape/features/calendar/data/repositories/mis_eventos_repository_impl.dart';
-import 'package:toolmape/features/general/data/repositories/diccionario_repository_impl.dart';
+import 'package:toolmape/features/general/infrastructure/repositories/diccionario_repository_impl.dart';
 
 final preferenciasRepositoryProvider = Provider<PreferenciasRepository>((ref) {
   final ds = PreferenciasLocalDatasource();

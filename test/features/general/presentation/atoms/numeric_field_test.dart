@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/design_system/atoms/numeric_field.dart';
+import 'package:toolmape/features/general/presentation/atoms/numeric_field.dart';
 
 void main() {
   testWidgets('NumericField updates controller with input', (tester) async {

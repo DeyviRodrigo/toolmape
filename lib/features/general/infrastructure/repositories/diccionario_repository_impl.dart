@@ -3,12 +3,12 @@ import '../../domain/entities/currency_entity.dart';
 import '../../domain/entities/metal_entity.dart';
 import '../../domain/repositories/diccionario_repository.dart';
 import '../datasources/diccionario_supabase_ds.dart';
-import '../dto/unit_dto.dart';
-import '../dto/currency_dto.dart';
-import '../dto/metal_dto.dart';
-import '../mappers/unit_mapper.dart';
-import '../mappers/currency_mapper.dart';
-import '../mappers/metal_mapper.dart';
+import '../../data/dto/unit_dto.dart';
+import '../../data/dto/currency_dto.dart';
+import '../../data/dto/metal_dto.dart';
+import '../../data/mappers/unit_mapper.dart';
+import '../../data/mappers/currency_mapper.dart';
+import '../../data/mappers/metal_mapper.dart';
 
 class DiccionarioRepositoryImpl implements DiccionarioRepository {
   DiccionarioRepositoryImpl(this._ds);

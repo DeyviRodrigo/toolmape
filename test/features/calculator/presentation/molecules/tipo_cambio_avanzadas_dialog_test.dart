@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:toolmape/features/calculator/data/exchange_rate_datasource.dart';
+import 'package:toolmape/features/calculator/infrastructure/datasources/exchange_rate_datasource.dart';
 import 'package:toolmape/features/calculator/presentation/molecules/tipo_cambio_avanzadas_dialog.dart';
 
 class MockExchangeRateDatasource extends Mock

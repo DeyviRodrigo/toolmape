@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/exchange_rate_datasource.dart';
+import '../../infrastructure/datasources/exchange_rate_datasource.dart';
 
 typedef TipoCambioSelection = ({double? rate, double? goldPrice});
 

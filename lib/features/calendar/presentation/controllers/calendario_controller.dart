@@ -7,8 +7,8 @@ import 'package:toolmape/features/calendar/domain/repositories/calendario_reposi
 import 'package:toolmape/features/calendar/domain/repositories/mis_eventos_repository.dart';
 import 'package:toolmape/features/calendar/domain/value_objects/date_range.dart';
 import 'package:toolmape/app/init_dependencies.dart';
-import 'package:toolmape/features/calendar/presentation/shared/event_filter.dart';
-import 'package:toolmape/features/calendar/presentation/shared/meses.dart';
+import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';
+import 'package:toolmape/features/calendar/presentation/atoms/meses.dart';
 
 class CalendarioState {
   final DateTime focused;

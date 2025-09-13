@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:toolmape/features/calculator/data/price_datasource.dart';
+import 'package:toolmape/features/calculator/infrastructure/datasources/price_datasource.dart';
 import 'package:toolmape/features/calculator/presentation/molecules/precio_oro_avanzadas_dialog.dart';
 
 class MockPriceDatasource extends Mock implements PriceDatasource {}

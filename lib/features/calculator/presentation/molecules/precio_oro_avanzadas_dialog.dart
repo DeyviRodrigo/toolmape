@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:toolmape/features/calculator/data/price_datasource.dart';
+import 'package:toolmape/features/calculator/infrastructure/datasources/price_datasource.dart';
 
 Future<double?> showPrecioOroAvanzadasDialog(
   BuildContext context, {

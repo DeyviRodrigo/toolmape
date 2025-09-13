@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/design_system/molecules/app_drawer_item.dart';
+import 'package:toolmape/features/general/presentation/molecules/app_drawer_item.dart';
 
 void main() {
   testWidgets('AppDrawerItem renders and reacts to tap', (tester) async {

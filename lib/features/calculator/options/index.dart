@@ -1,4 +1,4 @@
-export '../../general/presentation/shared/menu_option.dart';
-export '../presentation/shared/general_action.dart';
-export '../presentation/shared/descuento_action.dart';
-export '../presentation/shared/ley_action.dart';
+export '../../general/presentation/atoms/menu_option.dart';
+export '../presentation/atoms/general_action.dart';
+export '../presentation/atoms/descuento_action.dart';
+export '../presentation/atoms/ley_action.dart';

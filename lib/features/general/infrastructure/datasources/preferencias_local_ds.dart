@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
-import '../mappers/calculator_prefs_mapper.dart';
+import '../../data/mappers/calculator_prefs_mapper.dart';
 
 class PreferenciasLocalDatasource {
   Future<CalculatorPrefs> load() async {
