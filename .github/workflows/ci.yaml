@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  analyze:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,4 +16,24 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: dart run dart_code_metrics:metrics lib
-      - run: flutter test
+      - name: Enforce layering
+        run: |
+          if grep -R "package:toolmape/.*/infrastructure" lib/features/*/presentation; then
+            echo "Infrastructure import detected in presentation layer" && exit 1;
+          fi
+  test:
+    runs-on: ubuntu-latest
+    needs: analyze
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: sudo apt-get update && sudo apt-get install -y lcov
+      - run: flutter test --coverage
+      - name: Coverage summary
+        run: |
+          COVERAGE=$(lcov --summary coverage/lcov.info 2>/dev/null | grep lines | awk '{print $2}')
+          echo "Total coverage: $COVERAGE"
+          echo "::warning::Current coverage $COVERAGE (soft limit)"

@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:table_calendar/table_calendar.dart';
 
-import 'package:toolmape/app/app_shell.dart';
+import 'package:toolmape/app/shell/app_shell.dart';
 import 'package:toolmape/features/calendar/presentation/viewmodels/eventos_mes_view_model.dart';
 import 'package:toolmape/features/calendar/presentation/viewmodels/mis_eventos_view_model.dart';
 import 'package:toolmape/features/calendar/presentation/viewmodels/schedule_notifications_view_model.dart';
-import 'package:toolmape/app/init_dependencies.dart';
+import 'package:toolmape/app/di/di.dart';
 import 'package:toolmape/features/calendar/domain/value_objects/date_range.dart';
-import 'package:toolmape/app/routes.dart';
+import 'package:toolmape/app/router/routes.dart';
 import '../molecules/eventos_calendario_helpers.dart';
 import 'package:toolmape/features/calendar/presentation/viewmodels/calendar_view_model.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';

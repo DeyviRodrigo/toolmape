@@ -12,6 +12,8 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   plugins:
     - dart_code_metrics
+  errors:
+    unused_import: error
   # TODO: add import restrictions between layers (e.g., presentation -> infrastructure)
 
 linter:

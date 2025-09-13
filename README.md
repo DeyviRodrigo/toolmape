@@ -11,6 +11,17 @@ El proyecto adopta Clean Architecture, Domain-Driven Design, el patrón MVVM con
 - Las vistas deben limitarse a la interfaz; la lógica pertenece a controladores, casos de uso o servicios.
 - Cuando se creen nuevas piezas con inteligencia artificial, respete esta estructura de carpetas y reutilice los átomos y moléculas existentes.
 
+## Cómo agregar un feature
+
+Siga esta lista al incorporar un nuevo módulo funcional:
+
+1. Cree `lib/features/<feature>/` con subcarpetas `domain`, `data`, `infrastructure` y `presentation`.
+2. Defina casos de uso y entidades en `domain/` y exponga interfaces de repositorio.
+3. Implemente mappers, datasources y repositorios en `data/` e `infrastructure/` y regístrelos en `app/di/di.dart`.
+4. Añada páginas, widgets y viewmodels en `presentation/` sin acceder directamente a `infrastructure/`.
+5. Refleje la misma estructura en `test/features/<feature>/` con pruebas mínimas por capa.
+6. Actualice rutas y documentación si el feature tiene entrada en la app.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

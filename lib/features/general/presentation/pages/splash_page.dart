@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toolmape/app/routes.dart';
+import 'package:toolmape/app/router/routes.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});

@@ -56,3 +56,14 @@ Cada módulo dentro de `features` contiene sus propias capas: **domain**, **data
 - **CalendarioNotifications** – gestión de notificaciones locales.
 - **Formatters** y **NumberParsing** – utilidades comunes para formato de datos.
 
+## Flujo de capas
+
+```
+Page → ViewModel → UseCase → Repository (iface) → RepositoryImpl → Datasource
+```
+
+Cada capa depende sólo de la siguiente hacia dentro. Las vistas interactúan con
+los viewmodels, estos coordinan casos de uso que invocan repositorios
+abstraídos por interfaces. Las implementaciones concretas acceden a los
+datasources correspondientes.
+

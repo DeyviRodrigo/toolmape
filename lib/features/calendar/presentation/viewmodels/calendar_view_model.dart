@@ -6,7 +6,7 @@ import 'package:toolmape/features/calendar/domain/entities/mi_evento_entity.dart
 import 'package:toolmape/features/calendar/domain/repositories/calendario_repository.dart';
 import 'package:toolmape/features/calendar/domain/repositories/mis_eventos_repository.dart';
 import 'package:toolmape/features/calendar/domain/value_objects/date_range.dart';
-import 'package:toolmape/app/init_dependencies.dart';
+import 'package:toolmape/app/di/di.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/meses.dart';
 
