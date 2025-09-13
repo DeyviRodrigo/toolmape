@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import '../tokens/color_schemes.dart';
-import '../tokens/typography.dart';
-import '../extensions/app_colors.dart';
-import '../tokens/shapes.dart';
+import 'package:toolmape/core/theme/tokens/color_schemes.dart';
+import 'package:toolmape/core/theme/tokens/typography.dart';
+import 'package:toolmape/core/theme/extensions/app_colors.dart';
+import 'package:toolmape/core/theme/tokens/shapes.dart';
 
-final ColorScheme _goldCS =
-lightColorScheme.copyWith(primary: const Color(0xFFC58E00));
-
-final ThemeData goldBrandTheme = ThemeData(
+final ThemeData lightTheme = ThemeData(
   useMaterial3: true,
-  colorScheme: _goldCS,
-  textTheme: buildTextTheme(_goldCS),
+  colorScheme: lightColorScheme,
+  textTheme: buildTextTheme(lightColorScheme),
 
   extensions: const [
     AppColors(success: Color(0xFF10B981), warning: Color(0xFFF59E0B)),
@@ -41,7 +38,6 @@ final ThemeData goldBrandTheme = ThemeData(
     border: OutlineInputBorder(borderRadius: borderRadiusMd),
   ),
 
-  // opcional: sin tintado en tarjetas/diálogos si no lo quieres
   cardTheme: const CardThemeData(
     shape: shapeMd,
     surfaceTintColor: Colors.transparent,

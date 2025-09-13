@@ -12,9 +12,12 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   plugins:
     - dart_code_metrics
+  # TODO: add import restrictions between layers (e.g., presentation -> infrastructure)
 
 linter:
   rules:
+    avoid_relative_lib_imports: true
+    prefer_relative_imports: false
     # place additional lint rules here
 
 dart_code_metrics:

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../tokens/color_schemes.dart';
-import '../tokens/typography.dart';
-import '../extensions/app_colors.dart';
-import '../tokens/shapes.dart';
+import 'package:toolmape/core/theme/tokens/color_schemes.dart';
+import 'package:toolmape/core/theme/tokens/typography.dart';
+import 'package:toolmape/core/theme/extensions/app_colors.dart';
+import 'package:toolmape/core/theme/tokens/shapes.dart';
 
 // Ajuste del ColorScheme oscuro: primary/blanco para usarlo en iconos si lo necesitas
 final ColorScheme _darkCS = darkColorScheme.copyWith(
