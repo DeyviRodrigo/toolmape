@@ -5,7 +5,6 @@ import 'package:toolmape/app/shell/app_shell.dart';
 import 'package:toolmape/features/calculator/presentation/viewmodels/calculator_view_model.dart';
 import 'package:toolmape/features/calculator/presentation/viewmodels/parametros_view_model.dart';
 import 'package:toolmape/app/router/routes.dart';
-import 'package:toolmape/core/utils/formatters.dart';
 import 'package:toolmape/features/general/presentation/molecules/confirm_dialog.dart';
 
 import '../organisms/calculadora_form.dart';
