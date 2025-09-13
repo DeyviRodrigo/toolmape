@@ -270,13 +270,15 @@ class _CalculadoraForm extends StatefulWidget {
 class _CalculadoraFormState extends State<_CalculadoraForm> {
   bool _loadingPrecioOro = false;
   bool _loadingTipoCambio = false;
+  DateTime? _spotCapturedAt;
+  DateTime? _latestCapturedAt;
 
   Future<({DateTime? spot, DateTime? latest})> _actualizarDatos() async {
     final client = Supabase.instance.client;
     DateTime? spotAt;
 
     final row = await client
-        .from('stg_spot_ticks')
+        .from('spot')
         .select('price, captured_at')
         .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
         .ilike('currency', 'usd')
@@ -298,6 +300,11 @@ class _CalculadoraFormState extends State<_CalculadoraForm> {
       widget.tipoCambioCtrl.text = tc.toStringAsFixed(2);
       widget.vm.setTipoCambio(widget.tipoCambioCtrl.text);
     }
+
+    setState(() {
+      _spotCapturedAt = spotAt;
+      _latestCapturedAt = latestAt;
+    });
 
     return (spot: spotAt, latest: latestAt);
   }
@@ -332,14 +339,14 @@ class _CalculadoraFormState extends State<_CalculadoraForm> {
                   break;
                 case PrecioOroAction.tiempoReal:
                   setState(() => _loadingPrecioOro = true);
-                  final prev = (await _actualizarDatos()).spot;
+                  await _actualizarDatos();
+                  final prev = _spotCapturedAt;
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks'));
-                  DateTime? current;
                   do {
                     await Future.delayed(const Duration(seconds: 1));
-                    current = (await _actualizarDatos()).spot;
-                  } while (current == null || current == prev);
+                    await _actualizarDatos();
+                  } while (_spotCapturedAt == null || _spotCapturedAt == prev);
                   setState(() => _loadingPrecioOro = false);
                   break;
                 case PrecioOroAction.analisis:
@@ -382,14 +389,14 @@ class _CalculadoraFormState extends State<_CalculadoraForm> {
                   break;
                 case TipoCambioAction.tiempoReal:
                   setState(() => _loadingTipoCambio = true);
-                  final prev = (await _actualizarDatos()).latest;
+                  await _actualizarDatos();
+                  final prev = _latestCapturedAt;
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks'));
-                  DateTime? current;
                   do {
                     await Future.delayed(const Duration(seconds: 1));
-                    current = (await _actualizarDatos()).latest;
-                  } while (current == null || current == prev);
+                    await _actualizarDatos();
+                  } while (_latestCapturedAt == null || _latestCapturedAt == prev);
                   setState(() => _loadingTipoCambio = false);
                   break;
               }

@@ -11,7 +11,7 @@ class ExchangeRateDatasource {
   /// Returns the latest available PEN/USD exchange rate and when it was captured.
   Future<({double? value, DateTime? capturedAt})> fetchLatest() async {
     final row = await client
-        .from('stg_latest_ticks')
+        .from('latest')
         .select('captured_at, pen_usd')
         .order('captured_at', ascending: false)
         .limit(1)
