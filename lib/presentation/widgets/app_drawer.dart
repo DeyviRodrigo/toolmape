@@ -30,12 +30,21 @@ class AppDrawer extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'ToolMAPE',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: Text(
+                          'ToolMAPE',
+                          style:
+                              TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1),
+                  ],
                 ),
                 Expanded(
                   child: ListView(
