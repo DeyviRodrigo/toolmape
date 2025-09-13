@@ -4,36 +4,46 @@ import '../tokens/typography.dart';
 import '../extensions/app_colors.dart';
 import '../tokens/shapes.dart';
 
-final lightTheme = ThemeData(
+final ThemeData lightTheme = ThemeData(
   useMaterial3: true,
   colorScheme: lightColorScheme,
   textTheme: buildTextTheme(lightColorScheme),
+
   extensions: const [
     AppColors(success: Color(0xFF10B981), warning: Color(0xFFF59E0B)),
   ],
+
   filledButtonTheme: FilledButtonThemeData(
     style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
+      shape: WidgetStatePropertyAll(shapeMd),
     ),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
+      shape: WidgetStatePropertyAll(shapeMd),
     ),
   ),
-  outlinedButtonTheme: OutlinedButtonThemeData(
-    style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
+  outlinedButtonTheme: const OutlinedButtonThemeData(
+    style: ButtonStyle(
+      shape: WidgetStatePropertyAll(shapeMd),
     ),
   ),
-  textButtonTheme: TextButtonThemeData(
-    style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
+  textButtonTheme: const TextButtonThemeData(
+    style: ButtonStyle(
+      shape: WidgetStatePropertyAll(shapeMd),
     ),
   ),
+
   inputDecorationTheme: const InputDecorationTheme(
     border: OutlineInputBorder(borderRadius: borderRadiusMd),
   ),
-  cardTheme: const CardThemeData(shape: shapeMd),
-  dialogTheme: const DialogThemeData(shape: shapeMd),
+
+  cardTheme: const CardThemeData(
+    shape: shapeMd,
+    surfaceTintColor: Colors.transparent,
+  ),
+  dialogTheme: const DialogThemeData(
+    shape: shapeMd,
+    surfaceTintColor: Colors.transparent,
+  ),
 );

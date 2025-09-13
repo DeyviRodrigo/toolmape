@@ -5,49 +5,83 @@ import '../tokens/typography.dart';
 import '../extensions/app_colors.dart';
 import '../tokens/shapes.dart';
 
-final blackTheme = ThemeData(
+// Opcional: asegura onSurface blanco (útil para fondos de icono en dark/black).
+final _cs = blackColorScheme.copyWith(
+  onSurface: Colors.white,
+);
+
+final ThemeData blackTheme = ThemeData(
   useMaterial3: true,
-  colorScheme: blackColorScheme,
-  textTheme: buildTextTheme(blackColorScheme),
+  colorScheme: _cs,
+  textTheme: buildTextTheme(_cs),
+
+  // Fondo principal full negro
   scaffoldBackgroundColor: Colors.black,
-  drawerTheme: const DrawerThemeData(
-    backgroundColor: Color(0xFF1C1C1C),
+
+  // Evita tinte por elevación y surfaceTint (que dan el “azulado”)
+  applyElevationOverlayColor: false,
+  cardTheme: const CardThemeData(
+    shape: shapeMd,
+    color: Colors.black,
+    surfaceTintColor: Colors.transparent,
   ),
+  dialogTheme: const DialogThemeData(
+    shape: shapeMd,
+    backgroundColor: Colors.black,
+    surfaceTintColor: Colors.transparent,
+  ),
+  drawerTheme: const DrawerThemeData(
+    backgroundColor: Color(0xFF1C1C1C), // puedes usar Colors.black si lo quieres más negro
+    surfaceTintColor: Colors.transparent,
+  ),
+
+  // Extensiones
   extensions: const [
     AppColors(success: Color(0xFF34D399), warning: Color(0xFFFBBF24)),
   ],
+
+  // Botones blanco/negro
   filledButtonTheme: FilledButtonThemeData(
-    style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
-      backgroundColor: MaterialStatePropertyAll(Colors.white),
-      foregroundColor: MaterialStatePropertyAll(Colors.black),
+    style: ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.white),
+      foregroundColor: const WidgetStatePropertyAll(Colors.black),
+      shape: const WidgetStatePropertyAll(shapeMd),
     ),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
-    style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
-      backgroundColor: MaterialStatePropertyAll(Colors.white),
-      foregroundColor: MaterialStatePropertyAll(Colors.black),
+    style: ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.white),
+      foregroundColor: const WidgetStatePropertyAll(Colors.black),
+      shape: const WidgetStatePropertyAll(shapeMd),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
-    style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
-      backgroundColor: MaterialStatePropertyAll(Colors.white),
-      foregroundColor: MaterialStatePropertyAll(Colors.black),
-      side: MaterialStatePropertyAll(BorderSide(color: Colors.black)),
+    style: ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.white),
+      foregroundColor: const WidgetStatePropertyAll(Colors.black),
+      side: const WidgetStatePropertyAll(BorderSide(color: Colors.black)),
+      shape: const WidgetStatePropertyAll(shapeMd),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: const ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
-      backgroundColor: MaterialStatePropertyAll(Colors.white),
-      foregroundColor: MaterialStatePropertyAll(Colors.black),
+    style: ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.white),
+      foregroundColor: const WidgetStatePropertyAll(Colors.black),
+      shape: const WidgetStatePropertyAll(shapeMd),
     ),
   ),
+
   inputDecorationTheme: const InputDecorationTheme(
     border: OutlineInputBorder(borderRadius: borderRadiusMd),
   ),
-  cardTheme: const CardThemeData(shape: shapeMd),
-  dialogTheme: const DialogThemeData(shape: shapeMd),
+
+  // Divider gris medio
+  dividerTheme: DividerThemeData(
+    color: Colors.grey.shade600,
+    thickness: 1,
+    space: 1,
+  ),
+
+  iconTheme: const IconThemeData(color: Colors.white),
+  listTileTheme: const ListTileThemeData(iconColor: Colors.white, textColor: Colors.white),
 );

@@ -4,48 +4,54 @@ import '../tokens/typography.dart';
 import '../extensions/app_colors.dart';
 import '../tokens/shapes.dart';
 
-// Ajuste del ColorScheme oscuro
+// Ajuste del ColorScheme oscuro: primary/blanco para usarlo en iconos si lo necesitas
 final ColorScheme _darkCS = darkColorScheme.copyWith(
-  primary: Colors.white,     // blanco en oscuro
-  onPrimary: Colors.black,   // texto/icono sobre primary
+  primary: Colors.white,
+  onPrimary: Colors.black,
+  // (opcional) si quieres usar onSurface como fondo blanco para el logo en dark:
+  // onSurface: Colors.white,
 );
 
-final darkTheme = ThemeData(
+final ThemeData darkTheme = ThemeData(
   useMaterial3: true,
   colorScheme: _darkCS,
   textTheme: buildTextTheme(_darkCS),
 
+  // Evita tinte azulado por elevación en M3
+  applyElevationOverlayColor: false,
+
+  // Extensiones personalizadas
   extensions: const [
     AppColors(success: Color(0xFF34D399), warning: Color(0xFFFBBF24)),
   ],
 
-  // Botón "relleno" (FilledButton) -> blanco en oscuro
+  // Botón "relleno" (FilledButton) -> fondo blanco / texto negro en oscuro
   filledButtonTheme: FilledButtonThemeData(
     style: ButtonStyle(
-      backgroundColor: MaterialStatePropertyAll(_darkCS.primary),
-      foregroundColor: MaterialStatePropertyAll(_darkCS.onPrimary),
-      shape: const MaterialStatePropertyAll(shapeMd),
+      backgroundColor: WidgetStatePropertyAll(_darkCS.primary),
+      foregroundColor: WidgetStatePropertyAll(_darkCS.onPrimary),
+      shape: const WidgetStatePropertyAll(shapeMd),
     ),
   ),
 
-  // Botón "elevado" (ElevatedButton) -> blanco en oscuro
+  // Botón "elevado" (ElevatedButton) -> fondo blanco / texto negro en oscuro
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
-      backgroundColor: MaterialStatePropertyAll(_darkCS.primary),
-      foregroundColor: MaterialStatePropertyAll(_darkCS.onPrimary),
-      shape: const MaterialStatePropertyAll(shapeMd),
+      backgroundColor: WidgetStatePropertyAll(_darkCS.primary),
+      foregroundColor: WidgetStatePropertyAll(_darkCS.onPrimary),
+      shape: const WidgetStatePropertyAll(shapeMd),
     ),
   ),
 
   // Mantengo shape; colores heredan del esquema
   outlinedButtonTheme: const OutlinedButtonThemeData(
     style: ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
+      shape: WidgetStatePropertyAll(shapeMd),
     ),
   ),
   textButtonTheme: const TextButtonThemeData(
     style: ButtonStyle(
-      shape: MaterialStatePropertyAll(shapeMd),
+      shape: WidgetStatePropertyAll(shapeMd),
     ),
   ),
 
@@ -53,11 +59,17 @@ final darkTheme = ThemeData(
     border: OutlineInputBorder(borderRadius: borderRadiusMd),
   ),
 
-  // Tarjetas y diálogos igual que antes
-  cardTheme: const CardThemeData(shape: shapeMd),
-  dialogTheme: const DialogThemeData(shape: shapeMd),
+  // Superficies sin surfaceTint (para evitar azules/grises no deseados)
+  cardTheme: const CardThemeData(
+    shape: shapeMd,
+    surfaceTintColor: Colors.transparent,
+  ),
+  dialogTheme: const DialogThemeData(
+    shape: shapeMd,
+    surfaceTintColor: Colors.transparent,
+  ),
 
-  // Divider gris medio en oscuro
+  // Divider gris medio
   dividerTheme: DividerThemeData(
     color: Colors.grey.shade600,
     thickness: 1,
