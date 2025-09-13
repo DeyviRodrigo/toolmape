@@ -68,12 +68,12 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
   }
 
   PopupMenuButton<T> buildMenu<T>({
-    required IconData icon,
+    required Widget icon,
     required List<MenuOption<T>> options,
     required void Function(T) onSelected,
   }) {
     return PopupMenuButton<T>(
-      icon: Icon(icon),
+      icon: icon,
       offset: _menuOffsetUp,
       itemBuilder: (_) => options
           .map(
@@ -236,7 +236,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
   }
 }
 
-class _CalculadoraForm extends StatelessWidget {
+class _CalculadoraForm extends StatefulWidget {
   const _CalculadoraForm({
     required this.precioOroCtrl,
     required this.tipoCambioCtrl,
@@ -258,64 +258,89 @@ class _CalculadoraForm extends StatelessWidget {
   final CalculadoraViewModel vm;
   final Future<void> Function() onCalcular;
   final PopupMenuButton<T> Function<T>({
-    required IconData icon,
+    required Widget icon,
     required List<MenuOption<T>> options,
     required void Function(T) onSelected,
   }) buildMenu;
+
+  @override
+  State<_CalculadoraForm> createState() => _CalculadoraFormState();
+}
+
+class _CalculadoraFormState extends State<_CalculadoraForm> {
+  bool _loadingPrecioOro = false;
+  bool _loadingTipoCambio = false;
+
+  Future<({DateTime? spot, DateTime? latest})> _actualizarDatos() async {
+    final client = Supabase.instance.client;
+    DateTime? spotAt;
+
+    final row = await client
+        .from('stg_spot_ticks')
+        .select('price, captured_at')
+        .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
+        .ilike('currency', 'usd')
+        .order('captured_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    final price = (row?['price'] as num?)?.toDouble();
+    spotAt = DateTime.tryParse('${row?['captured_at']}')?.toLocal();
+    if (price != null) {
+      widget.precioOroCtrl.text = price.toStringAsFixed(2);
+      widget.vm.setPrecioOro(widget.precioOroCtrl.text);
+    }
+
+    final ds = ExchangeRateDatasource(client);
+    final res = await ds.fetchLatest();
+    final tc = res.value;
+    final latestAt = res.capturedAt;
+    if (tc != null) {
+      widget.tipoCambioCtrl.text = tc.toStringAsFixed(2);
+      widget.vm.setTipoCambio(widget.tipoCambioCtrl.text);
+    }
+
+    return (spot: spotAt, latest: latestAt);
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final horizontal = size.width >= size.height;
 
-    Future<void> _actualizarPrecioOro() async {
-      final row = await Supabase.instance.client
-          .from('stg_spot_ticks')
-          .select('price')
-          .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
-          .ilike('currency', 'usd')
-          .order('captured_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      final price = (row?['price'] as num?)?.toDouble();
-      if (price != null) {
-        precioOroCtrl.text = price.toStringAsFixed(2);
-        vm.setPrecioOro(precioOroCtrl.text);
-      }
-    }
-
-    Future<void> _actualizarTipoCambio() async {
-      final ds = ExchangeRateDatasource(Supabase.instance.client);
-      final res = await ds.fetchLatest();
-      final tc = res.value;
-      if (tc != null) {
-        tipoCambioCtrl.text = tc.toStringAsFixed(2);
-        vm.setTipoCambio(tipoCambioCtrl.text);
-      }
-    }
-
     Widget buildPrecioOro() => PrecioOroField(
-          controller: precioOroCtrl,
-          menu: buildMenu<PrecioOroAction>(
-            icon: Icons.settings,
+          controller: widget.precioOroCtrl,
+          menu: widget.buildMenu<PrecioOroAction>(
+            icon: _loadingPrecioOro
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.settings),
             options: precioOroMenuOptions,
             onSelected: (a) async {
               switch (a) {
                 case PrecioOroAction.actualizar:
-                  await _actualizarPrecioOro();
-                  await _actualizarTipoCambio();
+                  await _actualizarDatos();
                   break;
                 case PrecioOroAction.avanzadas:
                   final sel = await showPrecioOroAvanzadasDialog(context);
                   if (sel != null) {
-                    precioOroCtrl.text = sel.toStringAsFixed(2);
-                    vm.setPrecioOro(precioOroCtrl.text);
+                    widget.precioOroCtrl.text = sel.toStringAsFixed(2);
+                    widget.vm.setPrecioOro(widget.precioOroCtrl.text);
                   }
                   break;
                 case PrecioOroAction.tiempoReal:
+                  setState(() => _loadingPrecioOro = true);
+                  final prev = (await _actualizarDatos()).spot;
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks'));
-                  await _actualizarPrecioOro();
+                  DateTime? current;
+                  do {
+                    await Future.delayed(const Duration(seconds: 1));
+                    current = (await _actualizarDatos()).spot;
+                  } while (current == null || current == prev);
+                  setState(() => _loadingPrecioOro = false);
                   break;
                 case PrecioOroAction.analisis:
                   break;
@@ -325,14 +350,20 @@ class _CalculadoraForm extends StatelessWidget {
         );
 
     Widget buildTipoCambio() => TipoCambioField(
-          controller: tipoCambioCtrl,
-          menu: buildMenu<TipoCambioAction>(
-            icon: Icons.settings,
+          controller: widget.tipoCambioCtrl,
+          menu: widget.buildMenu<TipoCambioAction>(
+            icon: _loadingTipoCambio
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.settings),
             options: tipoCambioMenuOptions,
             onSelected: (a) async {
               switch (a) {
                 case TipoCambioAction.actualizar:
-                  await _actualizarTipoCambio();
+                  await _actualizarDatos();
                   break;
                 case TipoCambioAction.avanzadas:
                   final sel = await showTipoCambioAvanzadasDialog(context);
@@ -340,19 +371,26 @@ class _CalculadoraForm extends StatelessWidget {
                     final rate = sel.rate;
                     final gold = sel.goldPrice;
                     if (rate != null) {
-                      tipoCambioCtrl.text = rate.toStringAsFixed(2);
-                      vm.setTipoCambio(tipoCambioCtrl.text);
+                      widget.tipoCambioCtrl.text = rate.toStringAsFixed(2);
+                      widget.vm.setTipoCambio(widget.tipoCambioCtrl.text);
                     }
                     if (gold != null) {
-                      precioOroCtrl.text = gold.toStringAsFixed(2);
-                      vm.setPrecioOro(precioOroCtrl.text);
+                      widget.precioOroCtrl.text = gold.toStringAsFixed(2);
+                      widget.vm.setPrecioOro(widget.precioOroCtrl.text);
                     }
                   }
                   break;
                 case TipoCambioAction.tiempoReal:
+                  setState(() => _loadingTipoCambio = true);
+                  final prev = (await _actualizarDatos()).latest;
                   await http.post(Uri.parse(
                       'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks'));
-                  await _actualizarTipoCambio();
+                  DateTime? current;
+                  do {
+                    await Future.delayed(const Duration(seconds: 1));
+                    current = (await _actualizarDatos()).latest;
+                  } while (current == null || current == prev);
+                  setState(() => _loadingTipoCambio = false);
                   break;
               }
             },
@@ -360,9 +398,9 @@ class _CalculadoraForm extends StatelessWidget {
         );
 
     Widget buildDescuento() => DescuentoField(
-          controller: descuentoCtrl,
-          menu: buildMenu<DescuentoAction>(
-            icon: Icons.help_outline,
+          controller: widget.descuentoCtrl,
+          menu: widget.buildMenu<DescuentoAction>(
+            icon: const Icon(Icons.help_outline),
             options: descuentoMenuOptions,
             onSelected: (a) async {
               switch (a) {
@@ -370,22 +408,22 @@ class _CalculadoraForm extends StatelessWidget {
                 case DescuentoAction.desdePrecio:
                   final ok = await showDescuentoDialog(
                     context: context,
-                    precioOroCtrl: precioOroCtrl,
-                    tipoCambioCtrl: tipoCambioCtrl,
-                    descuentoCtrl: descuentoCtrl,
-                    leyCtrl: leyCtrl,
-                    sugeridos: sugeridos,
+                    precioOroCtrl: widget.precioOroCtrl,
+                    tipoCambioCtrl: widget.tipoCambioCtrl,
+                    descuentoCtrl: widget.descuentoCtrl,
+                    leyCtrl: widget.leyCtrl,
+                    sugeridos: widget.sugeridos,
                   );
                   if (ok) {
-                    vm
-                      ..setDescuento(descuentoCtrl.text)
-                      ..setLey(leyCtrl.text);
+                    widget.vm
+                      ..setDescuento(widget.descuentoCtrl.text)
+                      ..setLey(widget.leyCtrl.text);
                   }
                   break;
                 case DescuentoAction.predeterminado:
-                  descuentoCtrl.text =
-                      sugeridos.descuentoSugerido.toString();
-                  vm.setDescuento(descuentoCtrl.text);
+                  widget.descuentoCtrl.text =
+                      widget.sugeridos.descuentoSugerido.toString();
+                  widget.vm.setDescuento(widget.descuentoCtrl.text);
                   break;
               }
             },
@@ -393,9 +431,9 @@ class _CalculadoraForm extends StatelessWidget {
         );
 
     Widget buildLey() => LeyField(
-          controller: leyCtrl,
-          menu: buildMenu<LeyAction>(
-            icon: Icons.help_outline,
+          controller: widget.leyCtrl,
+          menu: widget.buildMenu<LeyAction>(
+            icon: const Icon(Icons.help_outline),
             options: leyMenuOptions,
             onSelected: (a) async {
               switch (a) {
@@ -409,8 +447,9 @@ class _CalculadoraForm extends StatelessWidget {
                   );
                   break;
                 case LeyAction.predeterminado:
-                  leyCtrl.text = sugeridos.leySugerida.toString();
-                  vm.setLey(leyCtrl.text);
+                  widget.leyCtrl.text =
+                      widget.sugeridos.leySugerida.toString();
+                  widget.vm.setLey(widget.leyCtrl.text);
                   break;
               }
             },
@@ -418,7 +457,7 @@ class _CalculadoraForm extends StatelessWidget {
         );
 
     Widget buildCantidad() => CantidadField(
-          controller: cantidadCtrl,
+          controller: widget.cantidadCtrl,
           menu: IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => showDialog(
@@ -433,12 +472,12 @@ class _CalculadoraForm extends StatelessWidget {
         );
 
     final button = FilledButton(
-      onPressed: onCalcular,
+      onPressed: widget.onCalcular,
       style: Theme.of(context).brightness == Brightness.dark
           ? FilledButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
-            )
+          )
           : null,
       child: const Text('Calcular'),
     );
@@ -462,28 +501,42 @@ class _CalculadoraForm extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          buildCantidad(),
-          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(child: buildCantidad()),
+              const SizedBox(width: 16),
+              Expanded(child: button),
+            ],
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          Row(
+            children: [Expanded(child: buildPrecioOro())],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [Expanded(child: buildTipoCambio())],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [Expanded(child: buildDescuento())],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [Expanded(child: buildLey())],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [Expanded(child: buildCantidad())],
+          ),
+          const SizedBox(height: 32),
           button,
         ],
       );
     }
-
-    return Column(
-      children: [
-        buildPrecioOro(),
-        const SizedBox(height: 12),
-        buildTipoCambio(),
-        const SizedBox(height: 16),
-        buildDescuento(),
-        const SizedBox(height: 16),
-        buildLey(),
-        const SizedBox(height: 16),
-        buildCantidad(),
-        const SizedBox(height: 24),
-        button,
-      ],
-    );
   }
 }
 
