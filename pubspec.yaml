@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_svg: ^2.0.10+1
   http: ^1.2.2
   google_fonts: ^6.2.1
   flutter_riverpod: ^2.5.1
@@ -36,3 +37,4 @@ flutter:
     - .env
     - assets/TrazMAPE1.png
     - assets/TrazMAPE2.png
+    - assets/logo_ToolMAPE.svg

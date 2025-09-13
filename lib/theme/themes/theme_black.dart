@@ -51,4 +51,3 @@ final blackTheme = ThemeData(
   cardTheme: const CardThemeData(shape: shapeMd),
   dialogTheme: const DialogThemeData(shape: shapeMd),
 );
-

@@ -3,6 +3,7 @@ import 'package:toolmape/design_system/molecules/app_drawer_item.dart';
 import 'package:toolmape/theme/theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Widget: AppDrawer - menú lateral de navegación.
 class AppDrawer extends StatelessWidget {
@@ -30,20 +31,46 @@ class AppDrawer extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Column(
+                // Header con icono SVG a la izquierda y colores según tema
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(
-                        child: Text(
-                          'ToolMAPE',
-                          style:
-                              TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                        ),
+                      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 8),
+                      child: Stack(
+                        alignment: Alignment.center, // centra el contenido por defecto
+                        children: [
+                          // Logo alineado a la izquierda
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: SvgPicture.asset(
+                                'assets/logo_ToolMAPE.svg',
+                                theme: SvgTheme(
+                                  currentColor: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Texto centrado
+                          Text(
+                            'ToolMAPE',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Divider(height: 1),
+                    const Divider(
+                      height: 1,
+                      color: Colors.grey,
+                      thickness: 1,
+                    ),
                   ],
                 ),
                 Expanded(
@@ -70,7 +97,11 @@ class AppDrawer extends StatelessWidget {
                         title: 'Consultoría personalizada',
                         onTap: () => Navigator.pop(context),
                       ),
-                      const Divider(),
+                      const Divider(
+                        height: 1,
+                        color: Colors.grey,
+                        thickness: 1,
+                      ),
                       AppDrawerItem(
                         icon: Icons.info_outline,
                         title: 'Información de la app',
@@ -107,35 +138,39 @@ class AppDrawer extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Divider(),
+                const Divider(
+                  height: 1,
+                  color: Colors.grey,
+                  thickness: 1,
+                ),
                 ListTile(
                   leading: const Icon(Icons.person),
                   title: Text(user?.email ?? 'Iniciar sesión'),
                   trailing: user == null
                       ? null
                       : PopupMenuButton<String>(
-                          icon: const Icon(Icons.arrow_drop_down),
-                          onSelected: (v) async {
-                            Navigator.pop(context);
-                            if (v == 'logout') {
-                              await Supabase.instance.client.auth.signOut();
-                            }
-                          },
-                          itemBuilder: (_) => const [
-                            PopupMenuItem(
-                              value: 'config',
-                              child: Text('Configurar la cuenta'),
-                            ),
-                            PopupMenuItem(
-                              value: 'logout',
-                              child: Text('Cerrar sesión'),
-                            ),
-                          ],
-                        ),
+                    icon: const Icon(Icons.arrow_drop_down),
+                    onSelected: (v) async {
+                      Navigator.pop(context);
+                      if (v == 'logout') {
+                        await Supabase.instance.client.auth.signOut();
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'config',
+                        child: Text('Configurar la cuenta'),
+                      ),
+                      PopupMenuItem(
+                        value: 'logout',
+                        child: Text('Cerrar sesión'),
+                      ),
+                    ],
+                  ),
                   onTap: user == null
                       ? () {
-                          Navigator.pop(context);
-                        }
+                    Navigator.pop(context);
+                  }
                       : null,
                 ),
               ],
