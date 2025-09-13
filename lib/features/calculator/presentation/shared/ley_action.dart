@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'menu_option.dart';
+import 'package:toolmape/features/general/presentation/shared/menu_option.dart';
 
 /// Actions for law (purity) calculations.
 enum LeyAction { ayuda, predeterminado }

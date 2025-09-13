@@ -7,10 +7,10 @@ import 'package:toolmape/features/calculator/presentation/providers/parametros_p
 import 'package:toolmape/app/routes.dart';
 import '../../core/utils/formatters.dart';
 import 'package:toolmape/design_system/molecules/confirm_dialog.dart';
-import 'package:toolmape/presentation/shared/general_action.dart';
-import 'package:toolmape/presentation/shared/descuento_action.dart';
-import 'package:toolmape/presentation/shared/ley_action.dart';
-import 'package:toolmape/presentation/shared/menu_option.dart';
+import 'package:toolmape/features/calculator/presentation/shared/general_action.dart';
+import 'package:toolmape/features/calculator/presentation/shared/descuento_action.dart';
+import 'package:toolmape/features/calculator/presentation/shared/ley_action.dart';
+import 'package:toolmape/features/general/presentation/shared/menu_option.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
 

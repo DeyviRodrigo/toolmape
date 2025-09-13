@@ -13,8 +13,8 @@ import 'package:toolmape/app/routes.dart';
 import 'package:toolmape/features/calendar/domain/usecases/schedule_notifications_usecase.dart';
 import '../molecules/eventos_calendario_helpers.dart';
 import 'package:toolmape/features/calendar/presentation/controllers/calendario_controller.dart';
-import 'package:toolmape/presentation/shared/event_filter.dart';
-import 'package:toolmape/presentation/shared/menu_option.dart';
+import 'package:toolmape/features/calendar/presentation/shared/event_filter.dart';
+import 'package:toolmape/features/general/presentation/shared/menu_option.dart';
 import 'package:toolmape/theme/extensions/app_colors.dart';
 
 // Eventos privados del usuario
