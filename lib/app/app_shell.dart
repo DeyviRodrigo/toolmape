@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toolmape/presentation/widgets/app_drawer.dart';
+import 'package:toolmape/features/general/presentation/organisms/app_drawer.dart';
 import 'package:toolmape/features/general/presentation/atoms/menu_option.dart';
 
 /// Widget: AppShell - estructura base con AppBar y Drawer.

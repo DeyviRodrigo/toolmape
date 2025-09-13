@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Small legend item with icon and text.
-class LegendItemWidget extends StatelessWidget {
-  const LegendItemWidget({
+/// Atom: LegendItem - icon and label for legends.
+class LegendItem extends StatelessWidget {
+  const LegendItem({
     super.key,
     required this.icon,
     required this.color,

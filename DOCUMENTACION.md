@@ -1,26 +1,58 @@
-# Documentación de bloques
+# Documentación del proyecto
 
-Este documento resume los principales bloques del código y su propósito.
+Este documento resume la estructura de ToolMAPE conforme a los principios de Clean Architecture, Domain-Driven Design (DDD), el patrón MVVM con Riverpod y Atomic Design.
 
-## Widgets
-- **ScreenCalculadora**: interfaz principal para calcular el precio del oro.
-- **AppShell**: envoltorio con `AppBar` y `Drawer`.
-- **AppDrawer**: menú lateral de navegación.
-- **CalendarioMineroScreen**: pantalla para consultar el calendario.
-- **CampoNumerico**: campo de texto para ingresar números.
-- **_LegendItem**: elemento de leyenda para el calendario.
+## Estructura de carpetas
 
-## Controladores y Notifiers
-- **CalculadoraController**: gestiona la lógica de cálculo y preferencias.
-- **ParametrosNotifier**: administra valores recomendados para el cálculo.
-- **UserPrefsNotifier**: maneja preferencias persistentes del usuario.
-- **MisEventosRepository**: operaciones sobre eventos personales.
-- **CalendarioRepository**: acceso a eventos generales del calendario.
+```
+lib/
+  app/                # Punto de entrada, rutas y shell de la aplicación
+  core_foundation/    # Configuraciones base y tema global
+  features/
+    general/          # Recursos compartidos y reutilizables
+      data/
+      domain/
+      infrastructure/
+      presentation/
+        atoms/        # Ej. NumericField, MenuOption, LegendItem
+        molecules/    # Ej. AppDrawerItem, ConfirmDialog, MenuPopupButton
+        organisms/    # Ej. AppDrawer
+        pages/        # Ej. SplashPage
+        providers/    # Ej. UserPrefsNotifier
+    calculator/       # Módulo calculadora de precios
+      core/
+      domain/
+      infrastructure/
+      presentation/
+    calendar/         # Módulo calendario minero
+      core/
+      data/
+      domain/
+      presentation/
+  theme/              # Temas y tokens de diseño
+```
 
-## Servicios y Utilidades
-- **CalculadoraService**: fórmulas para el precio del oro.
-- **CalendarioNotifications**: gestión de notificaciones locales.
-- **choiceDialog**: cuadro de diálogo con opciones.
-- **soles**: formatea números a moneda peruana.
+Cada módulo dentro de `features` contiene sus propias capas: **domain**, **data/infrastructure**, **presentation** y **usecases**, encapsulando la lógica específica del dominio.
 
+## Componentes principales
+
+### Widgets y vistas
+- **CalculadoraPage** – interfaz para calcular el precio del oro.
+- **CalendarioPage** – consulta y gestión del calendario minero.
+- **SplashPage** – pantalla inicial de carga.
+- **AppShell** – Scaffold base con AppBar y Drawer.
+- **AppDrawer** – menú lateral de navegación.
+- **LegendItem** – elemento de leyenda reutilizable.
+- **NumericField** – campo de texto numérico.
+
+### Controladores y notifiers
+- **CalculadoraController** – lógica del cálculo y preferencias.
+- **CalendarioController** – maneja el estado del calendario.
+- **ParametrosNotifier** – valores recomendados para la calculadora.
+- **UserPrefsNotifier** – persistencia de preferencias locales del usuario.
+
+### Servicios y utilidades
+- **CalculadoraFormulas** – operaciones para el cálculo de precios del oro.
+- **CalendarioNotifications** – gestión de notificaciones locales.
+- **Formatters** y **NumberParsing** – utilidades comunes para formato de datos.
 

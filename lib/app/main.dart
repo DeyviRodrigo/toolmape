@@ -8,7 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:toolmape/features/calendar/core/calendario_notifications.dart';
 import 'package:toolmape/features/calculator/presentation/pages/calculadora_page.dart';
 import 'package:toolmape/features/calendar/presentation/pages/calendario_page.dart';
-import 'package:toolmape/presentation/pages/splash_page.dart';
+import 'package:toolmape/features/general/presentation/pages/splash_page.dart';
 import 'package:toolmape/app/routes.dart';
 import 'package:toolmape/theme/theme_provider.dart';
 import 'package:toolmape/theme/themes/index.dart';

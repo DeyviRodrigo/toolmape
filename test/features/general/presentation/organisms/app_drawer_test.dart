@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolmape/presentation/widgets/app_drawer.dart';
+import 'package:toolmape/features/general/presentation/organisms/app_drawer.dart';
 
 void main() {
   testWidgets('tapping calculadora triggers callback', (tester) async {

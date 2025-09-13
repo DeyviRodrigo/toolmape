@@ -15,6 +15,7 @@ import '../molecules/eventos_calendario_helpers.dart';
 import 'package:toolmape/features/calendar/presentation/controllers/calendario_controller.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';
 import 'package:toolmape/features/general/presentation/atoms/menu_option.dart';
+import 'package:toolmape/features/general/presentation/atoms/legend_item.dart';
 import 'package:toolmape/theme/extensions/app_colors.dart';
 
 // Eventos privados del usuario
@@ -684,26 +685,6 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
   }
 }
 
-/// Widget: _LegendItem - elemento de la leyenda del calendario.
-class _LegendItem extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  const _LegendItem({required this.icon, required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(label),
-      ],
-    );
-  }
-}
-
 class _Legend extends StatelessWidget {
   const _Legend();
 
@@ -714,15 +695,15 @@ class _Legend extends StatelessWidget {
         runSpacing: 6,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          _LegendItem(
+          LegendItem(
               icon: Icons.assignment_outlined,
               color: Theme.of(context).extension<AppColors>()!.warning,
               label: 'Obligaciones'),
-          _LegendItem(
+          LegendItem(
               icon: Icons.event,
               color: Theme.of(context).colorScheme.primary,
               label: 'Mis eventos'),
-          _LegendItem(
+          LegendItem(
               icon: Icons.flag,
               color: Theme.of(context).colorScheme.error,
               label: 'Feriados'),
