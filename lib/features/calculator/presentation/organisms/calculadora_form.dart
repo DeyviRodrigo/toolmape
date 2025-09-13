@@ -89,8 +89,16 @@ class CalculadoraForm extends StatelessWidget {
                 case PrecioOroAction.avanzadas:
                   final sel = await showPrecioOroAvanzadasDialog(context);
                   if (sel != null) {
-                    precioOroCtrl.text = sel.toStringAsFixed(2);
-                    vm.setPrecioOro(precioOroCtrl.text);
+                    final price = sel.price;
+                    final rate = sel.rate;
+                    if (price != null) {
+                      precioOroCtrl.text = price.toStringAsFixed(2);
+                      vm.setPrecioOro(precioOroCtrl.text);
+                    }
+                    if (rate != null) {
+                      tipoCambioCtrl.text = rate.toStringAsFixed(2);
+                      vm.setTipoCambio(tipoCambioCtrl.text);
+                    }
                   }
                   break;
                 case PrecioOroAction.tiempoReal:

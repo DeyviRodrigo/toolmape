@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:toolmape/features/calculator/infrastructure/datasources/exchange_rate_datasource.dart';
 import 'package:toolmape/features/calculator/infrastructure/datasources/price_datasource.dart';
 
-Future<double?> showPrecioOroAvanzadasDialog(
+typedef PrecioOroSelection = ({double? price, double? rate});
+
+Future<PrecioOroSelection?> showPrecioOroAvanzadasDialog(
   BuildContext context, {
   PriceDatasource? datasource,
+  ExchangeRateDatasource? exchangeDatasource,
 }) async {
-  return showDialog<double>(
+  return showDialog<PrecioOroSelection>(
     context: context,
     barrierDismissible: true,
-    builder: (_) => _PrecioOroAvanzadasDialog(datasource: datasource),
+    builder: (_) => _PrecioOroAvanzadasDialog(
+      datasource: datasource,
+      exchangeDatasource: exchangeDatasource,
+    ),
   );
 }
 
 class _PrecioOroAvanzadasDialog extends StatefulWidget {
-  const _PrecioOroAvanzadasDialog({this.datasource});
+  const _PrecioOroAvanzadasDialog({
+    this.datasource,
+    this.exchangeDatasource,
+  });
 
   final PriceDatasource? datasource;
+  final ExchangeRateDatasource? exchangeDatasource;
 
   @override
   State<_PrecioOroAvanzadasDialog> createState() =>
@@ -36,13 +47,17 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
   DateTime? selectedDate;
   bool loading = true;
   bool spotError = false;
+  double? rate;
   late final PriceDatasource _datasource;
+  late final ExchangeRateDatasource _exchangeDatasource;
 
   @override
   void initState() {
     super.initState();
     _datasource =
         widget.datasource ?? PriceDatasource(Supabase.instance.client);
+    _exchangeDatasource = widget.exchangeDatasource ??
+        ExchangeRateDatasource(Supabase.instance.client);
     _load();
   }
 
@@ -51,6 +66,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
     Map<String, double?>? spotRes;
     DateTime? latestTs;
     DateTime? spotTs;
+    double? rateRes;
     var spotErr = false;
     try {
       final res = await _datasource.fetchLatestGold();
@@ -65,6 +81,12 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
       spotTs = res.capturedAt;
     } catch (_) {
       spotErr = true;
+    }
+    try {
+      final res = await _exchangeDatasource.fetchLatest();
+      rateRes = res.value;
+    } catch (_) {
+      // ignore
     }
 
     if (spotErr) {
@@ -82,6 +104,7 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
       spotCapturedAt = spotTs;
       loading = false;
       spotError = spotErr;
+      rate = rateRes;
     });
   }
 
@@ -95,12 +118,14 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
     );
     if (picked != null) {
       final res = await _datasource.fetchDailySummary(picked);
+      final rateRes = await _exchangeDatasource.fetchByDate(picked);
       setState(() {
         latest = res.latest;
         spot = res.spot;
         selectedDate = picked;
         latestCapturedAt = null;
         spotCapturedAt = null;
+        rate = rateRes.value;
       });
     }
   }
@@ -118,7 +143,9 @@ class _PrecioOroAvanzadasDialogState extends State<_PrecioOroAvanzadasDialog> {
     return SizedBox(
       width: _boxWidth,
       child: InkWell(
-        onTap: v == null ? null : () => Navigator.pop(context, v),
+        onTap: v == null
+            ? null
+            : () => Navigator.pop(context, (price: v, rate: rate)),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
