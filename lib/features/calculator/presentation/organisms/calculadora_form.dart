@@ -15,8 +15,8 @@ import '../molecules/ley_field.dart';
 import '../molecules/cantidad_field.dart';
 import '../molecules/descuento_dialog.dart';
 import 'package:toolmape/features/general/presentation/molecules/menu_popup_button.dart';
-import 'package:toolmape/features/calculator/presentation/controllers/calculadora_controller.dart';
-import 'package:toolmape/features/calculator/presentation/providers/parametros_providers.dart';
+import 'package:toolmape/features/calculator/presentation/viewmodels/calculator_view_model.dart';
+import 'package:toolmape/features/calculator/presentation/viewmodels/parametros_view_model.dart';
 
 class CalculadoraForm extends StatelessWidget {
   const CalculadoraForm({
@@ -37,7 +37,7 @@ class CalculadoraForm extends StatelessWidget {
   final TextEditingController leyCtrl;
   final TextEditingController cantidadCtrl;
   final ParametrosRecomendados sugeridos;
-  final CalculadoraViewModel vm;
+  final CalculatorViewModel vm;
   final Future<void> Function() onCalcular;
 
   @override

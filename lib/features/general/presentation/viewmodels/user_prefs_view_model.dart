@@ -16,8 +16,8 @@ class UserPrefs {
   );
 }
 
-/// Notifier: UserPrefsNotifier - maneja la persistencia de UserPrefs.
-class UserPrefsNotifier extends AsyncNotifier<UserPrefs> {
+/// Notifier: UserPrefsViewModel - maneja la persistencia de UserPrefs.
+class UserPrefsViewModel extends AsyncNotifier<UserPrefs> {
   static const _kRucDigit = 'prefs.rucLastDigit';
   static const _kRegimen  = 'prefs.regimen';
   static const _kNotif    = 'prefs.notif';
@@ -53,6 +53,12 @@ class UserPrefsNotifier extends AsyncNotifier<UserPrefs> {
   }
 }
 
-/// Provider: userPrefsProvider - expone las preferencias del usuario.
-final userPrefsProvider =
-    AsyncNotifierProvider<UserPrefsNotifier, UserPrefs>(() => UserPrefsNotifier());
+typedef UserPrefsNotifier = UserPrefsViewModel;
+
+/// Provider: userPrefsViewModelProvider - expone las preferencias del usuario.
+final userPrefsViewModelProvider =
+    AsyncNotifierProvider<UserPrefsViewModel, UserPrefs>(
+        () => UserPrefsViewModel());
+
+@Deprecated('Use userPrefsViewModelProvider')
+final userPrefsProvider = userPrefsViewModelProvider;

@@ -2,8 +2,8 @@ import '../../domain/entities/mi_evento_entity.dart';
 import '../../domain/repositories/mis_eventos_repository.dart';
 import '../../domain/value_objects/date_range.dart';
 import '../datasources/mis_eventos_supabase_ds.dart';
-import '../dto/mi_evento_dto.dart';
-import '../mappers/mi_evento_mapper.dart';
+import '../../data/dtos/mi_evento_dto.dart';
+import '../../data/mappers/mi_evento_mapper.dart';
 
 /// Repository implementation for personal events.
 class MisEventosRepositoryImpl implements MisEventosRepository {

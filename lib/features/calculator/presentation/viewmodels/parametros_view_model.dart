@@ -39,7 +39,7 @@ class ParametrosRecomendados {
 }
 
 /// Notifier: ParametrosNotifier - gestiona los parámetros recomendados.
-class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
+class ParametrosViewModel extends AsyncNotifier<ParametrosRecomendados> {
   static const _goldKey = 'ultimoPrecioOro';
   static const _tcKey = 'ultimoTipoCambio';
 
@@ -117,8 +117,14 @@ class ParametrosNotifier extends AsyncNotifier<ParametrosRecomendados> {
 }
 
 /// Provider: parametrosProvider - expone ParametrosNotifier.
-final parametrosProvider = AsyncNotifierProvider<ParametrosNotifier, ParametrosRecomendados>(
-      () => ParametrosNotifier(),
-);
+typedef ParametrosNotifier = ParametrosViewModel;
+
+final parametrosViewModelProvider =
+    AsyncNotifierProvider<ParametrosViewModel, ParametrosRecomendados>(
+        () => ParametrosViewModel(),
+    );
+
+@Deprecated('Use parametrosViewModelProvider')
+final parametrosProvider = parametrosViewModelProvider;
 
 final parametrosOfflineProvider = StateProvider<bool>((_) => false);

@@ -1,5 +1,5 @@
 import '../../domain/entities/metal_entity.dart';
-import '../dto/metal_dto.dart';
+import '../dtos/metal_dto.dart';
 
 class MetalMapper {
   static MetalEntity fromDto(MetalDto dto) => MetalEntity(

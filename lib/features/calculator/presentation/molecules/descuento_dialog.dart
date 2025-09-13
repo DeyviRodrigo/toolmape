@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/number_parsing.dart';
+import 'package:toolmape/core/utils/number_parsing.dart';
 import 'package:toolmape/features/calculator/domain/usecases/calculate_discount_from_offered_price_usecase.dart';
 import 'package:toolmape/features/calculator/options/index.dart';
-import 'package:toolmape/features/calculator/presentation/providers/parametros_providers.dart';
+import 'package:toolmape/features/calculator/presentation/viewmodels/parametros_view_model.dart';
 
 /// Dialog helper to calculate discount based on offered price and gold law.
 Future<bool> showDescuentoDialog({

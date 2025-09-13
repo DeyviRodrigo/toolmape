@@ -5,9 +5,9 @@ import 'package:toolmape/features/calculator/domain/usecases/calculate_price_use
 import 'package:toolmape/features/general/domain/usecases/load_prefs_usecase.dart';
 import 'package:toolmape/features/general/domain/usecases/save_prefs_usecase.dart';
 import 'package:toolmape/app/init_dependencies.dart';
-import '../../core/utils/number_parsing.dart';
+import 'package:toolmape/core/utils/number_parsing.dart';
 
-class CalculadoraState {
+class CalculatorState {
   final String precioOro;
   final String tipoCambio;
   final String descuento;
@@ -15,7 +15,7 @@ class CalculadoraState {
   final String cantidad;
   final double? precioPorGramo;
   final double? total;
-  const CalculadoraState({
+  const CalculatorState({
     this.precioOro = '',
     this.tipoCambio = '',
     this.descuento = '',
@@ -25,7 +25,7 @@ class CalculadoraState {
     this.total,
   });
 
-  CalculadoraState copyWith({
+  CalculatorState copyWith({
     String? precioOro,
     String? tipoCambio,
     String? descuento,
@@ -34,7 +34,7 @@ class CalculadoraState {
     double? precioPorGramo,
     double? total,
   }) {
-    return CalculadoraState(
+    return CalculatorState(
       precioOro: precioOro ?? this.precioOro,
       tipoCambio: tipoCambio ?? this.tipoCambio,
       descuento: descuento ?? this.descuento,
@@ -46,15 +46,15 @@ class CalculadoraState {
   }
 }
 
-class CalculadoraViewModel extends StateNotifier<CalculadoraState> {
-  CalculadoraViewModel({
+class CalculatorViewModel extends StateNotifier<CalculatorState> {
+  CalculatorViewModel({
     required CalculatePrice calcularPrecio,
     required SavePrefs guardarPrefs,
     required LoadPrefs cargarPrefs,
   })  : _calcularPrecio = calcularPrecio,
         _guardarPrefs = guardarPrefs,
         _cargarPrefs = cargarPrefs,
-        super(const CalculadoraState());
+        super(const CalculatorState());
 
   final CalculatePrice _calcularPrecio;
   final SavePrefs _guardarPrefs;
@@ -117,12 +117,19 @@ class CalculadoraViewModel extends StateNotifier<CalculadoraState> {
   }
 }
 
-final calculadoraViewModelProvider =
-    StateNotifierProvider<CalculadoraViewModel, CalculadoraState>((ref) {
+typedef CalculadoraState = CalculatorState;
+typedef CalculadoraViewModel = CalculatorViewModel;
+typedef CalculadoraController = CalculatorViewModel;
+
+final calculatorViewModelProvider =
+    StateNotifierProvider<CalculatorViewModel, CalculatorState>((ref) {
   final repo = ref.read(preferenciasRepositoryProvider);
-  return CalculadoraViewModel(
+  return CalculatorViewModel(
     calcularPrecio: const CalculatePrice(),
     guardarPrefs: SavePrefs(repo),
     cargarPrefs: LoadPrefs(repo),
   );
 });
+
+@Deprecated('Use calculatorViewModelProvider')
+final calculadoraViewModelProvider = calculatorViewModelProvider;

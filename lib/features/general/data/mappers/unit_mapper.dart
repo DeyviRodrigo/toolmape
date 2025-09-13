@@ -1,5 +1,5 @@
 import '../../domain/entities/unit_entity.dart';
-import '../dto/unit_dto.dart';
+import '../dtos/unit_dto.dart';
 
 class UnitMapper {
   static UnitEntity fromDto(UnitDto dto) => UnitEntity(

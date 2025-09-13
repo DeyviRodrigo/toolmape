@@ -4,15 +4,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:table_calendar/table_calendar.dart';
 
 import 'package:toolmape/app/app_shell.dart';
-import '../../core/calendario_notifications.dart';
-import 'package:toolmape/features/calendar/presentation/providers/calendario_providers.dart';
-import 'package:toolmape/features/calendar/presentation/providers/mis_eventos_providers.dart';
+import 'package:toolmape/features/calendar/presentation/viewmodels/eventos_mes_view_model.dart';
+import 'package:toolmape/features/calendar/presentation/viewmodels/mis_eventos_view_model.dart';
+import 'package:toolmape/features/calendar/presentation/viewmodels/schedule_notifications_view_model.dart';
 import 'package:toolmape/app/init_dependencies.dart';
 import 'package:toolmape/features/calendar/domain/value_objects/date_range.dart';
 import 'package:toolmape/app/routes.dart';
-import 'package:toolmape/features/calendar/domain/usecases/schedule_notifications_usecase.dart';
 import '../molecules/eventos_calendario_helpers.dart';
-import 'package:toolmape/features/calendar/presentation/controllers/calendario_controller.dart';
+import 'package:toolmape/features/calendar/presentation/viewmodels/calendar_view_model.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';
 import 'package:toolmape/features/general/presentation/atoms/menu_option.dart';
 import 'package:toolmape/features/general/presentation/atoms/legend_item.dart';
@@ -144,7 +143,7 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
         DateRange(start: _mesRango.start, end: _mesRango.end),
       ),
     );
-    final vm = ref.read(calendarioViewModelProvider.notifier);
+    final vm = ref.read(calendarViewModelProvider.notifier);
 
     final generalesSearch = (eventosAsync.value ?? [])
         .map((e) {
@@ -195,10 +194,7 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
         MenuOption<VoidCallback>(
           value: () async {
             final events = await ref.read(eventosMesProvider(_focused).future);
-            final schedule = ScheduleNotifications(
-              cancelAll: CalendarioNotifications.cancelAll,
-              scheduleOnce: CalendarioNotifications.scheduleOnce,
-            );
+            final schedule = ref.read(scheduleNotificationsProvider);
             await schedule(
               eventos: events,
               rucLastDigit: null,

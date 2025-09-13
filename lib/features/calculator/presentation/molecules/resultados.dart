@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/formatters.dart';
-import '../controllers/calculadora_controller.dart';
+import 'package:toolmape/core/utils/formatters.dart';
+import '../viewmodels/calculator_view_model.dart';
 
 class Resultados extends StatelessWidget {
   const Resultados({super.key, required this.state});
-  final CalculadoraState state;
+  final CalculatorState state;
 
   @override
   Widget build(BuildContext context) {

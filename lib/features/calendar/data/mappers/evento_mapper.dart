@@ -1,5 +1,5 @@
 import '../../domain/entities/evento_entity.dart';
-import '../dto/evento_dto.dart';
+import '../dtos/evento_dto.dart';
 
 class EventoMapper {
   static EventoEntity fromDto(EventoDto dto) => EventoEntity(

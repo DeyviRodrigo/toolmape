@@ -1,5 +1,5 @@
-import '../../core/calculadora_formulas.dart';
-import '../../core/utils/number_parsing.dart';
+import '../services/calculadora_formulas.dart';
+import 'package:toolmape/core/utils/number_parsing.dart';
 
 class CalculateDiscountFromOfferedPrice {
   const CalculateDiscountFromOfferedPrice();

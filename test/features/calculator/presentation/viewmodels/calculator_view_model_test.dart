@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:toolmape/features/calculator/presentation/controllers/calculadora_controller.dart';
+import 'package:toolmape/features/calculator/presentation/viewmodels/calculator_view_model.dart';
 import 'package:toolmape/features/calculator/domain/entities/calculator_prefs_entity.dart';
 import 'package:toolmape/features/general/domain/repositories/preferencias_repository.dart';
 import 'package:toolmape/app/init_dependencies.dart';
@@ -31,7 +31,7 @@ void main() {
       preferenciasRepositoryProvider.overrideWithValue(fake),
     ]);
 
-    final vm = container.read(calculadoraViewModelProvider.notifier);
+    final vm = container.read(calculatorViewModelProvider.notifier);
     vm
       ..setPrecioOro('100')
       ..setTipoCambio('3')
@@ -41,7 +41,7 @@ void main() {
 
     await vm.calcular();
 
-    final state = container.read(calculadoraViewModelProvider);
+    final state = container.read(calculatorViewModelProvider);
     expect(state.total, isNotNull);
     expect(fake.stored.precioOro, '100');
   });

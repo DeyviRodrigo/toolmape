@@ -1,4 +1,4 @@
-import 'constants.dart';
+import '../constants/constants.dart';
 
 /// Price per gram in Peruvian soles.
 double precioPorGramoEnSoles({

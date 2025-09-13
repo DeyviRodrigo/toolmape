@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:toolmape/features/calendar/presentation/controllers/calendario_controller.dart';
+import 'package:toolmape/features/calendar/presentation/viewmodels/calendar_view_model.dart';
 import 'package:toolmape/features/calendar/domain/entities/evento_entity.dart';
 import 'package:toolmape/features/calendar/domain/entities/mi_evento_entity.dart';
 import 'package:toolmape/features/calendar/domain/repositories/calendario_repository.dart';
@@ -71,7 +71,7 @@ void main() {
       misEventosRepositoryProvider.overrideWithValue(_FakeMisRepo()),
     ]);
 
-    final vm = container.read(calendarioViewModelProvider.notifier);
+    final vm = container.read(calendarViewModelProvider.notifier);
     final eventos = await vm.eventosDelMes(DateTime.now());
     expect(eventos, isNotEmpty);
 

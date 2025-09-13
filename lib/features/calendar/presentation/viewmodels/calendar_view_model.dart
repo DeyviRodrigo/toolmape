@@ -10,31 +10,31 @@ import 'package:toolmape/app/init_dependencies.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';
 import 'package:toolmape/features/calendar/presentation/atoms/meses.dart';
 
-class CalendarioState {
+class CalendarState {
   final DateTime focused;
   final DateTime selected;
   final EventFilter filtro;
 
-  const CalendarioState({
+  const CalendarState({
     required this.focused,
     required this.selected,
     required this.filtro,
   });
 
-  CalendarioState copyWith({
+  CalendarState copyWith({
     DateTime? focused,
     DateTime? selected,
     EventFilter? filtro,
-  }) => CalendarioState(
+  }) => CalendarState(
         focused: focused ?? this.focused,
         selected: selected ?? this.selected,
         filtro: filtro ?? this.filtro,
       );
 }
 
-class CalendarioViewModel extends StateNotifier<CalendarioState> {
-  CalendarioViewModel(this._calRepo, this._misRepo)
-      : super(CalendarioState(
+class CalendarViewModel extends StateNotifier<CalendarState> {
+  CalendarViewModel(this._calRepo, this._misRepo)
+      : super(CalendarState(
           focused: DateTime.now(),
           selected: DateTime.now(),
           filtro: EventFilter.all,
@@ -88,9 +88,16 @@ class CalendarioViewModel extends StateNotifier<CalendarioState> {
   String mesNombrePublic(int m) => mesNombre(m);
 }
 
-final calendarioViewModelProvider =
-    StateNotifierProvider<CalendarioViewModel, CalendarioState>((ref) {
+typedef CalendarioState = CalendarState;
+typedef CalendarioViewModel = CalendarViewModel;
+typedef CalendarioController = CalendarViewModel;
+
+final calendarViewModelProvider =
+    StateNotifierProvider<CalendarViewModel, CalendarState>((ref) {
   final calRepo = ref.read(calendarioRepositoryProvider);
   final misRepo = ref.read(misEventosRepositoryProvider);
-  return CalendarioViewModel(calRepo, misRepo);
+  return CalendarViewModel(calRepo, misRepo);
 });
+
+@Deprecated('Use calendarViewModelProvider')
+final calendarioViewModelProvider = calendarViewModelProvider;

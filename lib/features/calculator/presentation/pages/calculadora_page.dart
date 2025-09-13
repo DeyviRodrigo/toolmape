@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:toolmape/app/app_shell.dart';
-import 'package:toolmape/features/calculator/presentation/controllers/calculadora_controller.dart';
-import 'package:toolmape/features/calculator/presentation/providers/parametros_providers.dart';
+import 'package:toolmape/features/calculator/presentation/viewmodels/calculator_view_model.dart';
+import 'package:toolmape/features/calculator/presentation/viewmodels/parametros_view_model.dart';
 import 'package:toolmape/app/routes.dart';
-import '../../core/utils/formatters.dart';
+import 'package:toolmape/core/utils/formatters.dart';
 import 'package:toolmape/features/general/presentation/molecules/confirm_dialog.dart';
 
 import '../organisms/calculadora_form.dart';
@@ -31,8 +31,8 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
   @override
   void initState() {
     super.initState();
-    ref.read(calculadoraViewModelProvider.notifier).cargar().then((_) {
-      final s = ref.read(calculadoraViewModelProvider);
+    ref.read(calculatorViewModelProvider.notifier).cargar().then((_) {
+      final s = ref.read(calculatorViewModelProvider);
       precioOroCtrl.text = s.precioOro;
       tipoCambioCtrl.text = s.tipoCambio;
       descuentoCtrl.text = s.descuento;
@@ -40,12 +40,12 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
       cantidadCtrl.text = s.cantidad;
       setState(() {});
     });
-    ref.read(parametrosProvider.future).then((p) {
+    ref.read(parametrosViewModelProvider.future).then((p) {
       final gold = p.precioOroUsdOnza.toStringAsFixed(2);
       final tc = p.tipoCambio.toStringAsFixed(2);
       precioOroCtrl.text = gold;
       tipoCambioCtrl.text = tc;
-      final vm = ref.read(calculadoraViewModelProvider.notifier);
+      final vm = ref.read(calculatorViewModelProvider.notifier);
       vm
         ..setPrecioOro(gold)
         ..setTipoCambio(tc);
@@ -55,8 +55,8 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
 
   Future<void> _calcular() async {
     final sugeridos =
-        ref.read(parametrosProvider).value ?? ParametrosRecomendados.defaults();
-    final vm = ref.read(calculadoraViewModelProvider.notifier);
+        ref.read(parametrosViewModelProvider).value ?? ParametrosRecomendados.defaults();
+    final vm = ref.read(calculatorViewModelProvider.notifier);
 
     if (precioOroCtrl.text.trim().isEmpty) {
       precioOroCtrl.text = sugeridos.precioOroUsdOnza.toStringAsFixed(2);
@@ -144,10 +144,10 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
     });
 
     final sugeridos =
-        ref.watch(parametrosProvider).value ??
+        ref.watch(parametrosViewModelProvider).value ??
         ParametrosRecomendados.defaults();
-    final state = ref.watch(calculadoraViewModelProvider);
-    final vm = ref.read(calculadoraViewModelProvider.notifier);
+    final state = ref.watch(calculatorViewModelProvider);
+    final vm = ref.read(calculatorViewModelProvider.notifier);
 
     return AppShell(
       title: 'Calcular precio del oro',

@@ -2,8 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Clase: CalendarioNotifications - gestiona avisos locales.
-class CalendarioNotifications {
+/// Clase: NotificationsService - gestiona avisos locales.
+class NotificationsService {
   static final _plugin = FlutterLocalNotificationsPlugin();
 
   /// Función: init - inicializa el plugin de notificaciones.
@@ -51,3 +51,5 @@ class CalendarioNotifications {
   /// Función: cancelAll - elimina todas las notificaciones programadas.
   static Future<void> cancelAll() => _plugin.cancelAll();
 }
+
+typedef CalendarioNotifications = NotificationsService;

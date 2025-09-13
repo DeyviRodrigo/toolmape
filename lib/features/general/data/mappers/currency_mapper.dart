@@ -1,5 +1,5 @@
 import '../../domain/entities/currency_entity.dart';
-import '../dto/currency_dto.dart';
+import '../dtos/currency_dto.dart';
 
 class CurrencyMapper {
   static CurrencyEntity fromDto(CurrencyDto dto) => CurrencyEntity(
