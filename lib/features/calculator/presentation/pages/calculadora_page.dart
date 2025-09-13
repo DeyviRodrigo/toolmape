@@ -294,35 +294,50 @@ class _CalculadoraForm extends StatelessWidget {
       }
     }
 
+    Future<void> _actualizarDatos() async {
+      await _actualizarPrecioOro();
+      await _actualizarTipoCambio();
+    }
+
     Widget buildPrecioOro() => PrecioOroField(
-          controller: precioOroCtrl,
-          menu: buildMenu<PrecioOroAction>(
-            icon: Icons.settings,
-            options: precioOroMenuOptions,
-            onSelected: (a) async {
-              switch (a) {
-                case PrecioOroAction.actualizar:
-                  await _actualizarPrecioOro();
-                  await _actualizarTipoCambio();
-                  break;
-                case PrecioOroAction.avanzadas:
-                  final sel = await showPrecioOroAvanzadasDialog(context);
-                  if (sel != null) {
-                    precioOroCtrl.text = sel.toStringAsFixed(2);
-                    vm.setPrecioOro(precioOroCtrl.text);
-                  }
-                  break;
-                case PrecioOroAction.tiempoReal:
-                  await http.post(Uri.parse(
-                      'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks'));
-                  await _actualizarPrecioOro();
-                  break;
-                case PrecioOroAction.analisis:
-                  break;
+      controller: precioOroCtrl,
+      menu: buildMenu<PrecioOroAction>(
+        icon: Icons.settings,
+        options: precioOroMenuOptions,
+        onSelected: (a) async {
+          switch (a) {
+            case PrecioOroAction.actualizar:
+              await _actualizarDatos();
+              break;
+
+            case PrecioOroAction.avanzadas:
+              final sel = await showPrecioOroAvanzadasDialog(context);
+              if (sel != null) {
+                precioOroCtrl.text = sel.toStringAsFixed(2);
+                vm.setPrecioOro(precioOroCtrl.text);
               }
-            },
-          ),
-        );
+              break;
+
+            case PrecioOroAction.tiempoReal:
+              try {
+                await http
+                    .post(Uri.parse(
+                  'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_spot_ticks',
+                ))
+                    .timeout(const Duration(seconds: 15));
+              } catch (_) {
+                // opcional: mostrar SnackBar/log
+              } finally {
+                await _actualizarDatos();
+              }
+              break;
+
+            case PrecioOroAction.analisis:
+              break;
+          }
+        },
+      ),
+    );
 
     Widget buildTipoCambio() => TipoCambioField(
           controller: tipoCambioCtrl,
@@ -332,7 +347,7 @@ class _CalculadoraForm extends StatelessWidget {
             onSelected: (a) async {
               switch (a) {
                 case TipoCambioAction.actualizar:
-                  await _actualizarTipoCambio();
+                  await _actualizarDatos();
                   break;
                 case TipoCambioAction.avanzadas:
                   final sel = await showTipoCambioAvanzadasDialog(context);
@@ -350,9 +365,17 @@ class _CalculadoraForm extends StatelessWidget {
                   }
                   break;
                 case TipoCambioAction.tiempoReal:
-                  await http.post(Uri.parse(
-                      'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks'));
-                  await _actualizarTipoCambio();
+                  try {
+                    await http
+                        .post(Uri.parse(
+                      'https://eifdvmxqabyzxthddbrh.supabase.co/functions/v1/ingest_latest_ticks',
+                    ))
+                        .timeout(const Duration(seconds: 15));
+                  } catch (_) {
+                    // opcional: mostrar SnackBar/log
+                  } finally {
+                    await _actualizarDatos();
+                  }
                   break;
               }
             },
