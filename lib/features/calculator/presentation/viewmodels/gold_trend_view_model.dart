@@ -58,17 +58,20 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
       final start = _range == TrendRange.diario
           ? DateTime(now.year, now.month, now.day)
           : now.subtract(const Duration(days: 7));
-      final query = client
+
+      var query = client
           .from('stg_latest_ticks')
           .select('captured_at, gold_price, pen_usd')
-          .gte('captured_at', start.toIso8601String())
-          .order('captured_at', ascending: true);
-      final rows = _range == TrendRange.diario
-          ? await query.lt(
-              'captured_at',
-              start.add(const Duration(days: 1)).toIso8601String(),
-            )
-          : await query;
+          .gte('captured_at', start.toIso8601String());
+
+      if (_range == TrendRange.diario) {
+        query = query.lt(
+          'captured_at',
+          start.add(const Duration(days: 1)).toIso8601String(),
+        );
+      }
+
+      final rows = await query.order('captured_at', ascending: true);
       for (final r in rows) {
         final ts = DateTime.tryParse('${r['captured_at']}')?.toLocal();
         final gold = (r['gold_price'] as num?)?.toDouble();
