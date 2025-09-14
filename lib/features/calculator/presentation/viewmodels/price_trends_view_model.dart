@@ -28,40 +28,60 @@ class PriceTrendsViewModel extends AsyncNotifier<PriceTrendsState> {
   Future<PriceTrendsState> build() async {
     final client = Supabase.instance.client;
     final now = DateTime.now();
-    final weekStart = now.subtract(const Duration(days: 6));
-    final weekRows = await client
-        .from('fact_daily_summary')
-        .select('date_lima, avg_gold_spot_price, avg_pen_usd')
-        .gte('date_lima', weekStart.toIso8601String().split('T').first)
-        .order('date_lima')
-        .limit(7);
-    final weekly = <WeeklyPoint>[];
-    for (final r in weekRows) {
-      final date = DateTime.tryParse('${r['date_lima']}')?.toLocal() ?? now;
-      final gold = (r['avg_gold_spot_price'] as num?)?.toDouble() ?? 0.0;
-      final ex = (r['avg_pen_usd'] as num?)?.toDouble() ?? 0.0;
-      weekly.add(WeeklyPoint(date: date, goldUsd: gold, exchangeRate: ex));
-    }
 
-    final yearStart = now.subtract(const Duration(days: 365));
-    final yearRows = await client
-        .from('fact_daily_summary')
-        .select('date_lima, avg_gold_spot_price')
-        .gte('date_lima', yearStart.toIso8601String().split('T').first)
-        .order('date_lima');
+    final weekly = <WeeklyPoint>[];
     final annual = <({DateTime date, double goldUsd})>[];
-    for (final r in yearRows) {
-      final date = DateTime.tryParse('${r['date_lima']}')?.toLocal() ?? now;
-      final gold = (r['avg_gold_spot_price'] as num?)?.toDouble() ?? 0.0;
-      annual.add((date: date, goldUsd: gold));
+    try {
+      final weekStart = now.subtract(const Duration(days: 6));
+      final weekRows = await client
+          .from('fact_daily_summary')
+          .select('date_lima, avg_gold_spot_price, avg_pen_usd')
+          .gte('date_lima', weekStart.toIso8601String().split('T').first)
+          .order('date_lima')
+          .limit(7);
+      for (final r in weekRows) {
+        final date =
+            DateTime.tryParse('${r['date_lima']}')?.toLocal() ?? now;
+        final gold = (r['avg_gold_spot_price'] as num?)?.toDouble() ?? 0.0;
+        final ex = (r['avg_pen_usd'] as num?)?.toDouble() ?? 0.0;
+        weekly.add(
+            WeeklyPoint(date: date, goldUsd: gold, exchangeRate: ex));
+      }
+
+      final yearStart = now.subtract(const Duration(days: 365));
+      final yearRows = await client
+          .from('fact_daily_summary')
+          .select('date_lima, avg_gold_spot_price')
+          .gte('date_lima', yearStart.toIso8601String().split('T').first)
+          .order('date_lima');
+      for (final r in yearRows) {
+        final date =
+            DateTime.tryParse('${r['date_lima']}')?.toLocal() ?? now;
+        final gold =
+            (r['avg_gold_spot_price'] as num?)?.toDouble() ?? 0.0;
+        annual.add((date: date, goldUsd: gold));
+      }
+    } catch (_) {
+      // fall back to empty data on failure
     }
 
     final goldSeries = weekly.map((e) => e.goldUsd).toList();
     final exSeries = weekly.map((e) => e.exchangeRate).toList();
-    final goldFit = Sarima.autoSarima(goldSeries, s: 7);
-    final exFit = Sarima.autoSarima(exSeries, s: 7);
-    final goldForecast = Sarima.forecast(goldSeries, goldFit, 3).point;
-    final exForecast = Sarima.forecast(exSeries, exFit, 3).point;
+    List<double> goldForecast = const [];
+    List<double> exForecast = const [];
+    try {
+      final goldFit = Sarima.autoSarima(goldSeries, s: 7);
+      final exFit = Sarima.autoSarima(exSeries, s: 7);
+      goldForecast = Sarima.forecast(goldSeries, goldFit, 3).point;
+      exForecast = Sarima.forecast(exSeries, exFit, 3).point;
+    } catch (_) {
+      if (goldSeries.isNotEmpty) {
+        goldForecast = List<double>.filled(3, goldSeries.last);
+      }
+      if (exSeries.isNotEmpty) {
+        exForecast = List<double>.filled(3, exSeries.last);
+      }
+    }
 
     return PriceTrendsState(
       weekly: weekly,
