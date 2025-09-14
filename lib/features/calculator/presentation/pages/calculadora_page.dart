@@ -175,6 +175,8 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
               const SizedBox(height: 24),
               Resultados(state: state),
               const SizedBox(height: 24),
+              const Divider(color: Colors.grey),
+              const SizedBox(height: 24),
               const GoldTrendChart(),
             ],
           ),

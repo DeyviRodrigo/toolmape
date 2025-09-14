@@ -56,6 +56,7 @@ class GoldTrendChart extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Wrap(
+              alignment: WrapAlignment.center,
               spacing: 16,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
@@ -100,6 +101,19 @@ class GoldTrendChart extends ConsumerWidget {
               height: 200,
               child: LineChart(
                 LineChartData(
+                  lineTouchData: LineTouchData(
+                    handleBuiltInTouches: false,
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (touchedSpots) => touchedSpots
+                          .map(
+                            (e) => LineTooltipItem(
+                              e.y.toStringAsFixed(2),
+                              const TextStyle(color: Colors.white),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
                   gridData: FlGridData(show: true),
                   titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
@@ -117,7 +131,14 @@ class GoldTrendChart extends ConsumerWidget {
                       ),
                     ),
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) => Text(
+                          value.toStringAsFixed(2),
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      ),
                     ),
                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
