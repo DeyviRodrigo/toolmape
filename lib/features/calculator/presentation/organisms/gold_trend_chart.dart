@@ -32,17 +32,19 @@ class GoldTrendChart extends ConsumerWidget {
         Color chColor(double? v) => v == null
             ? Colors.black
             : (v >= 0 ? Colors.green : Colors.red);
-        Widget metric(String label, double? value, {bool colored = false}) {
-          final style = TextStyle(
-            fontSize: 12,
-            color: colored ? chColor(value) : Colors.black,
-          );
+        Widget metric(
+          String label,
+          double? value, {
+          bool colored = false,
+          Color? valueColor,
+        }) {
+          final numberColor = colored ? chColor(value) : valueColor ?? Colors.white;
           final txt = value == null ? '--' : value.toStringAsFixed(2);
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: const TextStyle(fontSize: 12)),
-              Text(txt, style: style),
+              Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
+              Text(txt, style: TextStyle(fontSize: 12, color: numberColor)),
             ],
           );
         }
@@ -53,47 +55,61 @@ class GoldTrendChart extends ConsumerWidget {
             const Text(
               'Gráfico de tendencias del precio del oro',
               textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 16,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
-                DropdownButton<TrendRange>(
-                  value: state.range,
-                  onChanged: (v) => v == null ? null : vm.setRange(v),
-                  items: const [
-                    DropdownMenuItem(
-                      value: TrendRange.diario,
-                      child: Text('Diario'),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      metric('BID', state.bid, valueColor: Colors.white),
+                      const SizedBox(width: 8),
+                      metric('ASK', state.ask, valueColor: Colors.white),
+                      const SizedBox(width: 8),
+                      metric('+/-', state.changeAbs, colored: true),
+                      const SizedBox(width: 8),
+                      metric('%', state.changePct, colored: true),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButton<TrendRange>(
+                      value: state.range,
+                      onChanged: (v) => v == null ? null : vm.setRange(v),
+                      items: const [
+                        DropdownMenuItem(
+                          value: TrendRange.diario,
+                          child: Text('Diario'),
+                        ),
+                        DropdownMenuItem(
+                          value: TrendRange.semanal,
+                          child: Text('Semanal'),
+                        ),
+                        DropdownMenuItem(
+                          value: TrendRange.mensual,
+                          child: Text('Mensual'),
+                        ),
+                        DropdownMenuItem(
+                          value: TrendRange.anual,
+                          child: Text('Anual'),
+                        ),
+                      ],
                     ),
-                    DropdownMenuItem(
-                      value: TrendRange.semanal,
-                      child: Text('Semanal'),
-                    ),
-                    DropdownMenuItem(
-                      value: TrendRange.mensual,
-                      child: Text('Mensual'),
-                    ),
-                    DropdownMenuItem(
-                      value: TrendRange.anual,
-                      child: Text('Anual'),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      value: state.currency,
+                      onChanged: (v) => v == null ? null : vm.setCurrency(v),
+                      items: const [
+                        DropdownMenuItem(value: 'USD', child: Text('USD')),
+                        DropdownMenuItem(value: 'PEN', child: Text('PEN')),
+                      ],
                     ),
                   ],
                 ),
-                DropdownButton<String>(
-                  value: state.currency,
-                  onChanged: (v) => v == null ? null : vm.setCurrency(v),
-                  items: const [
-                    DropdownMenuItem(value: 'USD', child: Text('USD')),
-                    DropdownMenuItem(value: 'PEN', child: Text('PEN')),
-                  ],
-                ),
-                metric('BID', state.bid),
-                metric('ASK', state.ask),
-                metric('+/-', state.changeAbs, colored: true),
-                metric('%', state.changePct, colored: true),
               ],
             ),
             const SizedBox(height: 16),
@@ -102,7 +118,7 @@ class GoldTrendChart extends ConsumerWidget {
               child: LineChart(
                 LineChartData(
                   lineTouchData: LineTouchData(
-                    handleBuiltInTouches: false,
+                    handleBuiltInTouches: true,
                     touchTooltipData: LineTouchTooltipData(
                       getTooltipItems: (touchedSpots) => touchedSpots
                           .map(
@@ -133,7 +149,7 @@ class GoldTrendChart extends ConsumerWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 40,
+                        reservedSize: 56,
                         getTitlesWidget: (value, meta) => Text(
                           value.toStringAsFixed(2),
                           style: const TextStyle(fontSize: 10),
