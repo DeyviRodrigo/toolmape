@@ -9,6 +9,7 @@ class AppShell extends StatelessWidget {
   final List<MenuOption<VoidCallback>> actions;
   final VoidCallback onGoToCalculadora;
   final VoidCallback onGoToCalendario;
+  final VoidCallback onGoToAnalisis;
 
   const AppShell({
     super.key,
@@ -16,6 +17,7 @@ class AppShell extends StatelessWidget {
     required this.body,
     required this.onGoToCalculadora,
     required this.onGoToCalendario,
+    required this.onGoToAnalisis,
     this.actions = const [],
   });
 
@@ -26,6 +28,7 @@ class AppShell extends StatelessWidget {
       drawer: AppDrawer(
         onGoToCalculadora: onGoToCalculadora,
         onGoToCalendario: onGoToCalendario,
+        onGoToAnalisis: onGoToAnalisis,
       ),
       appBar: AppBar(
         title: Text(title),

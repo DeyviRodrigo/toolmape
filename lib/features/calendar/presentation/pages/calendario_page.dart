@@ -163,6 +163,8 @@ class _CalendarioPageState extends ConsumerState<CalendarioPage> {
           Navigator.pushReplacementNamed(context, routeCalculadora),
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
+      onGoToAnalisis: () =>
+          Navigator.pushReplacementNamed(context, routeAnalisis),
       actions: [
         MenuOption<VoidCallback>(
           value: () async {

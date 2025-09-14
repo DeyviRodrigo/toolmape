@@ -11,10 +11,12 @@ class AppDrawer extends StatelessWidget {
     super.key,
     required this.onGoToCalculadora,
     required this.onGoToCalendario,
+    required this.onGoToAnalisis,
   });
 
   final VoidCallback onGoToCalculadora;
   final VoidCallback onGoToCalendario;
+  final VoidCallback onGoToAnalisis;
 
   void _go(BuildContext context, VoidCallback callback) {
     Navigator.pop(context);
@@ -86,6 +88,11 @@ class AppDrawer extends StatelessWidget {
                         icon: Icons.calendar_month,
                         title: 'Calendario minero',
                         onTap: () => _go(context, onGoToCalendario),
+                      ),
+                      AppDrawerItem(
+                        icon: Icons.bar_chart,
+                        title: 'Análisis del oro',
+                        onTap: () => _go(context, onGoToAnalisis),
                       ),
                       AppDrawerItem(
                         icon: Icons.menu_book_outlined,

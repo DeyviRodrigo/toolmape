@@ -154,6 +154,8 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
           Navigator.pushReplacementNamed(context, routeCalculadora),
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
+      onGoToAnalisis: () =>
+          Navigator.pushReplacementNamed(context, routeAnalisis),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
