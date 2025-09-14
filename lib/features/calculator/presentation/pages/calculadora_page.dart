@@ -162,6 +162,7 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              const SizedBox(height: 5),
               CalculadoraForm(
                 precioOroCtrl: precioOroCtrl,
                 tipoCambioCtrl: tipoCambioCtrl,
