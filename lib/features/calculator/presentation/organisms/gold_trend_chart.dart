@@ -25,6 +25,10 @@ class GoldTrendChart extends ConsumerWidget {
         final dateFmt = state.range == TrendRange.diario
             ? DateFormat.Hm()
             : DateFormat('dd/MM');
+        final tooltipFmt =
+            state.range == TrendRange.diario || state.range == TrendRange.semanal
+                ? DateFormat('dd/MM HH:mm')
+                : DateFormat('dd/MM/yyyy');
         final rangeFmt = DateFormat('dd/MM/yyyy');
         final rangeText = state.from == null
             ? ''
@@ -120,14 +124,19 @@ class GoldTrendChart extends ConsumerWidget {
                   lineTouchData: LineTouchData(
                     handleBuiltInTouches: true,
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipItems: (touchedSpots) => touchedSpots
-                          .map(
-                            (e) => LineTooltipItem(
-                              e.y.toStringAsFixed(2),
-                              const TextStyle(color: Colors.white),
-                            ),
-                          )
-                          .toList(),
+                      getTooltipItems: (touchedSpots) => touchedSpots.map((e) {
+                        final idx = e.x.toInt();
+                        final date =
+                            idx >= 0 && idx < pts.length ? pts[idx].time : null;
+                        final dateStr =
+                            date == null ? '' : tooltipFmt.format(date);
+                        final price = e.y.toStringAsFixed(2);
+                        final text = dateStr.isEmpty ? price : '$price\n$dateStr';
+                        return LineTooltipItem(
+                          text,
+                          const TextStyle(color: Colors.white),
+                        );
+                      }).toList(),
                     ),
                   ),
                   gridData: FlGridData(show: true),
@@ -161,7 +170,19 @@ class GoldTrendChart extends ConsumerWidget {
                   ),
                   borderData: FlBorderData(show: true),
                   lineBarsData: [
-                    LineChartBarData(spots: spots, color: Colors.red),
+                    LineChartBarData(
+                      spots: spots,
+                      color: Colors.red,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 2,
+                          color: Colors.red,
+                          strokeWidth: 0,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
