@@ -10,6 +10,10 @@ import 'package:toolmape/features/general/presentation/molecules/confirm_dialog.
 import '../organisms/calculadora_form.dart';
 import '../molecules/resultados.dart';
 import '../molecules/descuento_dialog.dart';
+import '../viewmodels/price_trends_view_model.dart';
+import '../organisms/weekly_trends_chart.dart';
+import '../organisms/annual_gold_chart.dart';
+import '../organisms/forecast_chart.dart';
 
 class CalculadoraPage extends ConsumerStatefulWidget {
   const CalculadoraPage({super.key});
@@ -173,6 +177,23 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
               ),
               const SizedBox(height: 24),
               Resultados(state: state),
+              const SizedBox(height: 24),
+              ref.watch(priceTrendsViewModelProvider).when(
+                    data: (t) => Column(
+                      children: [
+                        WeeklyTrendsChart(data: t.weekly),
+                        const SizedBox(height: 24),
+                        AnnualGoldChart(data: t.annual),
+                        const SizedBox(height: 24),
+                        ForecastChart(
+                          goldForecast: t.forecastGold,
+                          exchangeForecast: t.forecastExchange,
+                        ),
+                      ],
+                    ),
+                    loading: () => const CircularProgressIndicator(),
+                    error: (_, __) => const SizedBox(),
+                  ),
             ],
           ),
         ),
