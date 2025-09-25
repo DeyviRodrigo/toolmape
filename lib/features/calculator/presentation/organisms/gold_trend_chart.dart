@@ -33,6 +33,8 @@ class GoldTrendChart extends ConsumerWidget {
         final rangeText = state.from == null
             ? ''
             : '${rangeFmt.format(state.from!)} - ${rangeFmt.format(state.to!)}';
+        final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+        final baseTextColor = isDarkTheme ? Colors.white : Colors.black;
         Color chColor(double? v) => v == null
             ? Colors.black
             : (v >= 0 ? Colors.green : Colors.red);
@@ -42,12 +44,16 @@ class GoldTrendChart extends ConsumerWidget {
           bool colored = false,
           Color? valueColor,
         }) {
-          final numberColor = colored ? chColor(value) : valueColor ?? Colors.white;
+          final numberColor =
+              colored ? chColor(value) : valueColor ?? baseTextColor;
           final txt = value == null ? '--' : value.toStringAsFixed(2);
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
+              Text(
+                label,
+                style: TextStyle(fontSize: 12, color: baseTextColor),
+              ),
               Text(txt, style: TextStyle(fontSize: 12, color: numberColor)),
             ],
           );
@@ -68,9 +74,9 @@ class GoldTrendChart extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      metric('BID', state.bid, valueColor: Colors.white),
+                      metric('BID', state.bid, valueColor: baseTextColor),
                       const SizedBox(width: 8),
-                      metric('ASK', state.ask, valueColor: Colors.white),
+                      metric('ASK', state.ask, valueColor: baseTextColor),
                       const SizedBox(width: 8),
                       metric('+/-', state.changeAbs, colored: true),
                       const SizedBox(width: 8),
