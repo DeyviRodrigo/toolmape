@@ -9,7 +9,7 @@ import 'package:toolmape/features/calendar/infrastructure/services/notifications
 import 'package:toolmape/features/calculator/presentation/pages/calculadora_page.dart';
 import 'package:toolmape/features/calendar/presentation/pages/calendario_page.dart';
 import 'package:toolmape/features/general/presentation/pages/splash_page.dart';
-import 'package:toolmape/features/general/presentation/pages/analisis_page.dart';
+import 'package:toolmape/features/general/presentation/pages/informacion_page.dart';
 import 'package:toolmape/app/router/routes.dart';
 import 'package:toolmape/theme/theme_provider.dart';
 import 'package:toolmape/theme/themes/index.dart';
@@ -71,7 +71,7 @@ class ToolMAPEApp extends ConsumerWidget {
         routeSplash: (_) => const SplashPage(),
         routeCalculadora: (_) => const CalculadoraPage(),
         routeCalendario: (_) => const CalendarioPage(),
-        routeAnalisis: (_) => const AnalisisPage(),
+        routeInformacion: (_) => const InformacionPage(),
       },
     );
   }

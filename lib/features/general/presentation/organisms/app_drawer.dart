@@ -11,12 +11,12 @@ class AppDrawer extends StatelessWidget {
     super.key,
     required this.onGoToCalculadora,
     required this.onGoToCalendario,
-    required this.onGoToAnalisis,
+    required this.onGoToInformacion,
   });
 
   final VoidCallback onGoToCalculadora;
   final VoidCallback onGoToCalendario;
-  final VoidCallback onGoToAnalisis;
+  final VoidCallback onGoToInformacion;
 
   void _go(BuildContext context, VoidCallback callback) {
     Navigator.pop(context);
@@ -90,11 +90,6 @@ class AppDrawer extends StatelessWidget {
                         onTap: () => _go(context, onGoToCalendario),
                       ),
                       AppDrawerItem(
-                        icon: Icons.bar_chart,
-                        title: 'Análisis del oro',
-                        onTap: () => _go(context, onGoToAnalisis),
-                      ),
-                      AppDrawerItem(
                         icon: Icons.menu_book_outlined,
                         title: 'Biblioteca Minera',
                         onTap: () => Navigator.pop(context),
@@ -112,7 +107,7 @@ class AppDrawer extends StatelessWidget {
                       AppDrawerItem(
                         icon: Icons.info_outline,
                         title: 'Información de la app',
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => _go(context, onGoToInformacion),
                       ),
                       AppDrawerItem(
                         icon: Icons.comment_outlined,
