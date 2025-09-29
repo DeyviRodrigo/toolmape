@@ -34,9 +34,9 @@ class ControlTiemposPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'En esta sección podrás registrar actividades, calcular horas ' \
-              'invertidas y llevar un seguimiento detallado del avance de tus ' \
-              'proyectos mineros. Estamos trabajando para habilitar estas ' \
+              'En esta sección podrás registrar actividades, calcular horas '
+              'invertidas y llevar un seguimiento detallado del avance de tus '
+              'proyectos mineros. Estamos trabajando para habilitar estas '
               'funcionalidades muy pronto.',
               style: theme.textTheme.bodyLarge,
             ),
