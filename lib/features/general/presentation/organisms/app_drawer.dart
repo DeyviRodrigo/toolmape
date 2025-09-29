@@ -11,11 +11,13 @@ class AppDrawer extends StatelessWidget {
     super.key,
     required this.onGoToCalculadora,
     required this.onGoToCalendario,
+    required this.onGoToControlTiempos,
     required this.onGoToInformacion,
   });
 
   final VoidCallback onGoToCalculadora;
   final VoidCallback onGoToCalendario;
+  final VoidCallback onGoToControlTiempos;
   final VoidCallback onGoToInformacion;
 
   void _go(BuildContext context, VoidCallback callback) {
@@ -88,6 +90,11 @@ class AppDrawer extends StatelessWidget {
                         icon: Icons.calendar_month,
                         title: 'Calendario minero',
                         onTap: () => _go(context, onGoToCalendario),
+                      ),
+                      AppDrawerItem(
+                        icon: Icons.access_time,
+                        title: 'Control de tiempos',
+                        onTap: () => _go(context, onGoToControlTiempos),
                       ),
                       AppDrawerItem(
                         icon: Icons.menu_book_outlined,

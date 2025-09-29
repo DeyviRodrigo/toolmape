@@ -155,6 +155,8 @@ class _CalculadoraPageState extends ConsumerState<CalculadoraPage> {
           Navigator.pushReplacementNamed(context, routeCalculadora),
       onGoToCalendario: () =>
           Navigator.pushReplacementNamed(context, routeCalendario),
+      onGoToControlTiempos: () =>
+          Navigator.pushReplacementNamed(context, routeControlTiempos),
       onGoToInformacion: () =>
           Navigator.pushReplacementNamed(context, routeInformacion),
       body: Padding(
