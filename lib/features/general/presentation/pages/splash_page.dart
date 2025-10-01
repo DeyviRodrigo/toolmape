@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:toolmape/app/router/routes.dart';
 
 class SplashPage extends StatefulWidget {
@@ -79,9 +80,13 @@ class _SplashImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final imagePath =
-        isDark ? 'assets/TrazMAPE1.png' : 'assets/TrazMAPE2.png';
+        isDark ? 'assets/TrazMAPE_dark.svg' : 'assets/TrazMAPE_light.svg';
     final width = MediaQuery.of(context).size.width * 0.8;
-    return Image.asset(imagePath, width: width);
+    return SvgPicture.asset(
+      imagePath,
+      width: width,
+      semanticsLabel: 'Ilustración ToolMAPE',
+    );
   }
 }
 
