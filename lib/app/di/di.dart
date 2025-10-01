@@ -13,6 +13,9 @@ import 'package:toolmape/features/general/infrastructure/repositories/preferenci
 import 'package:toolmape/features/calendar/infrastructure/repositories/calendario_repository_impl.dart';
 import 'package:toolmape/features/calendar/infrastructure/repositories/mis_eventos_repository_impl.dart';
 import 'package:toolmape/features/general/infrastructure/repositories/diccionario_repository_impl.dart';
+import 'package:toolmape/features/control_tiempos/domain/repositories/volquete_repository.dart';
+import 'package:toolmape/features/control_tiempos/infrastructure/datasources/volquete_local_datasource.dart';
+import 'package:toolmape/features/control_tiempos/infrastructure/repositories/volquete_repository_impl.dart';
 
 final preferenciasRepositoryProvider = Provider<PreferenciasRepository>((ref) {
   final ds = PreferenciasLocalDatasource();
@@ -32,6 +35,11 @@ final misEventosRepositoryProvider = Provider<MisEventosRepository>((ref) {
 final diccionarioRepositoryProvider = Provider<DiccionarioRepository>((ref) {
   final ds = DiccionarioSupabaseDatasource(Supabase.instance.client);
   return DiccionarioRepositoryImpl(ds);
+});
+
+final volqueteRepositoryProvider = Provider<VolqueteRepository>((ref) {
+  final ds = VolqueteLocalDatasource();
+  return VolqueteRepositoryImpl(ds);
 });
 
 Future<void> initDependencies() async {

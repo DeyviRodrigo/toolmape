@@ -11,6 +11,9 @@ class AppShell extends StatelessWidget {
   final VoidCallback onGoToCalendario;
   final VoidCallback onGoToControlTiempos;
   final VoidCallback onGoToInformacion;
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
+  final Widget? bottomNavigationBar;
 
   const AppShell({
     super.key,
@@ -21,6 +24,9 @@ class AppShell extends StatelessWidget {
     required this.onGoToControlTiempos,
     required this.onGoToInformacion,
     this.actions = const [],
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
+    this.bottomNavigationBar,
   });
 
   @override
@@ -69,6 +75,9 @@ class AppShell extends StatelessWidget {
                   ]),
       ),
       body: body,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButtonLocation,
+      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }
