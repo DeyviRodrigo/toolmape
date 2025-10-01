@@ -203,7 +203,15 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
           Navigator.pushReplacementNamed(context, routeInformacion),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
-        child: const Icon(Icons.add),
+        child: SvgPicture.asset(
+          'assets/icons/icon_fab_add.svg',
+          width: 28,
+          height: 28,
+          colorFilter: ColorFilter.mode(
+            Theme.of(context).colorScheme.onPrimary,
+            BlendMode.srcIn,
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
@@ -215,11 +223,23 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.cloud_upload_outlined),
+            icon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_carga.svg',
+            ),
+            selectedIcon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_carga.svg',
+              selected: true,
+            ),
             label: 'Carga',
           ),
           NavigationDestination(
-            icon: Icon(Icons.cloud_download_outlined),
+            icon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_descarga.svg',
+            ),
+            selectedIcon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_descarga.svg',
+              selected: true,
+            ),
             label: 'Descarga',
           ),
         ],
@@ -372,7 +392,7 @@ class _VolqueteCard extends StatelessWidget {
       ),
       _CardStageAction(
         stage: VolqueteStage.finalDescarga,
-        asset: 'assets/icons/icon_stage_final_carga.svg',
+        asset: 'assets/icons/icon_stage_final_descarga.svg',
         label: 'Final descarga',
       ),
       _CardStageAction(
@@ -504,6 +524,31 @@ class _StageIconButton extends StatelessWidget {
           BlendMode.srcIn,
         ),
       ),
+    );
+  }
+}
+
+class _NavigationSvgIcon extends StatelessWidget {
+  const _NavigationSvgIcon({
+    required this.asset,
+    this.selected = false,
+  });
+
+  final String asset;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = selected
+        ? theme.colorScheme.onSecondaryContainer
+        : theme.colorScheme.onSurfaceVariant;
+
+    return SvgPicture.asset(
+      asset,
+      width: 24,
+      height: 24,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     );
   }
 }
