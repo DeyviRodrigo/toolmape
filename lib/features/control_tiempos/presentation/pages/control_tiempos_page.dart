@@ -992,7 +992,11 @@ class _NuevoCicloFormState extends State<_NuevoCicloForm> {
           _DateTimePickerField(
             label: 'Inicio',
             value: _inicio,
-            onChanged: (value) => setState(() => _inicio = value),
+            onChanged: (value) => setState(() {
+              if (value != null) {
+                _inicio = value;
+              }
+            }),
           ),
           const SizedBox(height: 12),
           _DateTimePickerField(
