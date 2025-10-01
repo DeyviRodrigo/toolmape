@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:toolmape/app/router/routes.dart';
@@ -15,6 +16,16 @@ class ControlTiemposPage extends StatefulWidget {
 
   @override
   State<ControlTiemposPage> createState() => _ControlTiemposPageState();
+}
+
+enum VolqueteStage {
+  inicioManiobra,
+  finalCarga,
+  inicioDescarga,
+  finalDescarga,
+  finalChute,
+  finalExcavadora,
+  editar,
 }
 
 class _ControlTiemposPageState extends State<ControlTiemposPage>
@@ -152,6 +163,32 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     return filtered;
   }
 
+  void _handleStageAction(Volquete volquete, VolqueteStage stage) {
+    switch (stage) {
+      case VolqueteStage.inicioManiobra:
+        _showSnack('Inicio de maniobra de ${volquete.codigo}');
+        break;
+      case VolqueteStage.finalCarga:
+        _showSnack('Final de carga registrado para ${volquete.codigo}');
+        break;
+      case VolqueteStage.inicioDescarga:
+        _showSnack('Inicio de descarga de ${volquete.codigo}');
+        break;
+      case VolqueteStage.finalDescarga:
+        _showSnack('Final de descarga registrado para ${volquete.codigo}');
+        break;
+      case VolqueteStage.finalChute:
+        _showSnack('Final de chute registrado para ${volquete.codigo}');
+        break;
+      case VolqueteStage.finalExcavadora:
+        _showSnack('Final registrado para ${volquete.codigo}');
+        break;
+      case VolqueteStage.editar:
+        _openForm(initial: volquete);
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppShell(
@@ -166,7 +203,15 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
           Navigator.pushReplacementNamed(context, routeInformacion),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
-        child: const Icon(Icons.add),
+        child: SvgPicture.asset(
+          'assets/icons/icon_fab_add.svg',
+          width: 28,
+          height: 28,
+          colorFilter: ColorFilter.mode(
+            Theme.of(context).colorScheme.onPrimary,
+            BlendMode.srcIn,
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
@@ -178,11 +223,23 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.cloud_upload_outlined),
+            icon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_carga.svg',
+            ),
+            selectedIcon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_carga.svg',
+              selected: true,
+            ),
             label: 'Carga',
           ),
           NavigationDestination(
-            icon: Icon(Icons.cloud_download_outlined),
+            icon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_descarga.svg',
+            ),
+            selectedIcon: const _NavigationSvgIcon(
+              asset: 'assets/icons/icon_nav_descarga.svg',
+              selected: true,
+            ),
             label: 'Descarga',
           ),
         ],
@@ -231,14 +288,8 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                             volquete: volquete,
                             dateFormat: _dateFormat,
                             onTap: () => _openDetail(volquete),
-                            onEdit: () => _openForm(initial: volquete),
-                            onViewDocument: () => _showSnack(
-                              'Documento ${volquete.documento ?? 'no disponible'}',
-                            ),
-                            onViewVolquete: () => _openDetail(volquete),
-                            onNavigate: () => _showSnack(
-                              'Navegando a ${volquete.destino}',
-                            ),
+                            onStageSelected: (stage) =>
+                                _handleStageAction(volquete, stage),
                           );
                         },
                       ),
@@ -289,19 +340,73 @@ class _VolqueteCard extends StatelessWidget {
     required this.volquete,
     required this.dateFormat,
     required this.onTap,
-    required this.onEdit,
-    required this.onViewDocument,
-    required this.onViewVolquete,
-    required this.onNavigate,
+    required this.onStageSelected,
   });
 
   final Volquete volquete;
   final DateFormat dateFormat;
   final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onViewDocument;
-  final VoidCallback onViewVolquete;
-  final VoidCallback onNavigate;
+  final ValueChanged<VolqueteStage> onStageSelected;
+
+  List<_CardStageAction> get _actions {
+    if (volquete.equipo == VolqueteEquipo.excavadora) {
+      return const [
+        _CardStageAction(
+          stage: VolqueteStage.finalExcavadora,
+          asset: 'assets/icons/icon_stage_final_excavadora.svg',
+          label: 'Final',
+        ),
+        _CardStageAction(
+          stage: VolqueteStage.editar,
+          asset: 'assets/icons/icon_stage_editar.svg',
+          label: 'Editar',
+        ),
+      ];
+    }
+
+    if (volquete.tipo == VolqueteTipo.carga) {
+      return const [
+        _CardStageAction(
+          stage: VolqueteStage.inicioManiobra,
+          asset: 'assets/icons/icon_stage_inicio_maniobra.svg',
+          label: 'Inicio maniobra',
+        ),
+        _CardStageAction(
+          stage: VolqueteStage.finalCarga,
+          asset: 'assets/icons/icon_stage_final_carga.svg',
+          label: 'Final carga',
+        ),
+        _CardStageAction(
+          stage: VolqueteStage.editar,
+          asset: 'assets/icons/icon_stage_editar.svg',
+          label: 'Editar',
+        ),
+      ];
+    }
+
+    return const [
+      _CardStageAction(
+        stage: VolqueteStage.inicioDescarga,
+        asset: 'assets/icons/icon_stage_inicio_descarga.svg',
+        label: 'Inicio descarga',
+      ),
+      _CardStageAction(
+        stage: VolqueteStage.finalDescarga,
+        asset: 'assets/icons/icon_stage_final_descarga.svg',
+        label: 'Final descarga',
+      ),
+      _CardStageAction(
+        stage: VolqueteStage.finalChute,
+        asset: 'assets/icons/icon_stage_final_chute.svg',
+        label: 'Final chute',
+      ),
+      _CardStageAction(
+        stage: VolqueteStage.editar,
+        asset: 'assets/icons/icon_stage_editar.svg',
+        label: 'Editar',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -358,35 +463,88 @@ class _VolqueteCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  IconButton(
-                    tooltip: 'Ver volquete',
-                    onPressed: onViewVolquete,
-                    icon: const Icon(Icons.visibility_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Ver documento',
-                    onPressed: onViewDocument,
-                    icon: const Icon(Icons.picture_as_pdf_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Navegar',
-                    onPressed: onNavigate,
-                    icon: const Icon(Icons.route_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Editar',
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
-                  ),
-                ],
+                spacing: 8,
+                runSpacing: 8,
+                children: _actions
+                    .map(
+                      (action) => _StageIconButton(
+                        action: action,
+                        onPressed: () => onStageSelected(action.stage),
+                      ),
+                    )
+                    .toList(),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CardStageAction {
+  const _CardStageAction({
+    required this.stage,
+    required this.asset,
+    required this.label,
+  });
+
+  final VolqueteStage stage;
+  final String asset;
+  final String label;
+}
+
+class _StageIconButton extends StatelessWidget {
+  const _StageIconButton({
+    required this.action,
+    required this.onPressed,
+  });
+
+  final _CardStageAction action;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return IconButton(
+      tooltip: action.label,
+      onPressed: onPressed,
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+      icon: SvgPicture.asset(
+        action.asset,
+        width: 24,
+        height: 24,
+        colorFilter: ColorFilter.mode(
+          theme.colorScheme.onSurfaceVariant,
+          BlendMode.srcIn,
+        ),
+      ),
+    );
+  }
+}
+
+class _NavigationSvgIcon extends StatelessWidget {
+  const _NavigationSvgIcon({
+    required this.asset,
+    this.selected = false,
+  });
+
+  final String asset;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = selected
+        ? theme.colorScheme.onSecondaryContainer
+        : theme.colorScheme.onSurfaceVariant;
+
+    return SvgPicture.asset(
+      asset,
+      width: 24,
+      height: 24,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     );
   }
 }
