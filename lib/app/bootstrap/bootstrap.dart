@@ -8,7 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:toolmape/features/calendar/infrastructure/services/notifications.dart';
 import 'package:toolmape/features/calculator/presentation/pages/calculadora_page.dart';
 import 'package:toolmape/features/calendar/presentation/pages/calendario_page.dart';
-import 'package:toolmape/features/control_tiempos/presentation/pages/control_tiempos_page.dart';
+import 'package:toolmape/features/control_tiempos/presentation/screens/control_tiempos_screen.dart';
 import 'package:toolmape/features/general/presentation/pages/splash_page.dart';
 import 'package:toolmape/features/general/presentation/pages/informacion_page.dart';
 import 'package:toolmape/app/router/routes.dart';
@@ -72,7 +72,7 @@ class ToolMAPEApp extends ConsumerWidget {
         routeSplash: (_) => const SplashPage(),
         routeCalculadora: (_) => const CalculadoraPage(),
         routeCalendario: (_) => const CalendarioPage(),
-        routeControlTiempos: (_) => const ControlTiemposPage(),
+        routeControlTiempos: (_) => const ControlTiemposScreen(),
         routeInformacion: (_) => const InformacionPage(),
       },
     );
