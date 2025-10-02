@@ -11,8 +11,6 @@ import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_de
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
-const _iconTruckSmall = 'assets/icons/truck_small.svg';
-const _iconTruckLarge = 'assets/icons/truck_large.svg';
 const _iconEditPen = 'assets/icons/edit_pen.svg';
 const _iconLoaderTab = 'assets/icons/loader_tab.svg';
 const _iconExcavatorTab = 'assets/icons/excavator_tab.svg';
@@ -489,7 +487,7 @@ class _VolqueteCard extends StatelessWidget {
                 runSpacing: 4,
                 children: [
                   IconButton(
-                    tooltip: 'Abrir detalle',
+                    tooltip: 'Inicio de maniobra',
                     onPressed: onViewVolquete,
                     icon: SvgPicture.asset(
                       _iconArrowRight,
@@ -499,20 +497,20 @@ class _VolqueteCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Ver documento',
+                    tooltip: 'Inicio de carga',
                     onPressed: onViewDocument,
                     icon: SvgPicture.asset(
-                      _iconTruckSmall,
+                      _iconExcavatorCarga,
                       width: 24,
                       height: 24,
                       colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Ver ruta',
+                    tooltip: 'Final de carga',
                     onPressed: onNavigate,
                     icon: SvgPicture.asset(
-                      _iconTruckLarge,
+                      _iconExcavatorDescarga,
                       width: 24,
                       height: 24,
                       colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
