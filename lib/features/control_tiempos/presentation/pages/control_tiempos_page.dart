@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:toolmape/app/router/routes.dart';
@@ -8,6 +9,11 @@ import 'package:toolmape/app/shell/app_shell.dart';
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+
+const _iconArrowRight = 'assets/icons/arrow_right.svg';
+const _iconTruckSmall = 'assets/icons/truck_small.svg';
+const _iconTruckLarge = 'assets/icons/truck_large.svg';
+const _iconEditPen = 'assets/icons/edit_pen.svg';
 
 /// Página: ControlTiemposPage - espacio para gestionar actividades y tiempos.
 class ControlTiemposPage extends StatefulWidget {
@@ -169,23 +175,43 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedBottomIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedBottomIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.cloud_upload_outlined),
-            label: 'Carga',
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: _BottomNavToggleButton(
+                  label: 'Carga',
+                  asset: _iconTruckSmall,
+                  isSelected: _selectedBottomIndex == 0,
+                  onTap: () {
+                    if (_selectedBottomIndex != 0) {
+                      setState(() {
+                        _selectedBottomIndex = 0;
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _BottomNavToggleButton(
+                  label: 'Descarga',
+                  asset: _iconTruckLarge,
+                  isSelected: _selectedBottomIndex == 1,
+                  onTap: () {
+                    if (_selectedBottomIndex != 1) {
+                      setState(() {
+                        _selectedBottomIndex = 1;
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.cloud_download_outlined),
-            label: 'Descarga',
-          ),
-        ],
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -257,6 +283,58 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   }
 }
 
+class _BottomNavToggleButton extends StatelessWidget {
+  const _BottomNavToggleButton({
+    required this.label,
+    required this.asset,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String asset;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color selectedBackground = Color(0xFFF97316);
+    const Color unselectedBackground = Color(0xFF1F2937);
+    final Color background = isSelected ? selectedBackground : unselectedBackground;
+
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                asset,
+                width: 28,
+                height: 28,
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyVolquetesView extends StatelessWidget {
   const _EmptyVolquetesView();
 
@@ -305,6 +383,9 @@ class _VolqueteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color iconColor =
+        Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface;
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -362,24 +443,44 @@ class _VolqueteCard extends StatelessWidget {
                 runSpacing: 4,
                 children: [
                   IconButton(
-                    tooltip: 'Ver volquete',
+                    tooltip: 'Abrir detalle',
                     onPressed: onViewVolquete,
-                    icon: const Icon(Icons.visibility_outlined),
+                    icon: SvgPicture.asset(
+                      _iconArrowRight,
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                    ),
                   ),
                   IconButton(
                     tooltip: 'Ver documento',
                     onPressed: onViewDocument,
-                    icon: const Icon(Icons.picture_as_pdf_outlined),
+                    icon: SvgPicture.asset(
+                      _iconTruckSmall,
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                    ),
                   ),
                   IconButton(
-                    tooltip: 'Navegar',
+                    tooltip: 'Ver ruta',
                     onPressed: onNavigate,
-                    icon: const Icon(Icons.route_outlined),
+                    icon: SvgPicture.asset(
+                      _iconTruckLarge,
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                    ),
                   ),
                   IconButton(
                     tooltip: 'Editar',
                     onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
+                    icon: SvgPicture.asset(
+                      _iconEditPen,
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                    ),
                   ),
                 ],
               ),
