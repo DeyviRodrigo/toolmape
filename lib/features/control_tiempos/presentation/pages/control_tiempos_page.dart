@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:toolmape/app/router/routes.dart';
@@ -178,11 +179,13 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.cloud_upload_outlined),
+            icon: _NavigationSvgIcon('assets/icons/carga_truck.svg'),
+            selectedIcon: _NavigationSvgIcon('assets/icons/carga_truck.svg'),
             label: 'Carga',
           ),
           NavigationDestination(
-            icon: Icon(Icons.cloud_download_outlined),
+            icon: _NavigationSvgIcon('assets/icons/descarga_arrow.svg'),
+            selectedIcon: _NavigationSvgIcon('assets/icons/descarga_arrow.svg'),
             label: 'Descarga',
           ),
         ],
@@ -280,6 +283,27 @@ class _EmptyVolquetesView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NavigationSvgIcon extends StatelessWidget {
+  const _NavigationSvgIcon(this.assetName);
+
+  final String assetName;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconTheme = IconTheme.of(context);
+    final size = iconTheme.size ?? 24;
+    final color = iconTheme.color;
+
+    return SvgPicture.asset(
+      assetName,
+      width: size,
+      height: size,
+      colorFilter:
+          color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,
     );
   }
 }

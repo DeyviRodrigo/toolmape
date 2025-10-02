@@ -39,3 +39,5 @@ flutter:
     - assets/TrazMAPE1.png
     - assets/TrazMAPE2.png
     - assets/logo_ToolMAPE.svg
+    - assets/icons/carga_truck.svg
+    - assets/icons/descarga_arrow.svg
