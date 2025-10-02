@@ -68,8 +68,15 @@ class Volquete {
     required this.tipo,
     required this.equipo,
     required this.eventos,
+    required this.procedencia,
+    required this.chute,
+    required this.llegadaFrente,
+    this.observaciones,
     this.documento,
     this.notas,
+    this.inicioManiobra,
+    this.inicioCarga,
+    this.finCarga,
   });
 
   final String id;
@@ -82,8 +89,15 @@ class Volquete {
   final VolqueteTipo tipo;
   final VolqueteEquipo equipo;
   final List<VolqueteEvento> eventos;
+  final String procedencia;
+  final int chute;
+  final DateTime llegadaFrente;
+  final String? observaciones;
   final String? documento;
   final String? notas;
+  final DateTime? inicioManiobra;
+  final DateTime? inicioCarga;
+  final DateTime? finCarga;
 
   Volquete copyWith({
     String? id,
@@ -96,8 +110,15 @@ class Volquete {
     VolqueteTipo? tipo,
     VolqueteEquipo? equipo,
     List<VolqueteEvento>? eventos,
+    String? procedencia,
+    int? chute,
+    DateTime? llegadaFrente,
+    String? observaciones,
     String? documento,
     String? notas,
+    DateTime? inicioManiobra,
+    DateTime? inicioCarga,
+    DateTime? finCarga,
   }) {
     return Volquete(
       id: id ?? this.id,
@@ -110,8 +131,15 @@ class Volquete {
       tipo: tipo ?? this.tipo,
       equipo: equipo ?? this.equipo,
       eventos: eventos ?? this.eventos,
+      procedencia: procedencia ?? this.procedencia,
+      chute: chute ?? this.chute,
+      llegadaFrente: llegadaFrente ?? this.llegadaFrente,
+      observaciones: observaciones ?? this.observaciones,
       documento: documento ?? this.documento,
       notas: notas ?? this.notas,
+      inicioManiobra: inicioManiobra ?? this.inicioManiobra,
+      inicioCarga: inicioCarga ?? this.inicioCarga,
+      finCarga: finCarga ?? this.finCarga,
     );
   }
 }

@@ -4,9 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
 
 class VolqueteFormPage extends StatefulWidget {
-  const VolqueteFormPage({super.key, this.initial});
+  const VolqueteFormPage({
+    super.key,
+    this.initial,
+    this.initialTipo,
+    this.initialEquipo,
+  });
 
   final Volquete? initial;
+  final VolqueteTipo? initialTipo;
+  final VolqueteEquipo? initialEquipo;
 
   @override
   State<VolqueteFormPage> createState() => _VolqueteFormPageState();
@@ -14,104 +21,127 @@ class VolqueteFormPage extends StatefulWidget {
 
 class _VolqueteFormPageState extends State<VolqueteFormPage> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _codigoController;
-  late final TextEditingController _placaController;
-  late final TextEditingController _operadorController;
-  late final TextEditingController _destinoController;
-  late final TextEditingController _notasController;
-  late final TextEditingController _fechaController;
-  late DateTime _fecha;
+  final TextEditingController _llegadaController = TextEditingController();
+  final TextEditingController _observacionesController = TextEditingController();
+
+  late DateTime _llegadaFrente;
   late VolqueteEstado _estado;
   late VolqueteTipo _tipo;
   late VolqueteEquipo _equipo;
+  _VolqueteCatalogItem? _selectedVolquete;
+  String? _procedencia;
+  int? _chute;
 
-  final DateFormat _dateFormat = DateFormat('dd/MM/yyyy – HH:mm');
+  final DateFormat _dateFormat = DateFormat('dd/MM/yyyy HH:mm:ss');
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initial;
-    _codigoController = TextEditingController(text: initial?.codigo ?? '');
-    _placaController = TextEditingController(text: initial?.placa ?? '');
-    _operadorController = TextEditingController(text: initial?.operador ?? '');
-    _destinoController = TextEditingController(text: initial?.destino ?? '');
-    _notasController = TextEditingController(text: initial?.notas ?? '');
-    _fecha = initial?.fecha ?? DateTime.now();
+    _tipo = initial?.tipo ?? widget.initialTipo ?? VolqueteTipo.carga;
+    _equipo = initial?.equipo ?? widget.initialEquipo ?? VolqueteEquipo.cargador;
     _estado = initial?.estado ?? VolqueteEstado.enProceso;
-    _tipo = initial?.tipo ?? VolqueteTipo.carga;
-    _equipo = initial?.equipo ?? VolqueteEquipo.cargador;
-    _fechaController =
-        TextEditingController(text: _dateFormat.format(_fecha));
+    _llegadaFrente = initial?.llegadaFrente ?? DateTime.now();
+    _procedencia = initial?.procedencia;
+    _chute = initial?.chute;
+
+    _observacionesController.text = initial?.observaciones ?? '';
+    _updateLlegadaController();
+
+    if (initial != null) {
+      for (final item in _catalogoVolquetes) {
+        if (item.codigo == initial.codigo && item.placa == initial.placa) {
+          _selectedVolquete = item;
+          break;
+        }
+      }
+      _selectedVolquete ??=
+          _VolqueteCatalogItem(codigo: initial.codigo, placa: initial.placa);
+    }
   }
 
   @override
   void dispose() {
-    _codigoController.dispose();
-    _placaController.dispose();
-    _operadorController.dispose();
-    _destinoController.dispose();
-    _notasController.dispose();
-    _fechaController.dispose();
+    _llegadaController.dispose();
+    _observacionesController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectFecha() async {
-    final initialDate = _fecha;
+  void _updateLlegadaController() {
+    _llegadaController.text = _dateFormat.format(_llegadaFrente);
+  }
+
+  Future<void> _pickLlegada() async {
     final pickedDate = await showDatePicker(
       context: context,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      initialDate: initialDate,
+      lastDate: DateTime(2035),
+      initialDate: _llegadaFrente,
     );
 
     if (pickedDate == null) return;
 
     final pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initialDate),
+      initialTime: TimeOfDay.fromDateTime(_llegadaFrente),
     );
 
     if (pickedTime == null) return;
 
     setState(() {
-      _fecha = DateTime(
+      _llegadaFrente = DateTime(
         pickedDate.year,
         pickedDate.month,
         pickedDate.day,
         pickedTime.hour,
         pickedTime.minute,
       );
-      _fechaController.text = _dateFormat.format(_fecha);
+      _updateLlegadaController();
     });
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    final eventos = widget.initial?.eventos ??
-        [
-          VolqueteEvento(
-            titulo: 'Registro creado',
-            descripcion: 'Ingreso manual desde el panel de control.',
-            fecha: DateTime.now(),
-          ),
-        ];
+    final selectedVolquete = _selectedVolquete;
+    final procedencia = _procedencia;
+    final chute = _chute;
+
+    if (selectedVolquete == null || procedencia == null || chute == null) {
+      return;
+    }
+
+    final observaciones = _observacionesController.text.trim();
+    final List<VolqueteEvento> eventos = widget.initial?.eventos != null
+        ? List<VolqueteEvento>.from(widget.initial!.eventos)
+        : [
+            VolqueteEvento(
+              titulo: 'Registro creado',
+              descripcion: 'Operación registrada manualmente desde el panel.',
+              fecha: DateTime.now(),
+            ),
+          ];
 
     final volquete = Volquete(
       id: widget.initial?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      codigo: _codigoController.text.trim(),
-      placa: _placaController.text.trim(),
-      operador: _operadorController.text.trim(),
-      destino: _destinoController.text.trim(),
-      fecha: _fecha,
+      codigo: selectedVolquete.codigo,
+      placa: selectedVolquete.placa,
+      operador: 'Turno $procedencia',
+      destino: 'Chute $chute',
+      fecha: _llegadaFrente,
       estado: _estado,
       tipo: _tipo,
       equipo: _equipo,
-      notas: _notasController.text.trim().isEmpty
-          ? widget.initial?.notas
-          : _notasController.text.trim(),
-      documento: widget.initial?.documento,
       eventos: eventos,
+      procedencia: procedencia,
+      chute: chute,
+      llegadaFrente: _llegadaFrente,
+      observaciones: observaciones.isEmpty ? null : observaciones,
+      documento: widget.initial?.documento,
+      notas: widget.initial?.notas,
+      inicioManiobra: widget.initial?.inicioManiobra,
+      inicioCarga: widget.initial?.inicioCarga,
+      finCarga: widget.initial?.finCarga,
     );
 
     Navigator.pop(context, volquete);
@@ -119,149 +149,334 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.initial != null;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Editar volquete' : 'Registrar volquete'),
-        actions: [
-          TextButton(
-            onPressed: _submit,
-            child: const Text('Guardar'),
-          ),
-        ],
+    final theme = Theme.of(context);
+    final bool isEditing = widget.initial != null;
+    final String estadoLabel =
+        _estado == VolqueteEstado.completo ? 'Completo' : 'Incompleto';
+
+    final InputBorder baseBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.white24),
+    );
+    final InputBorder focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.primary),
+    );
+
+    final ThemeData darkTheme = theme.copyWith(
+      scaffoldBackgroundColor: const Color(0xFF0B1120),
+      textTheme: theme.textTheme.apply(
+        bodyColor: Colors.white,
+        displayColor: Colors.white,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _codigoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Código / Alias',
-                    hintText: '(V01) Volq. ABC-123',
+      colorScheme: theme.colorScheme.copyWith(
+        surface: const Color(0xFF0B1120),
+        onSurface: Colors.white,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1F2937),
+        border: baseBorder,
+        enabledBorder: baseBorder,
+        focusedBorder: focusedBorder,
+        labelStyle: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+        floatingLabelStyle:
+            theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+      ),
+    );
+
+    final List<_VolqueteCatalogItem> catalogItems =
+        List<_VolqueteCatalogItem>.from(_catalogoVolquetes);
+    if (_selectedVolquete != null && !catalogItems.contains(_selectedVolquete)) {
+      catalogItems.add(_selectedVolquete!);
+    }
+
+    return Theme(
+      data: darkTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(isEditing ? 'Editar operación' : 'Registrar operación'),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Volquete',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa un código';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _placaController,
-                  decoration: const InputDecoration(
-                    labelText: 'Placa',
-                    hintText: 'ABC-123',
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<_VolqueteCatalogItem>(
+                    value: _selectedVolquete,
+                    dropdownColor: const Color(0xFF1F2937),
+                    decoration: const InputDecoration(
+                      labelText: 'Selecciona un volquete',
+                    ),
+                    items: catalogItems
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item,
+                            child: Text(item.codigo),
+                          ),
+                        )
+                        .toList(),
+                    validator: (value) =>
+                        value == null ? 'Selecciona un volquete' : null,
+                    onChanged: (value) => setState(() {
+                      _selectedVolquete = value;
+                    }),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa la placa';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _operadorController,
-                  decoration: const InputDecoration(
-                    labelText: 'Operador',
+                  const SizedBox(height: 16),
+                  Text(
+                    'Maquinaria',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa el operador';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _destinoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Destino',
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<VolqueteEquipo>(
+                    value: _equipo,
+                    dropdownColor: const Color(0xFF1F2937),
+                    decoration: const InputDecoration(
+                      labelText: 'Selecciona la maquinaria',
+                    ),
+                    items: VolqueteEquipo.values
+                        .map(
+                          (equipo) => DropdownMenuItem(
+                            value: equipo,
+                            child: Text(equipo.label),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _equipo = value);
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa el destino';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _fechaController,
-                  readOnly: true,
-                  onTap: _selectFecha,
-                  decoration: InputDecoration(
-                    labelText: 'Fecha y hora',
-                    hintText: _dateFormat.format(DateTime.now()),
-                    suffixIcon: const Icon(Icons.event_outlined),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Procedencia',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<VolqueteEstado>(
-                  value: _estado,
-                  decoration: const InputDecoration(labelText: 'Estado'),
-                  items: VolqueteEstado.values
-                      .map(
-                        (estado) => DropdownMenuItem(
-                          value: estado,
-                          child: Text(estado.label),
+                  const SizedBox(height: 8),
+                  FormField<String>(
+                    initialValue: _procedencia,
+                    validator: (value) =>
+                        value == null ? 'Selecciona la procedencia' : null,
+                    builder: (field) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: _procedenciaOptions.map((option) {
+                              final bool selected = field.value == option;
+                              return ChoiceChip(
+                                label: Text(
+                                  option,
+                                  style: TextStyle(
+                                    color:
+                                        selected ? Colors.black : Colors.white70,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                selected: selected,
+                                selectedColor: theme.colorScheme.secondary,
+                                backgroundColor: Colors.white12,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                onSelected: (isSelected) {
+                                  setState(() {
+                                    if (isSelected) {
+                                      _procedencia = option;
+                                      field.didChange(option);
+                                    } else {
+                                      _procedencia = null;
+                                      field.didChange(null);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          if (field.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                field.errorText!,
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Chute',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FormField<int>(
+                    initialValue: _chute,
+                    validator: (value) =>
+                        value == null ? 'Selecciona el chute' : null,
+                    builder: (field) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 12,
+                            children: _chuteOptions.map((option) {
+                              final bool selected = field.value == option;
+                              return ChoiceChip(
+                                label: Text(
+                                  option.toString(),
+                                  style: TextStyle(
+                                    color:
+                                        selected ? Colors.black : Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                selected: selected,
+                                selectedColor: theme.colorScheme.primary,
+                                backgroundColor: Colors.white12,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                onSelected: (isSelected) {
+                                  setState(() {
+                                    if (isSelected) {
+                                      _chute = option;
+                                      field.didChange(option);
+                                    } else {
+                                      _chute = null;
+                                      field.didChange(null);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          if (field.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                field.errorText!,
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Llegada al frente',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _llegadaController,
+                    readOnly: true,
+                    onTap: _pickLlegada,
+                    decoration: const InputDecoration(
+                      labelText: 'Llegada al frente',
+                      suffixIcon: Icon(Icons.event_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Observaciones',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _observacionesController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      hintText: 'Observaciones adicionales',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Estado',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Estado de la operación',
+                    ),
+                    child: Text(
+                      estadoLabel,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white38),
+                          ),
+                          child: const Text('Cancelar'),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _estado = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<VolqueteTipo>(
-                  value: _tipo,
-                  decoration: const InputDecoration(labelText: 'Tipo'),
-                  items: VolqueteTipo.values
-                      .map(
-                        (tipo) => DropdownMenuItem(
-                          value: tipo,
-                          child: Text(tipo.label),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _submit,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Guardar'),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _tipo = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<VolqueteEquipo>(
-                  value: _equipo,
-                  decoration: const InputDecoration(labelText: 'Equipo'),
-                  items: VolqueteEquipo.values
-                      .map(
-                        (equipo) => DropdownMenuItem(
-                          value: equipo,
-                          child: Text(equipo.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _equipo = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _notasController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Notas (opcional)',
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -269,3 +484,41 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
     );
   }
 }
+
+class _VolqueteCatalogItem {
+  const _VolqueteCatalogItem({required this.codigo, required this.placa});
+
+  final String codigo;
+  final String placa;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! _VolqueteCatalogItem) return false;
+    return codigo == other.codigo && placa == other.placa;
+  }
+
+  @override
+  int get hashCode => Object.hash(codigo, placa);
+}
+
+const List<_VolqueteCatalogItem> _catalogoVolquetes = [
+  _VolqueteCatalogItem(codigo: '(V12) Volqu. DJ F2J-854', placa: 'DJ F2J-854'),
+  _VolqueteCatalogItem(codigo: '(V10) Volqu. MG B9P-657', placa: 'MG B9P-657'),
+  _VolqueteCatalogItem(codigo: '(V05) Volqu. EO X2Q-733', placa: 'EO X2Q-733'),
+  _VolqueteCatalogItem(codigo: '(V03) Volqu. GM B7K-757', placa: 'GM B7K-757'),
+  _VolqueteCatalogItem(codigo: '(V21) Volqu. DJ F2J-854', placa: 'DJ F2J-854'),
+  _VolqueteCatalogItem(codigo: '(V22) Volqu. EO X2Q-733', placa: 'EO X2Q-733'),
+  _VolqueteCatalogItem(codigo: '(V23) Volqu. KQ P9J-301', placa: 'KQ P9J-301'),
+];
+
+const List<String> _procedenciaOptions = [
+  'Beatriz 1',
+  'Beatriz 2',
+  'Panchita 1',
+  'Panchita 2',
+  'Panchita 3',
+  'Relavado',
+];
+
+const List<int> _chuteOptions = [1, 2, 3, 4, 5];

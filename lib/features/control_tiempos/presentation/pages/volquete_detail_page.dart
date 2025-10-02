@@ -27,6 +27,8 @@ class VolqueteDetailPage extends StatelessWidget {
             children: [
               _HeaderSection(volquete: volquete, dateFormat: _dateFormat),
               const SizedBox(height: 24),
+              _FlowSummary(volquete: volquete, dateFormat: _dateFormat),
+              const SizedBox(height: 24),
               _TimelineSection(volquete: volquete, dateFormat: _dateFormat),
               const SizedBox(height: 24),
               _ActionsSection(volquete: volquete),
@@ -77,9 +79,19 @@ class _HeaderSection extends StatelessWidget {
                   value: volquete.placa,
                 ),
                 _InfoChip(
-                  icon: Icons.route_outlined,
-                  label: 'Destino',
-                  value: volquete.destino,
+                  icon: Icons.location_on_outlined,
+                  label: 'Procedencia',
+                  value: volquete.procedencia,
+                ),
+                _InfoChip(
+                  icon: Icons.local_shipping_outlined,
+                  label: 'Maquinaria',
+                  value: volquete.equipo.label,
+                ),
+                _InfoChip(
+                  icon: Icons.place_outlined,
+                  label: 'Chute',
+                  value: 'Chute ${volquete.chute}',
                 ),
               ],
             ),
@@ -88,22 +100,151 @@ class _HeaderSection extends StatelessWidget {
               children: [
                 _StatusIndicator(estado: volquete.estado),
                 const SizedBox(width: 16),
-                Text(
-                  dateFormat.format(volquete.fecha),
-                  style: theme.textTheme.bodyMedium,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Registrado: ${dateFormat.format(volquete.fecha)}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Llegada al frente: ${dateFormat.format(volquete.llegadaFrente)}',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            if (volquete.notas != null && volquete.notas!.isNotEmpty) ...[
+            if (volquete.observaciones != null &&
+                volquete.observaciones!.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                volquete.notas!,
+                volquete.observaciones!,
                 style: theme.textTheme.bodyMedium,
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FlowSummary extends StatelessWidget {
+  const _FlowSummary({
+    required this.volquete,
+    required this.dateFormat,
+  });
+
+  final Volquete volquete;
+  final DateFormat dateFormat;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Resumen del flujo',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _FlowSummaryTile(
+              icon: Icons.play_arrow_rounded,
+              title: 'Inicio de maniobra',
+              date: volquete.inicioManiobra,
+              dateFormat: dateFormat,
+            ),
+            const SizedBox(height: 8),
+            _FlowSummaryTile(
+              icon: Icons.local_shipping_outlined,
+              title: 'Inicio de carga',
+              date: volquete.inicioCarga,
+              dateFormat: dateFormat,
+            ),
+            const SizedBox(height: 8),
+            _FlowSummaryTile(
+              icon: Icons.check_circle_outline,
+              title: 'Fin de carga',
+              date: volquete.finCarga,
+              dateFormat: dateFormat,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FlowSummaryTile extends StatelessWidget {
+  const _FlowSummaryTile({
+    required this.icon,
+    required this.title,
+    required this.date,
+    required this.dateFormat,
+  });
+
+  final IconData icon;
+  final String title;
+  final DateTime? date;
+  final DateFormat dateFormat;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bool completed = date != null;
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: completed
+                ? theme.colorScheme.primary.withOpacity(0.15)
+                : Colors.grey.shade200,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: completed ? theme.colorScheme.primary : Colors.grey,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                completed ? dateFormat.format(date!) : 'Pendiente',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: completed
+                      ? Colors.grey.shade600
+                      : Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

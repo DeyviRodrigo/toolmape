@@ -18,6 +18,8 @@ const _iconLoaderTab = 'assets/icons/loader_tab.svg';
 const _iconExcavatorTab = 'assets/icons/excavator_tab.svg';
 const _iconExcavatorCarga = 'assets/icons/excavator_carga.svg';
 const _iconExcavatorDescarga = 'assets/icons/excavator_descarga.svg';
+const _iconTruckEmpty = 'assets/icons/truck_small.svg';
+const _iconTruckFull = 'assets/icons/truck_large.svg';
 
 /// Página: ControlTiemposPage - espacio para gestionar actividades y tiempos.
 class ControlTiemposPage extends StatefulWidget {
@@ -79,18 +81,28 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     final result = await Navigator.push<Volquete>(
       context,
       MaterialPageRoute(
-        builder: (_) => VolqueteFormPage(initial: initial),
+        builder: (_) => VolqueteFormPage(
+          initial: initial,
+          initialEquipo: initial?.equipo ?? _selectedEquipo,
+          initialTipo: initial?.tipo ?? _selectedTipo,
+        ),
       ),
     );
 
     if (result == null) return;
 
+    final normalized = result.copyWith(
+      estado: result.finCarga != null
+          ? VolqueteEstado.completo
+          : VolqueteEstado.enProceso,
+    );
+
     setState(() {
-      final existingIndex = _volquetes.indexWhere((v) => v.id == result.id);
+      final existingIndex = _volquetes.indexWhere((v) => v.id == normalized.id);
       if (existingIndex >= 0) {
-        _volquetes[existingIndex] = result;
+        _volquetes[existingIndex] = normalized;
       } else {
-        _volquetes = [..._volquetes, result];
+        _volquetes = [..._volquetes, normalized];
       }
     });
 
@@ -263,25 +275,34 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                 child: _filteredVolquetes.isEmpty
                     ? const _EmptyVolquetesView()
                     : ListView.separated(
-                  itemCount: _filteredVolquetes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) {
-                    final volquete = _filteredVolquetes[index];
-                    return _VolqueteCard(
-                      volquete: volquete,
-                      dateFormat: _dateFormat,
-                      onTap: () => _openDetail(volquete),
-                      onEdit: () => _openForm(initial: volquete),
-                      onViewDocument: () => _showSnack(
-                        'Documento ${volquete.documento ?? 'no disponible'}',
+                        itemCount: _filteredVolquetes.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, index) {
+                          final volquete = _filteredVolquetes[index];
+                          final bool canStartManiobra =
+                              volquete.finCarga == null && volquete.inicioManiobra == null;
+                          final bool canStartCarga = volquete.finCarga == null &&
+                              volquete.inicioManiobra != null &&
+                              volquete.inicioCarga == null;
+                          final bool canFinishCarga = volquete.finCarga == null &&
+                              volquete.inicioCarga != null;
+
+                          return _VolqueteCard(
+                            volquete: volquete,
+                            dateFormat: _dateFormat,
+                            onTap: () => _openDetail(volquete),
+                            onEdit: () => _openForm(initial: volquete),
+                            onInicioManiobra: canStartManiobra
+                                ? () => _registerInicioManiobra(volquete)
+                                : null,
+                            onInicioCarga: canStartCarga
+                                ? () => _registerInicioCarga(volquete)
+                                : null,
+                            onFinCarga:
+                                canFinishCarga ? () => _registerFinCarga(volquete) : null,
+                          );
+                        },
                       ),
-                      onViewVolquete: () => _openDetail(volquete),
-                      onNavigate: () => _showSnack(
-                        'Navegando a ${volquete.destino}',
-                      ),
-                    );
-                  },
-                ),
               ),
             ],
           ),
@@ -291,9 +312,115 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   }
 
   void _showSnack(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  void _updateVolqueteFlow(
+    String volqueteId,
+    Volquete Function(Volquete current) transformer,
+  ) {
+    setState(() {
+      _volquetes = _volquetes.map((volquete) {
+        if (volquete.id != volqueteId) return volquete;
+        final transformed = transformer(volquete);
+        final resolvedEstado = transformed.finCarga != null
+            ? VolqueteEstado.completo
+            : VolqueteEstado.enProceso;
+        return transformed.copyWith(estado: resolvedEstado);
+      }).toList();
+    });
+  }
+
+  void _registerInicioManiobra(Volquete volquete) {
+    if (volquete.finCarga != null) {
+      _showSnack('El volquete ya completó la carga.');
+      return;
+    }
+    if (volquete.inicioManiobra != null) {
+      _showSnack('El inicio de maniobra ya fue registrado.');
+      return;
+    }
+
+    final now = DateTime.now();
+    _updateVolqueteFlow(
+      volquete.id,
+      (current) => current.copyWith(
+        inicioManiobra: now,
+        eventos: [
+          ...current.eventos,
+          VolqueteEvento(
+            titulo: 'Inicio de maniobra',
+            descripcion: 'Registrado desde el panel de control.',
+            fecha: now,
+          ),
+        ],
+      ),
+    );
+    _showSnack('Inicio de maniobra registrado');
+  }
+
+  void _registerInicioCarga(Volquete volquete) {
+    if (volquete.finCarga != null) {
+      _showSnack('El volquete ya completó la carga.');
+      return;
+    }
+    if (volquete.inicioManiobra == null) {
+      _showSnack('Registra el inicio de maniobra antes de continuar.');
+      return;
+    }
+    if (volquete.inicioCarga != null) {
+      _showSnack('El inicio de carga ya fue registrado.');
+      return;
+    }
+
+    final now = DateTime.now();
+    _updateVolqueteFlow(
+      volquete.id,
+      (current) => current.copyWith(
+        inicioCarga: now,
+        eventos: [
+          ...current.eventos,
+          VolqueteEvento(
+            titulo: 'Inicio de carga',
+            descripcion: 'Registrado desde el panel de control.',
+            fecha: now,
+          ),
+        ],
+      ),
+    );
+    _showSnack('Inicio de carga registrado');
+  }
+
+  void _registerFinCarga(Volquete volquete) {
+    if (volquete.finCarga != null) {
+      _showSnack('El fin de carga ya fue registrado.');
+      return;
+    }
+    if (volquete.inicioManiobra == null || volquete.inicioCarga == null) {
+      _showSnack('Completa los pasos previos antes de finalizar la carga.');
+      return;
+    }
+
+    final now = DateTime.now();
+    _updateVolqueteFlow(
+      volquete.id,
+      (current) => current.copyWith(
+        finCarga: now,
+        fecha: now,
+        eventos: [
+          ...current.eventos,
+          VolqueteEvento(
+            titulo: 'Fin de carga',
+            descripcion: 'Registro automático desde el panel.',
+            fecha: now,
+          ),
+        ],
+      ),
+    );
+    _showSnack('Fin de carga registrado');
   }
 }
 
@@ -414,123 +541,164 @@ class _VolqueteCard extends StatelessWidget {
     required this.dateFormat,
     required this.onTap,
     required this.onEdit,
-    required this.onViewDocument,
-    required this.onViewVolquete,
-    required this.onNavigate,
+    required this.onInicioManiobra,
+    required this.onInicioCarga,
+    required this.onFinCarga,
   });
 
   final Volquete volquete;
   final DateFormat dateFormat;
   final VoidCallback onTap;
   final VoidCallback onEdit;
-  final VoidCallback onViewDocument;
-  final VoidCallback onViewVolquete;
-  final VoidCallback onNavigate;
+  final VoidCallback? onInicioManiobra;
+  final VoidCallback? onInicioCarga;
+  final VoidCallback? onFinCarga;
 
   @override
   Widget build(BuildContext context) {
-    final Color iconColor =
-        Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface;
+    final theme = Theme.of(context);
+    const Color cardBackground = Color(0xFF111827);
+    final bool isCompleto = volquete.finCarga != null;
+    final Color statusColor = isCompleto
+        ? const Color(0xFF34D399)
+        : const Color(0xFFFBBF24);
+    final String statusLabel = isCompleto ? 'Completo' : 'Incompleto';
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
                             volquete.codigo,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            volquete.placa,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          statusLabel,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        _EstadoChip(estado: volquete.estado),
+                        const SizedBox(height: 4),
+                        Text(
+                          dateFormat.format(volquete.fecha),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white54,
+                          ),
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${volquete.placa} • ${volquete.operador}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dateFormat.format(volquete.fecha),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Destino: ${volquete.destino}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  IconButton(
-                    tooltip: 'Inicio de maniobra',
-                    onPressed: onViewVolquete,
-                    icon: SvgPicture.asset(
-                      _iconArrowRight,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Procedencia: ${volquete.procedencia}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white70,
+                        ),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Inicio de carga',
-                    onPressed: onViewDocument,
-                    icon: SvgPicture.asset(
-                      _iconExcavatorCarga,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                    Text(
+                      'Chute ${volquete.chute}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Llegada al frente: ${dateFormat.format(volquete.llegadaFrente)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white54,
                   ),
-                  IconButton(
-                    tooltip: 'Final de carga',
-                    onPressed: onNavigate,
-                    icon: SvgPicture.asset(
-                      _iconExcavatorDescarga,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Editar',
-                    onPressed: onEdit,
-                    icon: SvgPicture.asset(
-                      _iconEditPen,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                ),
+                if (volquete.observaciones != null &&
+                    volquete.observaciones!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    volquete.observaciones!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white70,
                     ),
                   ),
                 ],
-              ),
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _FlowActionButton(
+                      asset: _iconArrowRight,
+                      tooltip: 'Inicio de maniobra',
+                      isCompleted: volquete.inicioManiobra != null,
+                      onPressed: onInicioManiobra,
+                    ),
+                    const SizedBox(width: 8),
+                    _FlowActionButton(
+                      asset: _iconTruckEmpty,
+                      tooltip: 'Inicio de carga',
+                      isCompleted: volquete.inicioCarga != null,
+                      onPressed: onInicioCarga,
+                    ),
+                    const SizedBox(width: 8),
+                    _FlowActionButton(
+                      asset: _iconTruckFull,
+                      tooltip: 'Fin de carga',
+                      isCompleted: volquete.finCarga != null,
+                      onPressed: onFinCarga,
+                    ),
+                    const SizedBox(width: 8),
+                    _FlowActionButton(
+                      asset: _iconEditPen,
+                      tooltip: 'Editar registro',
+                      isCompleted: true,
+                      onPressed: onEdit,
+                      highlightColor: theme.colorScheme.secondary,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -538,47 +706,56 @@ class _VolqueteCard extends StatelessWidget {
   }
 }
 
-class _EstadoChip extends StatelessWidget {
-  const _EstadoChip({required this.estado});
+class _FlowActionButton extends StatelessWidget {
+  const _FlowActionButton({
+    required this.asset,
+    required this.tooltip,
+    required this.isCompleted,
+    this.onPressed,
+    this.highlightColor,
+  });
 
-  final VolqueteEstado estado;
-
-  Color _backgroundColor(BuildContext context) {
-    switch (estado) {
-      case VolqueteEstado.completo:
-        return Colors.green.shade100;
-      case VolqueteEstado.enProceso:
-        return Colors.orange.shade100;
-      case VolqueteEstado.pausado:
-        return Colors.blueGrey.shade100;
-    }
-  }
-
-  Color _textColor() {
-    switch (estado) {
-      case VolqueteEstado.completo:
-        return Colors.green.shade800;
-      case VolqueteEstado.enProceso:
-        return Colors.orange.shade800;
-      case VolqueteEstado.pausado:
-        return Colors.blueGrey.shade800;
-    }
-  }
+  final String asset;
+  final String tooltip;
+  final bool isCompleted;
+  final VoidCallback? onPressed;
+  final Color? highlightColor;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _backgroundColor(context),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        estado.label,
-        style: Theme.of(context)
-            .textTheme
-            .labelSmall
-            ?.copyWith(fontWeight: FontWeight.w600, color: _textColor()),
+    final theme = Theme.of(context);
+    final Color accent = highlightColor ?? theme.colorScheme.primary;
+    final bool isEnabled = onPressed != null;
+    final Color iconColor = isCompleted
+        ? accent
+        : isEnabled
+            ? Colors.white70
+            : Colors.white38;
+    final Color backgroundColor = isCompleted
+        ? accent.withOpacity(0.18)
+        : Colors.white.withOpacity(isEnabled ? 0.08 : 0.04);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Ink(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: SvgPicture.asset(
+              asset,
+              width: 22,
+              height: 22,
+              colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -586,146 +763,231 @@ class _EstadoChip extends StatelessWidget {
 
 final List<Volquete> _initialVolquetes = [
   Volquete(
-    id: 'v09',
-    codigo: '(V09) Volq. JAA X3U-843',
-    placa: 'JAA X3U-843',
-    operador: 'Carlos Velarde',
-    destino: 'Frente 12 - Zona A',
-    fecha: DateTime(2025, 3, 27, 15, 30),
+    id: 'v12',
+    codigo: '(V12) Volqu. DJ F2J-854',
+    placa: 'DJ F2J-854',
+    operador: 'Turno Beatriz',
+    destino: 'Chute 2',
+    fecha: DateTime(2025, 6, 27, 13, 3, 3),
     estado: VolqueteEstado.completo,
     tipo: VolqueteTipo.carga,
     equipo: VolqueteEquipo.cargador,
-    documento: 'OrdenCarga_V09.pdf',
+    procedencia: 'Beatriz 1',
+    chute: 2,
+    llegadaFrente: DateTime(2025, 6, 27, 12, 45),
+    observaciones: 'Operación sin novedades.',
+    documento: 'OrdenCarga_V12.pdf',
+    notas: null,
+    inicioManiobra: DateTime(2025, 6, 27, 12, 46),
+    inicioCarga: DateTime(2025, 6, 27, 12, 50),
+    finCarga: DateTime(2025, 6, 27, 13, 3),
     eventos: [
       VolqueteEvento(
-        titulo: 'Carga completada',
-        descripcion: 'Carga registrada por operador en turno matutino.',
-        fecha: DateTime(2025, 3, 27, 15, 20),
+        titulo: 'Inicio de maniobra',
+        descripcion: 'Posicionamiento del volquete en frente Beatriz.',
+        fecha: DateTime(2025, 6, 27, 12, 46),
       ),
       VolqueteEvento(
-        titulo: 'Salida hacia depósito',
-        descripcion: 'Salida autorizada con guía interna 000912.',
-        fecha: DateTime(2025, 3, 27, 15, 30),
+        titulo: 'Inicio de carga',
+        descripcion: 'Cargador WA600 inicia ciclo controlado.',
+        fecha: DateTime(2025, 6, 27, 12, 50),
+      ),
+      VolqueteEvento(
+        titulo: 'Fin de carga',
+        descripcion: 'Carga completada y autorizada por supervisor.',
+        fecha: DateTime(2025, 6, 27, 13, 3),
+      ),
+    ],
+  ),
+  Volquete(
+    id: 'v10',
+    codigo: '(V10) Volqu. MG B9P-657',
+    placa: 'MG B9P-657',
+    operador: 'Turno Panchita',
+    destino: 'Chute 4',
+    fecha: DateTime(2025, 6, 27, 12, 58),
+    estado: VolqueteEstado.enProceso,
+    tipo: VolqueteTipo.carga,
+    equipo: VolqueteEquipo.cargador,
+    procedencia: 'Panchita 2',
+    chute: 4,
+    llegadaFrente: DateTime(2025, 6, 27, 12, 30),
+    observaciones: 'Esperando confirmación de báscula.',
+    documento: 'OrdenCarga_V10.pdf',
+    notas: null,
+    inicioManiobra: DateTime(2025, 6, 27, 12, 32),
+    inicioCarga: DateTime(2025, 6, 27, 12, 40),
+    finCarga: null,
+    eventos: [
+      VolqueteEvento(
+        titulo: 'Inicio de maniobra',
+        descripcion: 'Volquete alineado con cargador frontal.',
+        fecha: DateTime(2025, 6, 27, 12, 32),
+      ),
+      VolqueteEvento(
+        titulo: 'Inicio de carga',
+        descripcion: 'Registro de carga parcial a las 12:40.',
+        fecha: DateTime(2025, 6, 27, 12, 40),
       ),
     ],
   ),
   Volquete(
     id: 'v05',
-    codigo: '(V05) Volq. GQ VQN-840',
-    placa: 'GQ VQN-840',
-    operador: 'Ana Espino',
-    destino: 'Depósito central',
-    fecha: DateTime(2025, 3, 27, 14, 45),
+    codigo: '(V05) Volqu. EO X2Q-733',
+    placa: 'EO X2Q-733',
+    operador: 'Turno Relavado',
+    destino: 'Chute 1',
+    fecha: DateTime(2025, 6, 27, 12, 20),
     estado: VolqueteEstado.enProceso,
     tipo: VolqueteTipo.carga,
     equipo: VolqueteEquipo.cargador,
+    procedencia: 'Relavado',
+    chute: 1,
+    llegadaFrente: DateTime(2025, 6, 27, 12, 5),
+    observaciones: 'A la espera de disponibilidad del cargador.',
     documento: 'OrdenCarga_V05.pdf',
+    notas: null,
+    inicioManiobra: DateTime(2025, 6, 27, 12, 7),
+    inicioCarga: null,
+    finCarga: null,
     eventos: [
       VolqueteEvento(
-        titulo: 'Ingreso a carguío',
-        descripcion: 'Arribo al frente con orden de servicio 000234.',
-        fecha: DateTime(2025, 3, 27, 14, 10),
-      ),
-      VolqueteEvento(
-        titulo: 'Pesaje preliminar',
-        descripcion: 'Peso registrado 18.2 tn.',
-        fecha: DateTime(2025, 3, 27, 14, 40),
+        titulo: 'Inicio de maniobra',
+        descripcion: 'Volquete ubicado en frente principal.',
+        fecha: DateTime(2025, 6, 27, 12, 7),
       ),
     ],
   ),
   Volquete(
-    id: 'v02',
-    codigo: '(V02) Volq. RD F7V-760',
-    placa: 'RD F7V-760',
-    operador: 'Luis Ramos',
-    destino: 'Botadero norte',
-    fecha: DateTime(2025, 3, 27, 13, 10),
-    estado: VolqueteEstado.pausado,
+    id: 'v03',
+    codigo: '(V03) Volqu. GM B7K-757',
+    placa: 'GM B7K-757',
+    operador: 'Turno Beatriz',
+    destino: 'Chute 3',
+    fecha: DateTime(2025, 6, 27, 11, 54),
+    estado: VolqueteEstado.completo,
     tipo: VolqueteTipo.carga,
     equipo: VolqueteEquipo.cargador,
-    documento: 'OrdenCarga_V02.pdf',
+    procedencia: 'Beatriz 2',
+    chute: 3,
+    llegadaFrente: DateTime(2025, 6, 27, 11, 20),
+    observaciones: 'Carga completada sin incidentes.',
+    documento: 'OrdenCarga_V03.pdf',
+    notas: null,
+    inicioManiobra: DateTime(2025, 6, 27, 11, 22),
+    inicioCarga: DateTime(2025, 6, 27, 11, 30),
+    finCarga: DateTime(2025, 6, 27, 11, 50),
     eventos: [
+      VolqueteEvento(
+        titulo: 'Inicio de maniobra',
+        descripcion: 'Ingreso a Beatriz 2 reportado por operador.',
+        fecha: DateTime(2025, 6, 27, 11, 22),
+      ),
       VolqueteEvento(
         titulo: 'Inicio de carga',
-        descripcion: 'Inicio autorizado por supervisor.',
-        fecha: DateTime(2025, 3, 27, 12, 50),
+        descripcion: 'Se inicia carga supervisada.',
+        fecha: DateTime(2025, 6, 27, 11, 30),
       ),
       VolqueteEvento(
-        titulo: 'Pausa temporal',
-        descripcion: 'En espera por mantenimiento del frente.',
-        fecha: DateTime(2025, 3, 27, 13, 5),
+        titulo: 'Fin de carga',
+        descripcion: 'Carga liberada hacia báscula central.',
+        fecha: DateTime(2025, 6, 27, 11, 50),
       ),
     ],
   ),
   Volquete(
-    id: 'v11',
-    codigo: '(V11) Volq. JAA X3U-843',
-    placa: 'JAA X3U-843',
-    operador: 'Carlos Velarde',
-    destino: 'Planta de chancado',
-    fecha: DateTime(2025, 3, 27, 16, 10),
-    estado: VolqueteEstado.enProceso,
-    tipo: VolqueteTipo.descarga,
-    equipo: VolqueteEquipo.excavadora,
-    documento: 'OrdenDescarga_V11.pdf',
-    eventos: [
-      VolqueteEvento(
-        titulo: 'Ruta asignada',
-        descripcion: 'Excavadora CX-02 designada para descarga.',
-        fecha: DateTime(2025, 3, 27, 15, 50),
-      ),
-      VolqueteEvento(
-        titulo: 'Descarga iniciada',
-        descripcion: 'Inicia maniobra en planta.',
-        fecha: DateTime(2025, 3, 27, 16, 5),
-      ),
-    ],
-  ),
-  Volquete(
-    id: 'v14',
-    codigo: '(V14) Volq. GQ VQN-840',
-    placa: 'GQ VQN-840',
-    operador: 'Ana Espino',
-    destino: 'Depósito temporal B',
-    fecha: DateTime(2025, 3, 27, 11, 30),
+    id: 'd21',
+    codigo: '(V21) Volqu. DJ F2J-854',
+    placa: 'DJ F2J-854',
+    operador: 'Turno Descarga',
+    destino: 'Botadero norte',
+    fecha: DateTime(2025, 6, 27, 15, 12),
     estado: VolqueteEstado.completo,
     tipo: VolqueteTipo.descarga,
     equipo: VolqueteEquipo.excavadora,
-    documento: 'OrdenDescarga_V14.pdf',
+    procedencia: 'Panchita 1',
+    chute: 5,
+    llegadaFrente: DateTime(2025, 6, 27, 14, 40),
+    observaciones: 'Descarga finalizada y validada.',
+    documento: 'OrdenDescarga_V21.pdf',
+    notas: null,
+    inicioManiobra: DateTime(2025, 6, 27, 14, 42),
+    inicioCarga: DateTime(2025, 6, 27, 14, 50),
+    finCarga: DateTime(2025, 6, 27, 15, 10),
     eventos: [
       VolqueteEvento(
-        titulo: 'Ingreso a descarga',
-        descripcion: 'Control de acceso completado.',
-        fecha: DateTime(2025, 3, 27, 11, 5),
+        titulo: 'Inicio de maniobra',
+        descripcion: 'Ingreso al botadero autorizado.',
+        fecha: DateTime(2025, 6, 27, 14, 42),
       ),
       VolqueteEvento(
-        titulo: 'Descarga completada',
-        descripcion: 'Material dispuesto en depósito temporal.',
-        fecha: DateTime(2025, 3, 27, 11, 25),
+        titulo: 'Inicio de descarga',
+        descripcion: 'Excavadora RX-04 posicionada.',
+        fecha: DateTime(2025, 6, 27, 14, 50),
+      ),
+      VolqueteEvento(
+        titulo: 'Fin de descarga',
+        descripcion: 'Material dispuesto correctamente.',
+        fecha: DateTime(2025, 6, 27, 15, 10),
       ),
     ],
   ),
   Volquete(
-    id: 'v20',
-    codigo: '(V20) Volq. RD F7V-760',
-    placa: 'RD F7V-760',
-    operador: 'Luis Ramos',
-    destino: 'Botadero norte',
-    fecha: DateTime(2025, 3, 27, 10, 45),
+    id: 'd22',
+    codigo: '(V22) Volqu. EO X2Q-733',
+    placa: 'EO X2Q-733',
+    operador: 'Turno Descarga',
+    destino: 'Botadero sur',
+    fecha: DateTime(2025, 6, 27, 14, 58),
     estado: VolqueteEstado.enProceso,
     tipo: VolqueteTipo.descarga,
     equipo: VolqueteEquipo.excavadora,
-    documento: 'OrdenDescarga_V20.pdf',
+    procedencia: 'Relavado',
+    chute: 4,
+    llegadaFrente: DateTime(2025, 6, 27, 14, 20),
+    observaciones: 'Esperando señal del supervisor para descargar.',
+    documento: 'OrdenDescarga_V22.pdf',
+    notas: null,
+    inicioManiobra: DateTime(2025, 6, 27, 14, 25),
+    inicioCarga: DateTime(2025, 6, 27, 14, 40),
+    finCarga: null,
     eventos: [
       VolqueteEvento(
-        titulo: 'Salida de planta',
-        descripcion: 'Traslado con guía de transporte 001122.',
-        fecha: DateTime(2025, 3, 27, 10, 20),
+        titulo: 'Inicio de maniobra',
+        descripcion: 'Ruta segura confirmada por logística.',
+        fecha: DateTime(2025, 6, 27, 14, 25),
       ),
       VolqueteEvento(
-        titulo: 'En ruta',
-        descripcion: 'Esperando autorización para descarga.',
-        fecha: DateTime(2025, 3, 27, 10, 40),
+        titulo: 'Inicio de descarga',
+        descripcion: 'Esperando autorización de botadero.',
+        fecha: DateTime(2025, 6, 27, 14, 40),
+      ),
+    ],
+  ),
+  Volquete(
+    id: 'd23',
+    codigo: '(V23) Volqu. KQ P9J-301',
+    placa: 'KQ P9J-301',
+    operador: 'Turno Descarga',
+    destino: 'Depósito temporal C',
+    fecha: DateTime(2025, 6, 27, 14, 12),
+    estado: VolqueteEstado.enProceso,
+    tipo: VolqueteTipo.descarga,
+    equipo: VolqueteEquipo.excavadora,
+    procedencia: 'Beatriz 1',
+    chute: 3,
+    llegadaFrente: DateTime(2025, 6, 27, 13, 50),
+    observaciones: 'Pendiente de autorización para iniciar maniobra.',
+    documento: 'OrdenDescarga_V23.pdf',
+    notas: null,
+    inicioManiobra: null,
+    inicioCarga: null,
+    finCarga: null,
+    eventos: [
+      VolqueteEvento(
+        titulo: 'Registro creado',
+        descripcion: 'Volquete asignado desde panel de control.',
+        fecha: DateTime(2025, 6, 27, 13, 50),
       ),
     ],
   ),
