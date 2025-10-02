@@ -179,13 +179,13 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         },
         destinations: const [
           NavigationDestination(
-            icon: _NavigationSvgIcon('assets/icons/carga_truck.svg'),
-            selectedIcon: _NavigationSvgIcon('assets/icons/carga_truck.svg'),
+            icon: _SvgAssetIcon('assets/icons/carga_truck.svg'),
+            selectedIcon: _SvgAssetIcon('assets/icons/carga_truck.svg'),
             label: 'Carga',
           ),
           NavigationDestination(
-            icon: _NavigationSvgIcon('assets/icons/descarga_arrow.svg'),
-            selectedIcon: _NavigationSvgIcon('assets/icons/descarga_arrow.svg'),
+            icon: _SvgAssetIcon('assets/icons/descarga_arrow.svg'),
+            selectedIcon: _SvgAssetIcon('assets/icons/descarga_arrow.svg'),
             label: 'Descarga',
           ),
         ],
@@ -287,8 +287,8 @@ class _EmptyVolquetesView extends StatelessWidget {
   }
 }
 
-class _NavigationSvgIcon extends StatelessWidget {
-  const _NavigationSvgIcon(this.assetName);
+class _SvgAssetIcon extends StatelessWidget {
+  const _SvgAssetIcon(this.assetName);
 
   final String assetName;
 
@@ -304,6 +304,39 @@ class _NavigationSvgIcon extends StatelessWidget {
       height: size,
       colorFilter:
           color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,
+    );
+  }
+}
+
+class _ActionIconButton extends StatelessWidget {
+  const _ActionIconButton({
+    required this.tooltip,
+    required this.assetName,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final String assetName;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        padding: const EdgeInsets.all(10),
+        shape: const CircleBorder(),
+        backgroundColor: theme.colorScheme.onSurface.withOpacity(0.08),
+      ),
+      icon: IconTheme(
+        data: IconTheme.of(context).copyWith(
+          size: 20,
+          color: theme.colorScheme.onSurface,
+        ),
+        child: _SvgAssetIcon(assetName),
+      ),
     );
   }
 }
@@ -382,28 +415,28 @@ class _VolqueteCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Wrap(
-                spacing: 4,
-                runSpacing: 4,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  IconButton(
+                  _ActionIconButton(
                     tooltip: 'Ver volquete',
+                    assetName: 'assets/icons/action_view.svg',
                     onPressed: onViewVolquete,
-                    icon: const Icon(Icons.visibility_outlined),
                   ),
-                  IconButton(
+                  _ActionIconButton(
                     tooltip: 'Ver documento',
+                    assetName: 'assets/icons/action_pdf.svg',
                     onPressed: onViewDocument,
-                    icon: const Icon(Icons.picture_as_pdf_outlined),
                   ),
-                  IconButton(
+                  _ActionIconButton(
                     tooltip: 'Navegar',
+                    assetName: 'assets/icons/action_route.svg',
                     onPressed: onNavigate,
-                    icon: const Icon(Icons.route_outlined),
                   ),
-                  IconButton(
+                  _ActionIconButton(
                     tooltip: 'Editar',
+                    assetName: 'assets/icons/action_edit.svg',
                     onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
                   ),
                 ],
               ),

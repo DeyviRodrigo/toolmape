@@ -41,3 +41,7 @@ flutter:
     - assets/logo_ToolMAPE.svg
     - assets/icons/carga_truck.svg
     - assets/icons/descarga_arrow.svg
+    - assets/icons/action_view.svg
+    - assets/icons/action_pdf.svg
+    - assets/icons/action_route.svg
+    - assets/icons/action_edit.svg
