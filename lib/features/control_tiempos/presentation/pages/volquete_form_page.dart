@@ -154,35 +154,17 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
     final String estadoLabel =
         _estado == VolqueteEstado.completo ? 'Completo' : 'Incompleto';
 
-    final InputBorder baseBorder = OutlineInputBorder(
+    final TextStyle? sectionStyle =
+        theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600);
+    final ColorScheme colors = theme.colorScheme;
+    final Color defaultChipTextColor =
+        theme.textTheme.bodyMedium?.color ?? colors.onSurface;
+    final OutlineInputBorder baseBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Colors.white24),
     );
-    final InputBorder focusedBorder = OutlineInputBorder(
+    final OutlineInputBorder focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: theme.colorScheme.primary),
-    );
-
-    final ThemeData darkTheme = theme.copyWith(
-      scaffoldBackgroundColor: const Color(0xFF0B1120),
-      textTheme: theme.textTheme.apply(
-        bodyColor: Colors.white,
-        displayColor: Colors.white,
-      ),
-      colorScheme: theme.colorScheme.copyWith(
-        surface: const Color(0xFF0B1120),
-        onSurface: Colors.white,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFF1F2937),
-        border: baseBorder,
-        enabledBorder: baseBorder,
-        focusedBorder: focusedBorder,
-        labelStyle: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
-        floatingLabelStyle:
-            theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
-      ),
+      borderSide: BorderSide(color: colors.primary),
     );
 
     final List<_VolqueteCatalogItem> catalogItems =
@@ -191,292 +173,266 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
       catalogItems.add(_selectedVolquete!);
     }
 
-    return Theme(
-      data: darkTheme,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(isEditing ? 'Editar operación' : 'Registrar operación'),
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Volquete',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEditing ? 'Editar operación' : 'Registrar operación'),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Volquete', style: sectionStyle),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<_VolqueteCatalogItem>(
+                  value: _selectedVolquete,
+                  decoration: InputDecoration(
+                    labelText: 'Selecciona un volquete',
+                    border: baseBorder,
+                    enabledBorder: baseBorder,
+                    focusedBorder: focusedBorder,
                   ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<_VolqueteCatalogItem>(
-                    value: _selectedVolquete,
-                    dropdownColor: const Color(0xFF1F2937),
-                    decoration: const InputDecoration(
-                      labelText: 'Selecciona un volquete',
-                    ),
-                    items: catalogItems
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item,
-                            child: Text(item.codigo),
-                          ),
-                        )
-                        .toList(),
-                    validator: (value) =>
-                        value == null ? 'Selecciona un volquete' : null,
-                    onChanged: (value) => setState(() {
-                      _selectedVolquete = value;
-                    }),
+                  items: catalogItems
+                      .map(
+                        (item) => DropdownMenuItem(
+                          value: item,
+                          child: Text(item.codigo),
+                        ),
+                      )
+                      .toList(),
+                  validator: (value) =>
+                      value == null ? 'Selecciona un volquete' : null,
+                  onChanged: (value) => setState(() {
+                    _selectedVolquete = value;
+                  }),
+                ),
+                const SizedBox(height: 16),
+                Text('Maquinaria', style: sectionStyle),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<VolqueteEquipo>(
+                  value: _equipo,
+                  decoration: InputDecoration(
+                    labelText: 'Selecciona la maquinaria',
+                    border: baseBorder,
+                    enabledBorder: baseBorder,
+                    focusedBorder: focusedBorder,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Maquinaria',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<VolqueteEquipo>(
-                    value: _equipo,
-                    dropdownColor: const Color(0xFF1F2937),
-                    decoration: const InputDecoration(
-                      labelText: 'Selecciona la maquinaria',
-                    ),
-                    items: VolqueteEquipo.values
-                        .map(
-                          (equipo) => DropdownMenuItem(
-                            value: equipo,
-                            child: Text(equipo.label),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _equipo = value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Procedencia',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  FormField<String>(
-                    initialValue: _procedencia,
-                    validator: (value) =>
-                        value == null ? 'Selecciona la procedencia' : null,
-                    builder: (field) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: _procedenciaOptions.map((option) {
-                              final bool selected = field.value == option;
-                              return ChoiceChip(
-                                label: Text(
-                                  option,
-                                  style: TextStyle(
-                                    color:
-                                        selected ? Colors.black : Colors.white70,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                selected: selected,
-                                selectedColor: theme.colorScheme.secondary,
-                                backgroundColor: Colors.white12,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                onSelected: (isSelected) {
-                                  setState(() {
-                                    if (isSelected) {
-                                      _procedencia = option;
-                                      field.didChange(option);
-                                    } else {
-                                      _procedencia = null;
-                                      field.didChange(null);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          ),
-                          if (field.hasError)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                field.errorText!,
-                                style: TextStyle(
-                                  color: theme.colorScheme.error,
+                  items: VolqueteEquipo.values
+                      .map(
+                        (equipo) => DropdownMenuItem(
+                          value: equipo,
+                          child: Text(equipo.label),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _equipo = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text('Procedencia', style: sectionStyle),
+                const SizedBox(height: 8),
+                FormField<String>(
+                  initialValue: _procedencia,
+                  validator: (value) =>
+                      value == null ? 'Selecciona la procedencia' : null,
+                  builder: (field) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: _procedenciaOptions.map((option) {
+                            final bool selected = field.value == option;
+                            return ChoiceChip(
+                              label: Text(
+                                option,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: selected
+                                      ? colors.onPrimaryContainer
+                                      : defaultChipTextColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              selected: selected,
+                              selectedColor: colors.primaryContainer,
+                              backgroundColor: colors.surfaceVariant,
+                              side: BorderSide(
+                                color: selected
+                                    ? colors.primary
+                                    : colors.outline.withOpacity(0.3),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              onSelected: (isSelected) {
+                                setState(() {
+                                  if (isSelected) {
+                                    _procedencia = option;
+                                    field.didChange(option);
+                                  } else {
+                                    _procedencia = null;
+                                    field.didChange(null);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              field.errorText!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Chute',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  FormField<int>(
-                    initialValue: _chute,
-                    validator: (value) =>
-                        value == null ? 'Selecciona el chute' : null,
-                    builder: (field) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 12,
-                            children: _chuteOptions.map((option) {
-                              final bool selected = field.value == option;
-                              return ChoiceChip(
-                                label: Text(
-                                  option.toString(),
-                                  style: TextStyle(
-                                    color:
-                                        selected ? Colors.black : Colors.white70,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                selected: selected,
-                                selectedColor: theme.colorScheme.primary,
-                                backgroundColor: Colors.white12,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                onSelected: (isSelected) {
-                                  setState(() {
-                                    if (isSelected) {
-                                      _chute = option;
-                                      field.didChange(option);
-                                    } else {
-                                      _chute = null;
-                                      field.didChange(null);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
                           ),
-                          if (field.hasError)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                field.errorText!,
-                                style: TextStyle(
-                                  color: theme.colorScheme.error,
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text('Chute', style: sectionStyle),
+                const SizedBox(height: 8),
+                FormField<int>(
+                  initialValue: _chute,
+                  validator: (value) =>
+                      value == null ? 'Selecciona el chute' : null,
+                  builder: (field) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: _chuteOptions.map((option) {
+                            final bool selected = field.value == option;
+                            return ChoiceChip(
+                              label: Text(
+                                option.toString(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: selected
+                                      ? colors.onPrimaryContainer
+                                      : defaultChipTextColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              selected: selected,
+                              selectedColor: colors.primaryContainer,
+                              backgroundColor: colors.surfaceVariant,
+                              side: BorderSide(
+                                color: selected
+                                    ? colors.primary
+                                    : colors.outline.withOpacity(0.3),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              onSelected: (isSelected) {
+                                setState(() {
+                                  if (isSelected) {
+                                    _chute = option;
+                                    field.didChange(option);
+                                  } else {
+                                    _chute = null;
+                                    field.didChange(null);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              field.errorText!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Llegada al frente',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _llegadaController,
-                    readOnly: true,
-                    onTap: _pickLlegada,
-                    decoration: const InputDecoration(
-                      labelText: 'Llegada al frente',
-                      suffixIcon: Icon(Icons.event_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Observaciones',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _observacionesController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Observaciones adicionales',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Estado',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Estado de la operación',
-                    ),
-                    child: Text(
-                      estadoLabel,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white38),
                           ),
-                          child: const Text('Cancelar'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: _submit,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text('Guardar'),
-                        ),
-                      ),
-                    ],
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text('Llegada al frente', style: sectionStyle),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _llegadaController,
+                  readOnly: true,
+                  onTap: _pickLlegada,
+                  decoration: InputDecoration(
+                    labelText: 'Llegada al frente',
+                    border: baseBorder,
+                    enabledBorder: baseBorder,
+                    focusedBorder: focusedBorder,
+                    suffixIcon: const Icon(Icons.event_outlined),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Text('Observaciones', style: sectionStyle),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _observacionesController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Observaciones adicionales',
+                    border: baseBorder,
+                    enabledBorder: baseBorder,
+                    focusedBorder: focusedBorder,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Estado', style: sectionStyle),
+                const SizedBox(height: 8),
+                InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Estado de la operación',
+                    border: baseBorder,
+                    enabledBorder: baseBorder,
+                    focusedBorder: baseBorder,
+                  ),
+                  child: Text(
+                    estadoLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: _submit,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Guardar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

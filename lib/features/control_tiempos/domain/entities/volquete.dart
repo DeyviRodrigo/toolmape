@@ -7,7 +7,7 @@ extension VolqueteEstadoLabel on VolqueteEstado {
       case VolqueteEstado.completo:
         return 'Completo';
       case VolqueteEstado.enProceso:
-        return 'En proceso';
+        return 'Incompleto';
       case VolqueteEstado.pausado:
         return 'Pausado';
     }

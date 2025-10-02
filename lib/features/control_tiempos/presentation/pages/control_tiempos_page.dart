@@ -557,148 +557,115 @@ class _VolqueteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const Color cardBackground = Color(0xFF111827);
-    final bool isCompleto = volquete.finCarga != null;
-    final Color statusColor = isCompleto
-        ? const Color(0xFF34D399)
-        : const Color(0xFFFBBF24);
-    final String statusLabel = isCompleto ? 'Completo' : 'Incompleto';
+    final TextStyle? mutedStyle = theme.textTheme.bodySmall?.copyWith(
+      color: Colors.grey.shade600,
+    );
 
-    return Material(
-      color: Colors.transparent,
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cardBackground,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            volquete.codigo,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            volquete.placa,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          statusLabel,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: statusColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          volquete.codigo,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${volquete.placa} • ${volquete.operador}',
+                          style: theme.textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           dateFormat.format(volquete.fecha),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white54,
-                          ),
+                          style: mutedStyle,
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Procedencia: ${volquete.procedencia}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Chute ${volquete.chute}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Llegada al frente: ${dateFormat.format(volquete.llegadaFrente)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white54,
                   ),
-                ),
-                if (volquete.observaciones != null &&
-                    volquete.observaciones!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(width: 12),
+                  _EstadoChip(estado: volquete.estado),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Procedencia: ${volquete.procedencia}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Text(
-                    volquete.observaciones!,
+                    'Chute ${volquete.chute}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _FlowActionButton(
-                      asset: _iconArrowRight,
-                      tooltip: 'Inicio de maniobra',
-                      isCompleted: volquete.inicioManiobra != null,
-                      onPressed: onInicioManiobra,
-                    ),
-                    const SizedBox(width: 8),
-                    _FlowActionButton(
-                      asset: _iconTruckEmpty,
-                      tooltip: 'Inicio de carga',
-                      isCompleted: volquete.inicioCarga != null,
-                      onPressed: onInicioCarga,
-                    ),
-                    const SizedBox(width: 8),
-                    _FlowActionButton(
-                      asset: _iconTruckFull,
-                      tooltip: 'Fin de carga',
-                      isCompleted: volquete.finCarga != null,
-                      onPressed: onFinCarga,
-                    ),
-                    const SizedBox(width: 8),
-                    _FlowActionButton(
-                      asset: _iconEditPen,
-                      tooltip: 'Editar registro',
-                      isCompleted: true,
-                      onPressed: onEdit,
-                      highlightColor: theme.colorScheme.secondary,
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Llegada al frente: ${dateFormat.format(volquete.llegadaFrente)}',
+                style: mutedStyle,
+              ),
+              if (volquete.observaciones != null &&
+                  volquete.observaciones!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  volquete.observaciones!,
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
-            ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _FlowActionIcon(
+                    asset: _iconArrowRight,
+                    tooltip: 'Inicio de maniobra',
+                    isCompleted: volquete.inicioManiobra != null,
+                    onPressed: onInicioManiobra,
+                  ),
+                  const SizedBox(width: 4),
+                  _FlowActionIcon(
+                    asset: _iconTruckEmpty,
+                    tooltip: 'Inicio de carga',
+                    isCompleted: volquete.inicioCarga != null,
+                    onPressed: onInicioCarga,
+                  ),
+                  const SizedBox(width: 4),
+                  _FlowActionIcon(
+                    asset: _iconTruckFull,
+                    tooltip: 'Fin de carga',
+                    isCompleted: volquete.finCarga != null,
+                    onPressed: onFinCarga,
+                  ),
+                  const SizedBox(width: 4),
+                  _FlowActionIcon(
+                    asset: _iconEditPen,
+                    tooltip: 'Editar registro',
+                    isCompleted: true,
+                    onPressed: onEdit,
+                    highlightColor: theme.colorScheme.secondary,
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -706,12 +673,12 @@ class _VolqueteCard extends StatelessWidget {
   }
 }
 
-class _FlowActionButton extends StatelessWidget {
-  const _FlowActionButton({
+class _FlowActionIcon extends StatelessWidget {
+  const _FlowActionIcon({
     required this.asset,
     required this.tooltip,
     required this.isCompleted,
-    this.onPressed,
+    required this.onPressed,
     this.highlightColor,
   });
 
@@ -724,38 +691,87 @@ class _FlowActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Color accent = highlightColor ?? theme.colorScheme.primary;
     final bool isEnabled = onPressed != null;
-    final Color iconColor = isCompleted
-        ? accent
-        : isEnabled
-            ? Colors.white70
-            : Colors.white38;
-    final Color backgroundColor = isCompleted
-        ? accent.withOpacity(0.18)
-        : Colors.white.withOpacity(isEnabled ? 0.08 : 0.04);
+    final Color accent = highlightColor ?? theme.colorScheme.primary;
+    final Color resolvedColor;
+    if (isCompleted) {
+      resolvedColor = accent;
+    } else if (isEnabled) {
+      resolvedColor = theme.iconTheme.color ?? theme.colorScheme.onSurface;
+    } else {
+      resolvedColor = theme.disabledColor;
+    }
 
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Ink(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: SvgPicture.asset(
-              asset,
-              width: 22,
-              height: 22,
-              colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-            ),
-          ),
+      child: IconButton(
+        onPressed: onPressed,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(minHeight: 36, minWidth: 36),
+        icon: SvgPicture.asset(
+          asset,
+          width: 24,
+          height: 24,
+          colorFilter: ColorFilter.mode(resolvedColor, BlendMode.srcIn),
         ),
+      ),
+    );
+  }
+}
+
+class _EstadoChip extends StatelessWidget {
+  const _EstadoChip({required this.estado});
+
+  final VolqueteEstado estado;
+
+  String get _label {
+    switch (estado) {
+      case VolqueteEstado.completo:
+        return 'Completo';
+      case VolqueteEstado.enProceso:
+        return 'Incompleto';
+      case VolqueteEstado.pausado:
+        return 'Pausado';
+    }
+  }
+
+  Color _backgroundColor() {
+    switch (estado) {
+      case VolqueteEstado.completo:
+        return Colors.green.shade100;
+      case VolqueteEstado.enProceso:
+        return Colors.orange.shade100;
+      case VolqueteEstado.pausado:
+        return Colors.blueGrey.shade100;
+    }
+  }
+
+  Color _textColor() {
+    switch (estado) {
+      case VolqueteEstado.completo:
+        return Colors.green.shade800;
+      case VolqueteEstado.enProceso:
+        return Colors.orange.shade800;
+      case VolqueteEstado.pausado:
+        return Colors.blueGrey.shade800;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _backgroundColor(),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        _label,
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(fontWeight: FontWeight.w600, color: _textColor()),
       ),
     );
   }
