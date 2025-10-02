@@ -11,9 +11,13 @@ import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_de
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
-const _iconTruckSmall = 'assets/icons/truck_small.svg';
-const _iconTruckLarge = 'assets/icons/truck_large.svg';
 const _iconEditPen = 'assets/icons/edit_pen.svg';
+
+// Nuevos íconos (rama codex)
+const _iconLoaderTab = 'assets/icons/loader_tab.svg';
+const _iconExcavatorTab = 'assets/icons/excavator_tab.svg';
+const _iconExcavatorCarga = 'assets/icons/excavator_carga.svg';
+const _iconExcavatorDescarga = 'assets/icons/excavator_descarga.svg';
 
 /// Página: ControlTiemposPage - espacio para gestionar actividades y tiempos.
 class ControlTiemposPage extends StatefulWidget {
@@ -117,7 +121,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Volquete eliminado')), 
+        const SnackBar(content: Text('Volquete eliminado')),
       );
       return;
     }
@@ -125,7 +129,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     if (result.updatedVolquete != null) {
       setState(() {
         final index =
-            _volquetes.indexWhere((v) => v.id == result.updatedVolquete!.id);
+        _volquetes.indexWhere((v) => v.id == result.updatedVolquete!.id);
         if (index >= 0) {
           _volquetes[index] = result.updatedVolquete!;
         }
@@ -183,7 +187,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
               Expanded(
                 child: _BottomNavToggleButton(
                   label: 'Carga',
-                  asset: _iconTruckSmall,
+                  asset: _iconExcavatorCarga,
                   isSelected: _selectedBottomIndex == 0,
                   onTap: () {
                     if (_selectedBottomIndex != 0) {
@@ -198,7 +202,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
               Expanded(
                 child: _BottomNavToggleButton(
                   label: 'Descarga',
-                  asset: _iconTruckLarge,
+                  asset: _iconExcavatorDescarga,
                   isSelected: _selectedBottomIndex == 1,
                   onTap: () {
                     if (_selectedBottomIndex != 1) {
@@ -222,8 +226,18 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
               TabBar(
                 controller: _tabController,
                 tabs: const [
-                  Tab(text: 'Cargador'),
-                  Tab(text: 'Excavadora'),
+                  Tab(
+                    child: _TabIconLabel(
+                      asset: _iconLoaderTab,
+                      label: 'Cargador',
+                    ),
+                  ),
+                  Tab(
+                    child: _TabIconLabel(
+                      asset: _iconExcavatorTab,
+                      label: 'Excavadora',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -236,9 +250,9 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                   suffixIcon: _searchTerm.isEmpty
                       ? null
                       : IconButton(
-                          onPressed: _clearSearch,
-                          icon: const Icon(Icons.clear),
-                        ),
+                    onPressed: _clearSearch,
+                    icon: const Icon(Icons.clear),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -249,25 +263,25 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                 child: _filteredVolquetes.isEmpty
                     ? const _EmptyVolquetesView()
                     : ListView.separated(
-                        itemCount: _filteredVolquetes.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (_, index) {
-                          final volquete = _filteredVolquetes[index];
-                          return _VolqueteCard(
-                            volquete: volquete,
-                            dateFormat: _dateFormat,
-                            onTap: () => _openDetail(volquete),
-                            onEdit: () => _openForm(initial: volquete),
-                            onViewDocument: () => _showSnack(
-                              'Documento ${volquete.documento ?? 'no disponible'}',
-                            ),
-                            onViewVolquete: () => _openDetail(volquete),
-                            onNavigate: () => _showSnack(
-                              'Navegando a ${volquete.destino}',
-                            ),
-                          );
-                        },
+                  itemCount: _filteredVolquetes.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (_, index) {
+                    final volquete = _filteredVolquetes[index];
+                    return _VolqueteCard(
+                      volquete: volquete,
+                      dateFormat: _dateFormat,
+                      onTap: () => _openDetail(volquete),
+                      onEdit: () => _openForm(initial: volquete),
+                      onViewDocument: () => _showSnack(
+                        'Documento ${volquete.documento ?? 'no disponible'}',
                       ),
+                      onViewVolquete: () => _openDetail(volquete),
+                      onNavigate: () => _showSnack(
+                        'Navegando a ${volquete.destino}',
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -323,14 +337,46 @@ class _BottomNavToggleButton extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TabIconLabel extends StatelessWidget {
+  const _TabIconLabel({required this.asset, required this.label});
+
+  final String asset;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color iconColor =
+        IconTheme.of(context).color ?? Theme.of(context).colorScheme.onSurface;
+    final TextStyle textStyle = DefaultTextStyle.of(context).style;
+    final Color resolvedTextColor = textStyle.color ?? iconColor;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(
+          asset,
+          width: 20,
+          height: 20,
+          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: textStyle.copyWith(color: resolvedTextColor),
+        ),
+      ],
     );
   }
 }
@@ -443,7 +489,7 @@ class _VolqueteCard extends StatelessWidget {
                 runSpacing: 4,
                 children: [
                   IconButton(
-                    tooltip: 'Abrir detalle',
+                    tooltip: 'Inicio de maniobra',
                     onPressed: onViewVolquete,
                     icon: SvgPicture.asset(
                       _iconArrowRight,
@@ -453,20 +499,20 @@ class _VolqueteCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Ver documento',
+                    tooltip: 'Inicio de carga',
                     onPressed: onViewDocument,
                     icon: SvgPicture.asset(
-                      _iconTruckSmall,
+                      _iconExcavatorCarga,
                       width: 24,
                       height: 24,
                       colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Ver ruta',
+                    tooltip: 'Final de carga',
                     onPressed: onNavigate,
                     icon: SvgPicture.asset(
-                      _iconTruckLarge,
+                      _iconExcavatorDescarga,
                       width: 24,
                       height: 24,
                       colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
