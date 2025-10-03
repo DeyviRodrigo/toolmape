@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+
+const _iconArrowRight = 'assets/icons/arrow_right.svg';
+const _iconTruckEmpty = 'assets/icons/truck_small.svg';
+const _iconTruckFull = 'assets/icons/truck_large.svg';
 
 class VolqueteDetailPage extends StatelessWidget {
   VolqueteDetailPage({
@@ -146,6 +151,10 @@ class _FlowSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bool esDescarga = volquete.tipo == VolqueteTipo.descarga;
+    final String inicioCargaTitulo =
+        esDescarga ? 'Inicio de descarga' : 'Inicio de carga';
+    final String finCargaTitulo = esDescarga ? 'Fin de descarga' : 'Fin de carga';
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -161,22 +170,22 @@ class _FlowSummary extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _FlowSummaryTile(
-              icon: Icons.play_arrow_rounded,
+              asset: _iconArrowRight,
               title: 'Inicio de maniobra',
               date: volquete.inicioManiobra,
               dateFormat: dateFormat,
             ),
             const SizedBox(height: 8),
             _FlowSummaryTile(
-              icon: Icons.local_shipping_outlined,
-              title: 'Inicio de carga',
+              asset: _iconTruckEmpty,
+              title: inicioCargaTitulo,
               date: volquete.inicioCarga,
               dateFormat: dateFormat,
             ),
             const SizedBox(height: 8),
             _FlowSummaryTile(
-              icon: Icons.check_circle_outline,
-              title: 'Fin de carga',
+              asset: _iconTruckFull,
+              title: finCargaTitulo,
               date: volquete.finCarga,
               dateFormat: dateFormat,
             ),
@@ -189,13 +198,13 @@ class _FlowSummary extends StatelessWidget {
 
 class _FlowSummaryTile extends StatelessWidget {
   const _FlowSummaryTile({
-    required this.icon,
+    required this.asset,
     required this.title,
     required this.date,
     required this.dateFormat,
   });
 
-  final IconData icon;
+  final String asset;
   final String title;
   final DateTime? date;
   final DateFormat dateFormat;
@@ -216,9 +225,14 @@ class _FlowSummaryTile extends StatelessWidget {
                 : Colors.grey.shade200,
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            color: completed ? theme.colorScheme.primary : Colors.grey,
+          child: SvgPicture.asset(
+            asset,
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(
+              completed ? theme.colorScheme.primary : Colors.grey,
+              BlendMode.srcIn,
+            ),
           ),
         ),
         const SizedBox(width: 12),

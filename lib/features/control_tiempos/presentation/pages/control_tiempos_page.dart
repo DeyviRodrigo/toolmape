@@ -318,6 +318,13 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     );
   }
 
+  String _tipoCopy(VolqueteTipo tipo, {
+    required String carga,
+    required String descarga,
+  }) {
+    return tipo == VolqueteTipo.carga ? carga : descarga;
+  }
+
   void _updateVolqueteFlow(
     String volqueteId,
     Volquete Function(Volquete current) transformer,
@@ -336,7 +343,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
   void _registerInicioManiobra(Volquete volquete) {
     if (volquete.finCarga != null) {
-      _showSnack('El volquete ya completó la carga.');
+      final etapa = _tipoCopy(
+        volquete.tipo,
+        carga: 'carga',
+        descarga: 'descarga',
+      );
+      _showSnack('El volquete ya completó la $etapa.');
       return;
     }
     if (volquete.inicioManiobra != null) {
@@ -364,7 +376,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
   void _registerInicioCarga(Volquete volquete) {
     if (volquete.finCarga != null) {
-      _showSnack('El volquete ya completó la carga.');
+      final etapa = _tipoCopy(
+        volquete.tipo,
+        carga: 'carga',
+        descarga: 'descarga',
+      );
+      _showSnack('El volquete ya completó la $etapa.');
       return;
     }
     if (volquete.inicioManiobra == null) {
@@ -372,11 +389,21 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
       return;
     }
     if (volquete.inicioCarga != null) {
-      _showSnack('El inicio de carga ya fue registrado.');
+      final inicioTitulo = _tipoCopy(
+        volquete.tipo,
+        carga: 'inicio de carga',
+        descarga: 'inicio de descarga',
+      );
+      _showSnack('El $inicioTitulo ya fue registrado.');
       return;
     }
 
     final now = DateTime.now();
+    final inicioTitulo = _tipoCopy(
+      volquete.tipo,
+      carga: 'Inicio de carga',
+      descarga: 'Inicio de descarga',
+    );
     _updateVolqueteFlow(
       volquete.id,
       (current) => current.copyWith(
@@ -384,23 +411,34 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         eventos: [
           ...current.eventos,
           VolqueteEvento(
-            titulo: 'Inicio de carga',
+            titulo: inicioTitulo,
             descripcion: 'Registrado desde el panel de control.',
             fecha: now,
           ),
         ],
       ),
     );
-    _showSnack('Inicio de carga registrado');
+    _showSnack('$inicioTitulo registrado');
   }
 
   void _registerFinCarga(Volquete volquete) {
+    final etapa = _tipoCopy(
+      volquete.tipo,
+      carga: 'carga',
+      descarga: 'descarga',
+    );
+    final finTitulo = _tipoCopy(
+      volquete.tipo,
+      carga: 'Fin de carga',
+      descarga: 'Fin de descarga',
+    );
+
     if (volquete.finCarga != null) {
-      _showSnack('El fin de carga ya fue registrado.');
+      _showSnack('El $finTitulo ya fue registrado.');
       return;
     }
     if (volquete.inicioManiobra == null || volquete.inicioCarga == null) {
-      _showSnack('Completa los pasos previos antes de finalizar la carga.');
+      _showSnack('Completa los pasos previos antes de finalizar la $etapa.');
       return;
     }
 
@@ -413,14 +451,14 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         eventos: [
           ...current.eventos,
           VolqueteEvento(
-            titulo: 'Fin de carga',
+            titulo: finTitulo,
             descripcion: 'Registro automático desde el panel.',
             fecha: now,
           ),
         ],
       ),
     );
-    _showSnack('Fin de carga registrado');
+    _showSnack('$finTitulo registrado');
   }
 }
 
@@ -560,6 +598,12 @@ class _VolqueteCard extends StatelessWidget {
     final TextStyle? mutedStyle = theme.textTheme.bodySmall?.copyWith(
       color: Colors.grey.shade600,
     );
+    final String inicioCargaTooltip = volquete.tipo == VolqueteTipo.carga
+        ? 'Inicio de carga'
+        : 'Inicio de descarga';
+    final String finCargaTooltip = volquete.tipo == VolqueteTipo.carga
+        ? 'Fin de carga'
+        : 'Fin de descarga';
 
     return Card(
       elevation: 0,
@@ -644,14 +688,14 @@ class _VolqueteCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   _FlowActionIcon(
                     asset: _iconTruckEmpty,
-                    tooltip: 'Inicio de carga',
+                    tooltip: inicioCargaTooltip,
                     isCompleted: volquete.inicioCarga != null,
                     onPressed: onInicioCarga,
                   ),
                   const SizedBox(width: 4),
                   _FlowActionIcon(
                     asset: _iconTruckFull,
-                    tooltip: 'Fin de carga',
+                    tooltip: finCargaTooltip,
                     isCompleted: volquete.finCarga != null,
                     onPressed: onFinCarga,
                   ),
