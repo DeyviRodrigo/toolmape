@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toolmape/features/general/presentation/molecules/app_drawer_item.dart';
-import 'package:toolmape/theme/theme_provider.dart';
+import 'package:toolmape/core/theme/theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';

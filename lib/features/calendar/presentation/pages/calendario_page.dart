@@ -15,7 +15,7 @@ import 'package:toolmape/features/calendar/presentation/viewmodels/calendar_view
 import 'package:toolmape/features/calendar/presentation/atoms/event_filter.dart';
 import 'package:toolmape/features/general/presentation/atoms/menu_option.dart';
 import 'package:toolmape/features/general/presentation/atoms/legend_item.dart';
-import 'package:toolmape/theme/extensions/app_colors.dart';
+import 'package:toolmape/core/theme/extensions/app_colors.dart';
 
 // Eventos privados del usuario
 import 'package:toolmape/features/calendar/domain/mi_evento.dart';

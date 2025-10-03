@@ -11,8 +11,8 @@ import 'package:toolmape/features/calendar/presentation/pages/calendario_page.da
 import 'package:toolmape/features/general/presentation/pages/splash_page.dart';
 import 'package:toolmape/features/general/presentation/pages/informacion_page.dart';
 import 'package:toolmape/app/router/routes.dart';
-import 'package:toolmape/theme/theme_provider.dart';
-import 'package:toolmape/theme/themes/index.dart';
+import 'package:toolmape/core/theme/theme_provider.dart';
+import 'package:toolmape/core/theme/themes/index.dart';
 import 'package:toolmape/app/di/di.dart';
 
 Future<void> bootstrap() async {
