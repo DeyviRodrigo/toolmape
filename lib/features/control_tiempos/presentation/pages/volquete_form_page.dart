@@ -1,278 +1,329 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
+import 'package:toolmape/features/control_tiempos/domain/entities/operacion.dart';
+import 'package:toolmape/features/control_tiempos/presentation/widgets/toolmape_header.dart';
 
-class VolqueteFormPage extends StatefulWidget {
-  const VolqueteFormPage({
-    super.key,
-    this.initial,
-    this.defaultTipo,
-    this.defaultEquipo,
-  });
+const _backgroundColor = Color(0xFF0B1220);
+const _cardColor = Color(0xFF111827);
+const _accentColor = Color(0xFFF59E0B);
 
-  final Volquete? initial;
-  final VolqueteTipo? defaultTipo;
-  final VolqueteEquipo? defaultEquipo;
+class OperacionFormPage extends StatefulWidget {
+  const OperacionFormPage({super.key, this.initial});
+
+  final Operacion? initial;
 
   @override
-  State<VolqueteFormPage> createState() => _VolqueteFormPageState();
+  State<OperacionFormPage> createState() => _OperacionFormPageState();
 }
 
-class _VolqueteFormPageState extends State<VolqueteFormPage> {
+class _OperacionFormPageState extends State<OperacionFormPage> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _codigoController;
-  late final TextEditingController _placaController;
-  late final TextEditingController _operadorController;
-  late final TextEditingController _destinoController;
-  late final TextEditingController _notasController;
-  late final TextEditingController _fechaController;
-  late DateTime _fecha;
-  late VolqueteEstado _estado;
-  late VolqueteTipo _tipo;
-  late VolqueteEquipo _equipo;
+  final DateFormat _dateFormat = DateFormat('d/M/yyyy HH:mm:ss');
 
-  final DateFormat _dateFormat = DateFormat('dd/MM/yyyy – HH:mm');
+  late TextEditingController _actividadController;
+  late TextEditingController _volqueteController;
+  late TextEditingController _inicioController;
+  late TextEditingController _finController;
+  late TextEditingController _observacionesController;
+
+  late String _maquinaria;
+  late int _chute;
+  late DateTime _inicio;
+  DateTime? _fin;
+  late EstadoOperacion _estado;
+
+  bool get _isEditing => widget.initial != null;
+
+  static const List<String> _maquinarias = [
+    '(E01) Excav. C 340-01',
+    '(E02) Excav. C 340-02',
+    '(E03) Excav. C 340-03',
+    '(E04) Excav. C 340-04',
+  ];
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initial;
-    _codigoController = TextEditingController(text: initial?.codigo ?? '');
-    _placaController = TextEditingController(text: initial?.placa ?? '');
-    _operadorController = TextEditingController(text: initial?.operador ?? '');
-    _destinoController = TextEditingController(text: initial?.destino ?? '');
-    _notasController = TextEditingController(text: initial?.notas ?? '');
-    _fecha = initial?.fecha ?? DateTime.now();
-    _estado = initial?.estado ?? VolqueteEstado.enProceso;
-    _tipo = initial?.tipo ?? widget.defaultTipo ?? VolqueteTipo.carga;
-    _equipo = initial?.equipo ?? widget.defaultEquipo ?? VolqueteEquipo.cargador;
-    _fechaController =
-        TextEditingController(text: _dateFormat.format(_fecha));
+    _maquinaria = initial?.maquinaria ?? _maquinarias.first;
+    _chute = initial?.chute ?? 1;
+    _inicio = initial?.inicio ?? DateTime.now();
+    _fin = initial?.fin;
+    _estado = initial?.estado ?? EstadoOperacion.incompleto;
+    _actividadController = TextEditingController(text: initial?.actividad ?? '');
+    _volqueteController = TextEditingController(text: initial?.volquete ?? '');
+    _inicioController =
+        TextEditingController(text: _dateFormat.format(_inicio));
+    _finController = TextEditingController(
+      text: _fin != null ? _dateFormat.format(_fin!) : '',
+    );
+    _observacionesController =
+        TextEditingController(text: initial?.observaciones ?? '');
   }
 
   @override
   void dispose() {
-    _codigoController.dispose();
-    _placaController.dispose();
-    _operadorController.dispose();
-    _destinoController.dispose();
-    _notasController.dispose();
-    _fechaController.dispose();
+    _actividadController.dispose();
+    _volqueteController.dispose();
+    _inicioController.dispose();
+    _finController.dispose();
+    _observacionesController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectFecha() async {
-    final initialDate = _fecha;
-    final pickedDate = await showDatePicker(
+  Future<void> _selectInicio() async {
+    final picked = await _pickDateTime(_inicio);
+    if (picked != null) {
+      setState(() {
+        _inicio = picked;
+        _inicioController.text = _dateFormat.format(_inicio);
+      });
+    }
+  }
+
+  Future<void> _selectFin() async {
+    final picked = await _pickDateTime(_fin ?? DateTime.now());
+    if (picked != null) {
+      setState(() {
+        _fin = picked;
+        _finController.text = _dateFormat.format(_fin!);
+      });
+    }
+  }
+
+  Future<DateTime?> _pickDateTime(DateTime initial) async {
+    FocusScope.of(context).unfocus();
+    final date = await showDatePicker(
       context: context,
+      initialDate: initial,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      initialDate: initialDate,
+      lastDate: DateTime(2035),
     );
+    if (date == null) return null;
 
-    if (pickedDate == null) return;
-
-    final pickedTime = await showTimePicker(
+    final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initialDate),
+      initialTime: TimeOfDay.fromDateTime(initial),
     );
+    if (time == null) return null;
 
-    if (pickedTime == null) return;
-
-    setState(() {
-      _fecha = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-      _fechaController.text = _dateFormat.format(_fecha);
-    });
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    final eventos = widget.initial?.eventos ??
-        [
-          VolqueteEvento(
-            titulo: 'Registro creado',
-            descripcion: 'Ingreso manual desde el panel de control.',
-            fecha: DateTime.now(),
-          ),
-        ];
+    final actividad = _actividadController.text.trim();
+    final volquete = _volqueteController.text.trim();
+    final observaciones = _observacionesController.text.trim();
 
-    final volquete = Volquete(
+    final operacion = Operacion(
       id: widget.initial?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      codigo: _codigoController.text.trim(),
-      placa: _placaController.text.trim(),
-      operador: _operadorController.text.trim(),
-      destino: _destinoController.text.trim(),
-      fecha: _fecha,
+      maquinaria: _maquinaria,
+      chute: _chute,
+      actividad: actividad,
+      inicio: _inicio,
+      fin: _finController.text.trim().isEmpty ? null : _fin,
+      volquete: volquete.isEmpty ? null : volquete,
+      observaciones: observaciones.isEmpty ? null : observaciones,
       estado: _estado,
-      tipo: _tipo,
-      equipo: _equipo,
-      notas: _notasController.text.trim().isEmpty
-          ? widget.initial?.notas
-          : _notasController.text.trim(),
-      documento: widget.initial?.documento,
-      eventos: eventos,
     );
 
-    Navigator.pop(context, volquete);
+    Navigator.pop(context, operacion);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.initial != null;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Editar volquete' : 'Registrar volquete'),
-        actions: [
-          TextButton(
-            onPressed: _submit,
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
+      backgroundColor: _backgroundColor,
+      appBar: const ToolmapeHeader(),
+      drawer: const Drawer(),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _codigoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Código / Alias',
-                    hintText: '(V01) Volq. ABC-123',
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: _cardColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionTitle(text: _isEditing ? 'Editar operación' : 'Nueva operación'),
+                  const SizedBox(height: 24),
+                  DropdownButtonFormField<String>(
+                    value: _maquinaria,
+                    decoration: _inputDecoration('Maquinaria*'),
+                    dropdownColor: _cardColor,
+                    items: _maquinarias
+                        .map(
+                          (value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(value),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _maquinaria = value);
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa un código';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _placaController,
-                  decoration: const InputDecoration(
-                    labelText: 'Placa',
-                    hintText: 'ABC-123',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa la placa';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _operadorController,
-                  decoration: const InputDecoration(
-                    labelText: 'Operador',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa el operador';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _destinoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Destino',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa el destino';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _fechaController,
-                  readOnly: true,
-                  onTap: _selectFecha,
-                  decoration: InputDecoration(
-                    labelText: 'Fecha y hora',
-                    hintText: _dateFormat.format(DateTime.now()),
-                    suffixIcon: const Icon(Icons.event_outlined),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<VolqueteEstado>(
-                  value: _estado,
-                  decoration: const InputDecoration(labelText: 'Estado'),
-                  items: VolqueteEstado.values
-                      .map(
-                        (estado) => DropdownMenuItem(
-                          value: estado,
-                          child: Text(estado.label),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Chutes',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w600,
                         ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _estado = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<VolqueteTipo>(
-                  value: _tipo,
-                  decoration: const InputDecoration(labelText: 'Tipo'),
-                  items: VolqueteTipo.values
-                      .map(
-                        (tipo) => DropdownMenuItem(
-                          value: tipo,
-                          child: Text(tipo.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _tipo = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<VolqueteEquipo>(
-                  value: _equipo,
-                  decoration: const InputDecoration(labelText: 'Equipo'),
-                  items: VolqueteEquipo.values
-                      .map(
-                        (equipo) => DropdownMenuItem(
-                          value: equipo,
-                          child: Text(equipo.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _equipo = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _notasController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Notas (opcional)',
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    children: List.generate(5, (index) {
+                      final chute = index + 1;
+                      final isSelected = chute == _chute;
+                      return ChoiceChip(
+                        label: Text(chute.toString()),
+                        selected: isSelected,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.black : Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        selectedColor: _accentColor,
+                        backgroundColor: const Color(0xFF1F2937),
+                        onSelected: (_) => setState(() => _chute = chute),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _actividadController,
+                    decoration: _inputDecoration('Actividad*'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Ingresa la actividad';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _volqueteController,
+                    decoration: _inputDecoration('Volquete (si aplica)'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _inicioController,
+                    readOnly: true,
+                    onTap: _selectInicio,
+                    decoration: _inputDecoration('Inicio*').copyWith(
+                      suffixIcon: const Icon(Icons.calendar_month, color: Colors.white70),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _finController,
+                    readOnly: true,
+                    onTap: _selectFin,
+                    decoration: _inputDecoration('Final').copyWith(
+                      suffixIcon: const Icon(Icons.calendar_month, color: Colors.white70),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _observacionesController,
+                    maxLines: 3,
+                    decoration: _inputDecoration('Observaciones'),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<EstadoOperacion>(
+                    value: _estado,
+                    decoration: _inputDecoration('Estado').copyWith(
+                      isDense: true,
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    ),
+                    dropdownColor: _cardColor,
+                    items: EstadoOperacion.values
+                        .map(
+                          (estado) => DropdownMenuItem(
+                            value: estado,
+                            child: Text(estado.label),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _estado = value);
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white54),
+                          ),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _accentColor,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Guardar'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      filled: true,
+      fillColor: const Color(0xFF1F2937),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
     );
   }
 }
