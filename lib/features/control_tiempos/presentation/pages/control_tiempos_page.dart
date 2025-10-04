@@ -6,9 +6,12 @@ import 'package:intl/intl.dart';
 
 import 'package:toolmape/app/router/routes.dart';
 import 'package:toolmape/app/shell/app_shell.dart';
+import 'package:toolmape/features/control_tiempos/domain/entities/excavadora_operacion.dart';
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+import 'package:toolmape/features/control_tiempos/presentation/pages/excavadora_operacion_detail_page.dart';
+import 'package:toolmape/features/control_tiempos/presentation/pages/excavadora_operacion_form_page.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
 const _iconEditPen = 'assets/icons/edit_pen.svg';
@@ -34,6 +37,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy – HH:mm');
 
   late List<Volquete> _volquetes;
+  late List<ExcavadoraOperacion> _operaciones;
   int _selectedBottomIndex = 0;
   String _searchTerm = '';
   Timer? _debounce;
@@ -50,6 +54,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabChanged);
     _volquetes = _initialVolquetes;
+    _operaciones = _initialExcavadoraOperaciones;
   }
 
   @override
@@ -141,6 +146,74 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     }
   }
 
+  Future<void> _openExcavadoraForm({ExcavadoraOperacion? initial}) async {
+    final result = await Navigator.push<ExcavadoraOperacion>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExcavadoraOperacionFormPage(initial: initial),
+      ),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      final existingIndex = _operaciones.indexWhere((o) => o.id == result.id);
+      if (existingIndex >= 0) {
+        _operaciones[existingIndex] = result;
+      } else {
+        _operaciones = [..._operaciones, result];
+      }
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(initial == null
+            ? 'Operación registrada correctamente'
+            : 'Operación actualizada correctamente'),
+      ),
+    );
+  }
+
+  Future<void> _openExcavadoraDetalle(ExcavadoraOperacion operacion) async {
+    final result = await Navigator.push<ExcavadoraOperacionDetailResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExcavadoraOperacionDetailPage(operacion: operacion),
+      ),
+    );
+
+    if (result == null) return;
+
+    if (result.finalizar) {
+      final current =
+          _operaciones.firstWhere((o) => o.id == operacion.id, orElse: () => operacion);
+      _marcarOperacionCompleta(current);
+    }
+
+    if (result.editar) {
+      final current =
+          _operaciones.firstWhere((o) => o.id == operacion.id, orElse: () => operacion);
+      await _openExcavadoraForm(initial: current);
+    }
+  }
+
+  void _marcarOperacionCompleta(ExcavadoraOperacion operacion) {
+    if (operacion.estaCompleta) return;
+
+    setState(() {
+      _operaciones = _operaciones
+          .map((o) =>
+              o.id == operacion.id ? o.copyWith(fin: DateTime.now()) : o)
+          .toList();
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Operación finalizada')),
+    );
+  }
+
   void _clearSearch() {
     _searchController.clear();
     _onSearchChanged('');
@@ -164,6 +237,8 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
   @override
   Widget build(BuildContext context) {
+    final bool isExcavadoraTab = _selectedEquipo == VolqueteEquipo.excavadora;
+
     return AppShell(
       title: 'Control de tiempos',
       onGoToCalculadora: () =>
@@ -175,48 +250,13 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
       onGoToInformacion: () =>
           Navigator.pushReplacementNamed(context, routeInformacion),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openForm(),
+        onPressed: () =>
+            isExcavadoraTab ? _openExcavadoraForm() : _openForm(),
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _BottomNavToggleButton(
-                  label: 'Carga',
-                  asset: _iconExcavatorCarga,
-                  isSelected: _selectedBottomIndex == 0,
-                  onTap: () {
-                    if (_selectedBottomIndex != 0) {
-                      setState(() {
-                        _selectedBottomIndex = 0;
-                      });
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _BottomNavToggleButton(
-                  label: 'Descarga',
-                  asset: _iconExcavatorDescarga,
-                  isSelected: _selectedBottomIndex == 1,
-                  onTap: () {
-                    if (_selectedBottomIndex != 1) {
-                      setState(() {
-                        _selectedBottomIndex = 1;
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar:
+          isExcavadoraTab ? null : _buildVolqueteBottomNavigationBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -241,50 +281,102 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                 ],
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                decoration: InputDecoration(
-                  hintText: 'Buscar volquete…',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchTerm.isEmpty
-                      ? null
-                      : IconButton(
-                    onPressed: _clearSearch,
-                    icon: const Icon(Icons.clear),
+              if (isExcavadoraTab)
+                Expanded(
+                  child: _ExcavadoraOperacionesList(
+                    operaciones: _operaciones,
+                    onVerDetalle: _openExcavadoraDetalle,
+                    onFinalizar: _marcarOperacionCompleta,
+                    onEditar: _openExcavadoraForm,
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                )
+              else ...[
+                TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar volquete…',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchTerm.isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: _clearSearch,
+                            icon: const Icon(Icons.clear),
+                          ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _filteredVolquetes.isEmpty
-                    ? const _EmptyVolquetesView()
-                    : ListView.separated(
-                  itemCount: _filteredVolquetes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) {
-                    final volquete = _filteredVolquetes[index];
-                    return _VolqueteCard(
-                      volquete: volquete,
-                      dateFormat: _dateFormat,
-                      onTap: () => _openDetail(volquete),
-                      onEdit: () => _openForm(initial: volquete),
-                      onViewDocument: () => _showSnack(
-                        'Documento ${volquete.documento ?? 'no disponible'}',
-                      ),
-                      onViewVolquete: () => _openDetail(volquete),
-                      onNavigate: () => _showSnack(
-                        'Navegando a ${volquete.destino}',
-                      ),
-                    );
-                  },
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _filteredVolquetes.isEmpty
+                      ? const _EmptyVolquetesView()
+                      : ListView.separated(
+                          itemCount: _filteredVolquetes.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (_, index) {
+                            final volquete = _filteredVolquetes[index];
+                            return _VolqueteCard(
+                              volquete: volquete,
+                              dateFormat: _dateFormat,
+                              onTap: () => _openDetail(volquete),
+                              onEdit: () => _openForm(initial: volquete),
+                              onViewDocument: () => _showSnack(
+                                'Documento ${volquete.documento ?? 'no disponible'}',
+                              ),
+                              onViewVolquete: () => _openDetail(volquete),
+                              onNavigate: () => _showSnack(
+                                'Navegando a ${volquete.destino}',
+                              ),
+                            );
+                          },
+                        ),
                 ),
-              ),
+              ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildVolqueteBottomNavigationBar() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: _BottomNavToggleButton(
+                label: 'Carga',
+                asset: _iconExcavatorCarga,
+                isSelected: _selectedBottomIndex == 0,
+                onTap: () {
+                  if (_selectedBottomIndex != 0) {
+                    setState(() {
+                      _selectedBottomIndex = 0;
+                    });
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _BottomNavToggleButton(
+                label: 'Descarga',
+                asset: _iconExcavatorDescarga,
+                isSelected: _selectedBottomIndex == 1,
+                onTap: () {
+                  if (_selectedBottomIndex != 1) {
+                    setState(() {
+                      _selectedBottomIndex = 1;
+                    });
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -396,6 +488,246 @@ class _EmptyVolquetesView extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Ajusta los filtros o registra un nuevo volquete.',
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExcavadoraOperacionesList extends StatelessWidget {
+  const _ExcavadoraOperacionesList({
+    required this.operaciones,
+    required this.onVerDetalle,
+    required this.onFinalizar,
+    required this.onEditar,
+  });
+
+  final List<ExcavadoraOperacion> operaciones;
+  final ValueChanged<ExcavadoraOperacion> onVerDetalle;
+  final ValueChanged<ExcavadoraOperacion> onFinalizar;
+  final void Function({ExcavadoraOperacion? initial}) onEditar;
+
+  @override
+  Widget build(BuildContext context) {
+    if (operaciones.isEmpty) {
+      return const _ExcavadoraEmptyView();
+    }
+
+    return ListView.separated(
+      itemCount: operaciones.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, index) {
+        final operacion = operaciones[index];
+        return _ExcavadoraOperacionCard(
+          operacion: operacion,
+          onVerDetalle: onVerDetalle,
+          onFinalizar: onFinalizar,
+          onEditar: onEditar,
+        );
+      },
+    );
+  }
+}
+
+class _ExcavadoraOperacionCard extends StatelessWidget {
+  const _ExcavadoraOperacionCard({
+    required this.operacion,
+    required this.onVerDetalle,
+    required this.onFinalizar,
+    required this.onEditar,
+  });
+
+  final ExcavadoraOperacion operacion;
+  final ValueChanged<ExcavadoraOperacion> onVerDetalle;
+  final ValueChanged<ExcavadoraOperacion> onFinalizar;
+  final void Function({ExcavadoraOperacion? initial}) onEditar;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color backgroundColor = Color(0xFF111827);
+    const Color shadowColor = Color(0x40000000);
+    const Color titleColor = Colors.white;
+    final Color secondaryTextColor = Colors.white.withOpacity(0.7);
+    final bool estaCompleta = operacion.estaCompleta;
+    final Color estadoColor = estaCompleta
+        ? const Color(0xFF34D399)
+        : const Color(0xFFFBBF24);
+    final String estadoLabel = estaCompleta ? 'Completo' : 'Incompleto';
+
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 12,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => onVerDetalle(operacion),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            right: 12,
+                            top: 4,
+                            bottom: 4,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                operacion.actividad,
+                                style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: titleColor,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                        ) ??
+                                    const TextStyle(
+                                      color: titleColor,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                operacion.maquinaria,
+                                style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: secondaryTextColor,
+                                        ) ??
+                                    TextStyle(
+                                      color: secondaryTextColor,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    estadoLabel,
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: estadoColor,
+                          fontWeight: FontWeight.w600,
+                        ) ??
+                        TextStyle(
+                          color: estadoColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+              if (operacion.volquete != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Volquete: ${operacion.volquete}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: secondaryTextColor,
+                      ) ??
+                      TextStyle(
+                        color: secondaryTextColor,
+                      ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _ExcavadoraActionIcon(
+                    icon: Icons.timer_outlined,
+                    tooltip: 'Finalizar operación',
+                    onPressed: estaCompleta ? null : () => onFinalizar(operacion),
+                  ),
+                  const SizedBox(width: 12),
+                  _ExcavadoraActionIcon(
+                    icon: Icons.edit_outlined,
+                    tooltip: 'Editar operación',
+                    onPressed: () => onEditar(initial: operacion),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExcavadoraActionIcon extends StatelessWidget {
+  const _ExcavadoraActionIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color iconColor = onPressed == null
+        ? Colors.grey.shade600
+        : Colors.grey.shade200;
+
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, color: iconColor, size: 22),
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(minHeight: 36, minWidth: 36),
+      splashRadius: 22,
+    );
+  }
+}
+
+class _ExcavadoraEmptyView extends StatelessWidget {
+  const _ExcavadoraEmptyView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.construction_outlined,
+              size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          const Text('No hay operaciones registradas'),
+          const SizedBox(height: 4),
+          Text(
+            'Registra una nueva operación con el botón +.',
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -583,6 +915,58 @@ class _EstadoChip extends StatelessWidget {
     );
   }
 }
+
+final List<ExcavadoraOperacion> _initialExcavadoraOperaciones = [
+  ExcavadoraOperacion(
+    id: 'op01',
+    actividad: 'Carguío de Gravas',
+    actividadId: 'carguio_gravas',
+    maquinaria: '(E01) Excav. C 340-01',
+    chute: 3,
+    inicio: DateTime(2025, 7, 24, 9, 12),
+    fin: DateTime(2025, 7, 24, 9, 41),
+    volquete: '(V11) Volqu. CM B7K-757',
+    observaciones: 'Descarga conforme.',
+  ),
+  ExcavadoraOperacion(
+    id: 'op02',
+    actividad: 'Carga de Mineral',
+    actividadId: 'carga_mineral',
+    maquinaria: '(E02) Excav. CX-02',
+    chute: 2,
+    inicio: DateTime(2025, 7, 24, 10, 5),
+    volquete: '(V07) Volqu. RD F7V-760',
+    observaciones: 'En espera de volquete adicional.',
+  ),
+  ExcavadoraOperacion(
+    id: 'op03',
+    actividad: 'Carguío de Gravas',
+    actividadId: 'carguio_gravas',
+    maquinaria: '(E03) Excav. ZX 250',
+    chute: 1,
+    inicio: DateTime(2025, 7, 24, 8, 40),
+    fin: DateTime(2025, 7, 24, 9, 5),
+  ),
+  ExcavadoraOperacion(
+    id: 'op04',
+    actividad: 'Movimiento de Desmonte',
+    actividadId: 'mov_desmonte',
+    maquinaria: '(E01) Excav. C 340-01',
+    chute: 4,
+    inicio: DateTime(2025, 7, 24, 11, 10),
+    volquete: '(V15) Volqu. JAA X3U-843',
+  ),
+  ExcavadoraOperacion(
+    id: 'op05',
+    actividad: 'Limpieza de Frente',
+    actividadId: 'limpieza_frente',
+    maquinaria: '(E04) Excav. 320D',
+    chute: 5,
+    inicio: DateTime(2025, 7, 24, 7, 45),
+    fin: DateTime(2025, 7, 24, 8, 30),
+    observaciones: 'Área liberada para inspección.',
+  ),
+];
 
 final List<Volquete> _initialVolquetes = [
   Volquete(
