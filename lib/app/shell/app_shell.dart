@@ -26,9 +26,18 @@ class AppShell extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       drawer: AppDrawer(
-        onGoToCalculadora: onGoToCalculadora,
-        onGoToCalendario: onGoToCalendario,
-        onGoToInformacion: onGoToInformacion,
+        onGoToCalculadora: () {
+          Navigator.of(context).pop();
+          onGoToCalculadora();
+        },
+        onGoToCalendario: () {
+          Navigator.of(context).pop();
+          onGoToCalendario();
+        },
+        onGoToInformacion: () {
+          Navigator.of(context).pop();
+          onGoToInformacion();
+        },
       ),
       appBar: AppBar(
         title: Text(title),
@@ -46,6 +55,7 @@ class AppShell extends StatelessWidget {
                     .toList()
                 : [
                     PopupMenuButton<VoidCallback>(
+                      key: const Key('appShell_moreMenu'),
                       icon: const Icon(Icons.more_vert),
                       onSelected: (cb) => cb(),
                       itemBuilder: (_) => actions
@@ -65,7 +75,7 @@ class AppShell extends StatelessWidget {
                     ),
                   ]),
       ),
-      body: body,
+      body: SafeArea(child: body),
     );
   }
 }

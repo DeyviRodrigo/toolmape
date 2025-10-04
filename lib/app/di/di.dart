@@ -14,25 +14,44 @@ import 'package:toolmape/features/calendar/infrastructure/repositories/calendari
 import 'package:toolmape/features/calendar/infrastructure/repositories/mis_eventos_repository_impl.dart';
 import 'package:toolmape/features/general/infrastructure/repositories/diccionario_repository_impl.dart';
 
-final preferenciasRepositoryProvider = Provider<PreferenciasRepository>((ref) {
-  final ds = PreferenciasLocalDatasource();
-  return PreferenciasRepositoryImpl(ds);
-});
+final supabaseClientProvider = Provider<SupabaseClient>(
+  (ref) => Supabase.instance.client,
+);
 
-final calendarioRepositoryProvider = Provider<CalendarioRepository>((ref) {
-  final ds = CalendarioSupabaseDatasource(Supabase.instance.client);
-  return CalendarioRepositoryImpl(ds);
-});
+// Datasources
+final preferenciasLocalDsProvider =
+    Provider<PreferenciasLocalDatasource>(
+  (ref) => PreferenciasLocalDatasource(),
+);
 
-final misEventosRepositoryProvider = Provider<MisEventosRepository>((ref) {
-  final ds = MisEventosSupabaseDatasource(Supabase.instance.client);
-  return MisEventosRepositoryImpl(ds);
-});
+final calendarioSupabaseDsProvider = Provider<CalendarioSupabaseDatasource>(
+  (ref) => CalendarioSupabaseDatasource(ref.read(supabaseClientProvider)),
+);
 
-final diccionarioRepositoryProvider = Provider<DiccionarioRepository>((ref) {
-  final ds = DiccionarioSupabaseDatasource(Supabase.instance.client);
-  return DiccionarioRepositoryImpl(ds);
-});
+final misEventosSupabaseDsProvider = Provider<MisEventosSupabaseDatasource>(
+  (ref) => MisEventosSupabaseDatasource(ref.read(supabaseClientProvider)),
+);
+
+final diccionarioSupabaseDsProvider = Provider<DiccionarioSupabaseDatasource>(
+  (ref) => DiccionarioSupabaseDatasource(ref.read(supabaseClientProvider)),
+);
+
+// Repos (MISMO nombre público que hoy)
+final preferenciasRepositoryProvider = Provider<PreferenciasRepository>(
+  (ref) => PreferenciasRepositoryImpl(ref.read(preferenciasLocalDsProvider)),
+);
+
+final calendarioRepositoryProvider = Provider<CalendarioRepository>(
+  (ref) => CalendarioRepositoryImpl(ref.read(calendarioSupabaseDsProvider)),
+);
+
+final misEventosRepositoryProvider = Provider<MisEventosRepository>(
+  (ref) => MisEventosRepositoryImpl(ref.read(misEventosSupabaseDsProvider)),
+);
+
+final diccionarioRepositoryProvider = Provider<DiccionarioRepository>(
+  (ref) => DiccionarioRepositoryImpl(ref.read(diccionarioSupabaseDsProvider)),
+);
 
 Future<void> initDependencies() async {
   // Additional initialization if required in the future.
