@@ -1,15 +1,13 @@
 /// Posibles estados de un volquete dentro del flujo de control de tiempos.
-enum VolqueteEstado { completo, enProceso, pausado }
+enum VolqueteEstado { completo, incompleto }
 
 extension VolqueteEstadoLabel on VolqueteEstado {
   String get label {
     switch (this) {
       case VolqueteEstado.completo:
         return 'Completo';
-      case VolqueteEstado.enProceso:
-        return 'En proceso';
-      case VolqueteEstado.pausado:
-        return 'Pausado';
+      case VolqueteEstado.incompleto:
+        return 'Incompleto';
     }
   }
 }
@@ -55,6 +53,25 @@ class VolqueteEvento {
   final DateTime fecha;
 }
 
+/// Registro de descarga asociado a un volquete.
+class VolqueteDescarga {
+  const VolqueteDescarga({
+    required this.id,
+    required this.volquete,
+    required this.procedencia,
+    required this.chute,
+    required this.fechaInicio,
+    required this.fechaFin,
+  });
+
+  final String id;
+  final String volquete;
+  final String procedencia;
+  final int chute;
+  final DateTime fechaInicio;
+  final DateTime fechaFin;
+}
+
 /// Entidad de dominio simple para representar un volquete registrado.
 class Volquete {
   const Volquete({
@@ -68,6 +85,14 @@ class Volquete {
     required this.tipo,
     required this.equipo,
     required this.eventos,
+    required this.maquinaria,
+    required this.procedencias,
+    required this.chute,
+    required this.llegadaFrente,
+    required this.descargas,
+    this.inicioManiobra,
+    this.inicioCarga,
+    this.finCarga,
     this.documento,
     this.notas,
   });
@@ -82,6 +107,14 @@ class Volquete {
   final VolqueteTipo tipo;
   final VolqueteEquipo equipo;
   final List<VolqueteEvento> eventos;
+  final String maquinaria;
+  final List<String> procedencias;
+  final int chute;
+  final DateTime llegadaFrente;
+  final DateTime? inicioManiobra;
+  final DateTime? inicioCarga;
+  final DateTime? finCarga;
+  final List<VolqueteDescarga> descargas;
   final String? documento;
   final String? notas;
 
@@ -96,6 +129,14 @@ class Volquete {
     VolqueteTipo? tipo,
     VolqueteEquipo? equipo,
     List<VolqueteEvento>? eventos,
+    String? maquinaria,
+    List<String>? procedencias,
+    int? chute,
+    DateTime? llegadaFrente,
+    DateTime? inicioManiobra,
+    DateTime? inicioCarga,
+    DateTime? finCarga,
+    List<VolqueteDescarga>? descargas,
     String? documento,
     String? notas,
   }) {
@@ -110,6 +151,14 @@ class Volquete {
       tipo: tipo ?? this.tipo,
       equipo: equipo ?? this.equipo,
       eventos: eventos ?? this.eventos,
+      maquinaria: maquinaria ?? this.maquinaria,
+      procedencias: procedencias ?? this.procedencias,
+      chute: chute ?? this.chute,
+      llegadaFrente: llegadaFrente ?? this.llegadaFrente,
+      inicioManiobra: inicioManiobra ?? this.inicioManiobra,
+      inicioCarga: inicioCarga ?? this.inicioCarga,
+      finCarga: finCarga ?? this.finCarga,
+      descargas: descargas ?? this.descargas,
       documento: documento ?? this.documento,
       notas: notas ?? this.notas,
     );
