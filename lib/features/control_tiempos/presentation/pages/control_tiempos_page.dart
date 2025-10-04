@@ -10,6 +10,7 @@ import 'package:toolmape/features/control_tiempos/domain/entities/excavadora_ope
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+import 'package:toolmape/features/control_tiempos/presentation/pages/excavadora_operacion_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/excavadora_operacion_form_page.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
@@ -174,6 +175,29 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     );
   }
 
+  Future<void> _openExcavadoraDetalle(ExcavadoraOperacion operacion) async {
+    final result = await Navigator.push<ExcavadoraOperacionDetailResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExcavadoraOperacionDetailPage(operacion: operacion),
+      ),
+    );
+
+    if (result == null) return;
+
+    if (result.finalizar) {
+      final current =
+          _operaciones.firstWhere((o) => o.id == operacion.id, orElse: () => operacion);
+      _marcarOperacionCompleta(current);
+    }
+
+    if (result.editar) {
+      final current =
+          _operaciones.firstWhere((o) => o.id == operacion.id, orElse: () => operacion);
+      await _openExcavadoraForm(initial: current);
+    }
+  }
+
   void _marcarOperacionCompleta(ExcavadoraOperacion operacion) {
     if (operacion.estaCompleta) return;
 
@@ -261,6 +285,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                 Expanded(
                   child: _ExcavadoraOperacionesList(
                     operaciones: _operaciones,
+                    onVerDetalle: _openExcavadoraDetalle,
                     onFinalizar: _marcarOperacionCompleta,
                     onEditar: _openExcavadoraForm,
                   ),
@@ -478,11 +503,13 @@ class _EmptyVolquetesView extends StatelessWidget {
 class _ExcavadoraOperacionesList extends StatelessWidget {
   const _ExcavadoraOperacionesList({
     required this.operaciones,
+    required this.onVerDetalle,
     required this.onFinalizar,
     required this.onEditar,
   });
 
   final List<ExcavadoraOperacion> operaciones;
+  final ValueChanged<ExcavadoraOperacion> onVerDetalle;
   final ValueChanged<ExcavadoraOperacion> onFinalizar;
   final void Function({ExcavadoraOperacion? initial}) onEditar;
 
@@ -499,6 +526,7 @@ class _ExcavadoraOperacionesList extends StatelessWidget {
         final operacion = operaciones[index];
         return _ExcavadoraOperacionCard(
           operacion: operacion,
+          onVerDetalle: onVerDetalle,
           onFinalizar: onFinalizar,
           onEditar: onEditar,
         );
@@ -510,98 +538,161 @@ class _ExcavadoraOperacionesList extends StatelessWidget {
 class _ExcavadoraOperacionCard extends StatelessWidget {
   const _ExcavadoraOperacionCard({
     required this.operacion,
+    required this.onVerDetalle,
     required this.onFinalizar,
     required this.onEditar,
   });
 
   final ExcavadoraOperacion operacion;
+  final ValueChanged<ExcavadoraOperacion> onVerDetalle;
   final ValueChanged<ExcavadoraOperacion> onFinalizar;
   final void Function({ExcavadoraOperacion? initial}) onEditar;
 
-  String get _estadoLabel =>
-      operacion.estaCompleta ? 'Completo' : 'Incompleto';
-
-  Color _estadoColor(BuildContext context) {
-    if (operacion.estaCompleta) {
-      return Colors.green.shade400;
-    }
-    return Theme.of(context).colorScheme.secondary;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    const Color backgroundColor = Color(0xFF111827);
+    const Color shadowColor = Color(0x40000000);
+    const Color titleColor = Colors.white;
+    final Color secondaryTextColor = Colors.white.withOpacity(0.7);
+    final bool estaCompleta = operacion.estaCompleta;
+    final Color estadoColor = estaCompleta
+        ? const Color(0xFF34D399)
+        : const Color(0xFFFBBF24);
+    final String estadoLabel = estaCompleta ? 'Completo' : 'Incompleto';
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          operacion.actividad,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _estadoLabel,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: _estadoColor(context),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    operacion.maquinaria,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
-                  ),
-                  if (operacion.volquete != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Volquete: ${operacion.volquete}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: colorScheme.onSurface.withOpacity(0.6)),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: 'Finalizar operación',
-                  onPressed:
-                      operacion.estaCompleta ? null : () => onFinalizar(operacion),
-                  icon: const Icon(Icons.access_time),
-                ),
-                IconButton(
-                  tooltip: 'Editar operación',
-                  onPressed: () => onEditar(initial: operacion),
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-              ],
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 12,
+              offset: Offset(0, 8),
             ),
           ],
         ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => onVerDetalle(operacion),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            operacion.actividad,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: titleColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ) ??
+                                const TextStyle(
+                                  color: titleColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            operacion.maquinaria,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: secondaryTextColor,
+                                ) ??
+                                TextStyle(
+                                  color: secondaryTextColor,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      estadoLabel,
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: estadoColor,
+                            fontWeight: FontWeight.w600,
+                          ) ??
+                          TextStyle(
+                            color: estadoColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+                if (operacion.volquete != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Volquete: ${operacion.volquete}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: secondaryTextColor,
+                        ) ??
+                        TextStyle(
+                          color: secondaryTextColor,
+                        ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _ExcavadoraActionIcon(
+                      icon: Icons.timer_outlined,
+                      tooltip: 'Finalizar operación',
+                      onPressed:
+                          estaCompleta ? null : () => onFinalizar(operacion),
+                    ),
+                    const SizedBox(width: 12),
+                    _ExcavadoraActionIcon(
+                      icon: Icons.edit_outlined,
+                      tooltip: 'Editar operación',
+                      onPressed: () => onEditar(initial: operacion),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+    );
+  }
+}
+
+class _ExcavadoraActionIcon extends StatelessWidget {
+  const _ExcavadoraActionIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color iconColor = onPressed == null
+        ? Colors.grey.shade600
+        : Colors.grey.shade200;
+
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, color: iconColor, size: 22),
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(minHeight: 36, minWidth: 36),
+      splashRadius: 22,
     );
   }
 }
