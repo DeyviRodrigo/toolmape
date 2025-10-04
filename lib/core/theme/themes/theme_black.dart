@@ -8,6 +8,10 @@ import 'package:toolmape/core/theme/tokens/shapes.dart';
 // Opcional: asegura onSurface blanco (útil para fondos de icono en dark/black).
 final _cs = blackColorScheme.copyWith(
   onSurface: Colors.white,
+  surface: Colors.black,
+  surfaceVariant: Colors.black,
+  background: Colors.black,
+  surfaceTint: Colors.transparent,
 );
 
 final ThemeData blackTheme = ThemeData(
@@ -21,6 +25,11 @@ final ThemeData blackTheme = ThemeData(
 
   // Evita tinte por elevación y surfaceTint (que dan el “azulado”)
   applyElevationOverlayColor: false,
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Colors.black,
+    foregroundColor: Colors.white,
+    surfaceTintColor: Colors.transparent,
+  ),
   cardTheme: const CardThemeData(
     shape: shapeMd,
     color: Colors.black,
@@ -32,6 +41,26 @@ final ThemeData blackTheme = ThemeData(
     surfaceTintColor: Colors.transparent,
   ),
   drawerTheme: const DrawerThemeData(
+    backgroundColor: Colors.black,
+    surfaceTintColor: Colors.transparent,
+  ),
+  navigationDrawerTheme: const NavigationDrawerThemeData(
+    backgroundColor: Colors.black,
+    surfaceTintColor: Colors.transparent,
+  ),
+  navigationRailTheme: const NavigationRailThemeData(
+    backgroundColor: Colors.black,
+  ),
+  navigationBarTheme: const NavigationBarThemeData(
+    backgroundColor: Colors.black,
+    surfaceTintColor: Colors.transparent,
+  ),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    backgroundColor: Colors.black,
+    selectedItemColor: Colors.white,
+    unselectedItemColor: Colors.white70,
+  ),
+  bottomSheetTheme: const BottomSheetThemeData(
     backgroundColor: Colors.black,
     surfaceTintColor: Colors.transparent,
   ),
