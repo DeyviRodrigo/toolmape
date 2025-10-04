@@ -14,6 +14,7 @@ class AppShell extends StatelessWidget {
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
   final Widget? bottomNavigationBar;
+  final Color? backgroundColor;
 
   const AppShell({
     super.key,
@@ -27,12 +28,14 @@ class AppShell extends StatelessWidget {
     this.floatingActionButton,
     this.floatingActionButtonLocation,
     this.bottomNavigationBar,
+    this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
+      backgroundColor: backgroundColor,
       drawer: AppDrawer(
         onGoToCalculadora: onGoToCalculadora,
         onGoToCalendario: onGoToCalendario,
