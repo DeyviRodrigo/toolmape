@@ -203,7 +203,7 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
           borderSide: const BorderSide(color: _accentColor, width: 2),
         ),
         labelStyle: const TextStyle(color: Colors.white70),
-        hintStyle: const TextStyle(color: Colors.white50),
+        hintStyle: const TextStyle(color: Colors.white54),
       ),
     );
 
