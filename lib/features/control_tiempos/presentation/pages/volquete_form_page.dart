@@ -4,9 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
 
 class VolqueteFormPage extends StatefulWidget {
-  const VolqueteFormPage({super.key, this.initial});
+  const VolqueteFormPage({
+    super.key,
+    this.initial,
+    this.defaultTipo,
+    this.defaultEquipo,
+  });
 
   final Volquete? initial;
+  final VolqueteTipo? defaultTipo;
+  final VolqueteEquipo? defaultEquipo;
 
   @override
   State<VolqueteFormPage> createState() => _VolqueteFormPageState();
@@ -38,8 +45,8 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
     _notasController = TextEditingController(text: initial?.notas ?? '');
     _fecha = initial?.fecha ?? DateTime.now();
     _estado = initial?.estado ?? VolqueteEstado.enProceso;
-    _tipo = initial?.tipo ?? VolqueteTipo.carga;
-    _equipo = initial?.equipo ?? VolqueteEquipo.cargador;
+    _tipo = initial?.tipo ?? widget.defaultTipo ?? VolqueteTipo.carga;
+    _equipo = initial?.equipo ?? widget.defaultEquipo ?? VolqueteEquipo.cargador;
     _fechaController =
         TextEditingController(text: _dateFormat.format(_fecha));
   }

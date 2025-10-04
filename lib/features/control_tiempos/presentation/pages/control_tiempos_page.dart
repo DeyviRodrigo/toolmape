@@ -12,6 +12,8 @@ import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_fo
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
 const _iconEditPen = 'assets/icons/edit_pen.svg';
+const _iconTruckLoaded = 'assets/icons/truck_large.svg';
+const _iconTruckEmpty = 'assets/icons/truck_small.svg';
 
 // Nuevos íconos (rama codex)
 const _iconLoaderTab = 'assets/icons/loader_tab.svg';
@@ -79,7 +81,11 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     final result = await Navigator.push<Volquete>(
       context,
       MaterialPageRoute(
-        builder: (_) => VolqueteFormPage(initial: initial),
+        builder: (_) => VolqueteFormPage(
+          initial: initial,
+          defaultTipo: _selectedTipo,
+          defaultEquipo: _selectedEquipo,
+        ),
       ),
     );
 
@@ -431,6 +437,110 @@ class _VolqueteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color iconColor =
         Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface;
+    final bool isDescarga = volquete.tipo == VolqueteTipo.descarga;
+
+    final List<_VolqueteCardAction> actions = isDescarga
+        ? [
+            _VolqueteCardAction(
+              tooltip: 'Llegada al chute',
+              asset: _iconTruckLoaded,
+              onPressed: onViewVolquete,
+            ),
+            _VolqueteCardAction(
+              tooltip: 'Fin de descarga',
+              asset: _iconTruckEmpty,
+              onPressed: onViewDocument,
+            ),
+            _VolqueteCardAction(
+              tooltip: 'Maniobra de salida',
+              asset: _iconArrowRight,
+              onPressed: onNavigate,
+            ),
+            _VolqueteCardAction(
+              tooltip: 'Editar',
+              asset: _iconEditPen,
+              onPressed: onEdit,
+            ),
+          ]
+        : [
+            _VolqueteCardAction(
+              tooltip: 'Inicio de maniobra',
+              asset: _iconArrowRight,
+              onPressed: onViewVolquete,
+            ),
+            _VolqueteCardAction(
+              tooltip: 'Inicio de carga',
+              asset: _iconExcavatorCarga,
+              onPressed: onViewDocument,
+            ),
+            _VolqueteCardAction(
+              tooltip: 'Final de carga',
+              asset: _iconExcavatorDescarga,
+              onPressed: onNavigate,
+            ),
+            _VolqueteCardAction(
+              tooltip: 'Editar',
+              asset: _iconEditPen,
+              onPressed: onEdit,
+            ),
+          ];
+
+    Widget buildActionButton(_VolqueteCardAction action) {
+      return IconButton(
+        tooltip: action.tooltip,
+        onPressed: action.onPressed,
+        icon: SvgPicture.asset(
+          action.asset,
+          width: 24,
+          height: 24,
+          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        ),
+      );
+    }
+
+    Widget buildTrailing() {
+      if (!isDescarga) {
+        return Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: actions.map(buildActionButton).toList(),
+        );
+      }
+
+      final String estadoLabel =
+          volquete.estado == VolqueteEstado.completo ? 'Completo' : 'Incompleto';
+
+      Color estadoColor() {
+        switch (volquete.estado) {
+          case VolqueteEstado.completo:
+            return Colors.green.shade600;
+          case VolqueteEstado.enProceso:
+            return Colors.orange.shade600;
+          case VolqueteEstado.pausado:
+            return Colors.blueGrey.shade600;
+        }
+      }
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            estadoLabel,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: estadoColor(),
+                ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: actions.map(buildActionButton).toList(),
+          ),
+        ],
+      );
+    }
 
     return Card(
       elevation: 0,
@@ -455,8 +565,10 @@ class _VolqueteCard extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        _EstadoChip(estado: volquete.estado),
+                        if (!isDescarga) ...[
+                          const SizedBox(width: 12),
+                          _EstadoChip(estado: volquete.estado),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -484,58 +596,25 @@ class _VolqueteCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  IconButton(
-                    tooltip: 'Inicio de maniobra',
-                    onPressed: onViewVolquete,
-                    icon: SvgPicture.asset(
-                      _iconArrowRight,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Inicio de carga',
-                    onPressed: onViewDocument,
-                    icon: SvgPicture.asset(
-                      _iconExcavatorCarga,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Final de carga',
-                    onPressed: onNavigate,
-                    icon: SvgPicture.asset(
-                      _iconExcavatorDescarga,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Editar',
-                    onPressed: onEdit,
-                    icon: SvgPicture.asset(
-                      _iconEditPen,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                    ),
-                  ),
-                ],
-              ),
+              buildTrailing(),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+class _VolqueteCardAction {
+  const _VolqueteCardAction({
+    required this.tooltip,
+    required this.asset,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final String asset;
+  final VoidCallback onPressed;
 }
 
 class _EstadoChip extends StatelessWidget {
