@@ -8,6 +8,9 @@ import 'package:toolmape/core/theme/tokens/shapes.dart';
 final ColorScheme _darkCS = darkColorScheme.copyWith(
   primary: Colors.white,
   onPrimary: Colors.black,
+  background: Colors.black,
+  surface: Colors.black,
+  surfaceVariant: Colors.black,
   // (opcional) si quieres usar onSurface como fondo blanco para el logo en dark:
   // onSurface: Colors.white,
 );
@@ -78,4 +81,6 @@ final ThemeData darkTheme = ThemeData(
 
   // Iconos por defecto blancos
   iconTheme: const IconThemeData(color: Colors.white),
+  scaffoldBackgroundColor: Colors.black,
+  canvasColor: Colors.black,
 );
