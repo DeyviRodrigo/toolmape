@@ -17,6 +17,7 @@ final ThemeData blackTheme = ThemeData(
 
   // Fondo principal full negro
   scaffoldBackgroundColor: Colors.black,
+  canvasColor: Colors.black,
 
   // Evita tinte por elevación y surfaceTint (que dan el “azulado”)
   applyElevationOverlayColor: false,
@@ -31,7 +32,7 @@ final ThemeData blackTheme = ThemeData(
     surfaceTintColor: Colors.transparent,
   ),
   drawerTheme: const DrawerThemeData(
-    backgroundColor: Color(0xFF1C1C1C), // puedes usar Colors.black si lo quieres más negro
+    backgroundColor: Colors.black,
     surfaceTintColor: Colors.transparent,
   ),
 

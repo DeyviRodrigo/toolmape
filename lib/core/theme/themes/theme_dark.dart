@@ -4,16 +4,7 @@ import 'package:toolmape/core/theme/tokens/typography.dart';
 import 'package:toolmape/core/theme/extensions/app_colors.dart';
 import 'package:toolmape/core/theme/tokens/shapes.dart';
 
-// Ajuste del ColorScheme oscuro: primary/blanco para usarlo en iconos si lo necesitas
-final ColorScheme _darkCS = darkColorScheme.copyWith(
-  primary: Colors.white,
-  onPrimary: Colors.black,
-  background: Colors.black,
-  surface: Colors.black,
-  surfaceVariant: Colors.black,
-  // (opcional) si quieres usar onSurface como fondo blanco para el logo en dark:
-  // onSurface: Colors.white,
-);
+final ColorScheme _darkCS = darkColorScheme;
 
 final ThemeData darkTheme = ThemeData(
   useMaterial3: true,
@@ -28,7 +19,7 @@ final ThemeData darkTheme = ThemeData(
     AppColors(success: Color(0xFF34D399), warning: Color(0xFFFBBF24)),
   ],
 
-  // Botón "relleno" (FilledButton) -> fondo blanco / texto negro en oscuro
+  // Botón "relleno" (FilledButton) -> usa el primario del esquema oscuro
   filledButtonTheme: FilledButtonThemeData(
     style: ButtonStyle(
       backgroundColor: WidgetStatePropertyAll(_darkCS.primary),
@@ -37,7 +28,7 @@ final ThemeData darkTheme = ThemeData(
     ),
   ),
 
-  // Botón "elevado" (ElevatedButton) -> fondo blanco / texto negro en oscuro
+  // Botón "elevado" (ElevatedButton) -> usa el primario del esquema oscuro
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
       backgroundColor: WidgetStatePropertyAll(_darkCS.primary),
@@ -79,8 +70,12 @@ final ThemeData darkTheme = ThemeData(
     space: 1,
   ),
 
-  // Iconos por defecto blancos
-  iconTheme: const IconThemeData(color: Colors.white),
-  scaffoldBackgroundColor: Colors.black,
-  canvasColor: Colors.black,
+  // Iconos usando el color onSurface del esquema oscuro
+  iconTheme: IconThemeData(color: _darkCS.onSurface),
+  scaffoldBackgroundColor: _darkCS.background,
+  canvasColor: _darkCS.surface,
+  drawerTheme: DrawerThemeData(
+    backgroundColor: _darkCS.surface,
+    surfaceTintColor: Colors.transparent,
+  ),
 );
