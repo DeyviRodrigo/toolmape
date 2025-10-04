@@ -22,6 +22,8 @@ final ThemeData blackTheme = ThemeData(
   // Fondo principal full negro
   scaffoldBackgroundColor: Colors.black,
   canvasColor: Colors.black,
+  cardColor: Colors.black,
+  dialogBackgroundColor: Colors.black,
 
   // Evita tinte por elevación y surfaceTint (que dan el “azulado”)
   applyElevationOverlayColor: false,
@@ -55,6 +57,11 @@ final ThemeData blackTheme = ThemeData(
     backgroundColor: Colors.black,
     surfaceTintColor: Colors.transparent,
   ),
+  bottomAppBarTheme: const BottomAppBarTheme(
+    color: Colors.black,
+    surfaceTintColor: Colors.transparent,
+    elevation: 0,
+  ),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     backgroundColor: Colors.black,
     selectedItemColor: Colors.white,
@@ -63,6 +70,46 @@ final ThemeData blackTheme = ThemeData(
   bottomSheetTheme: const BottomSheetThemeData(
     backgroundColor: Colors.black,
     surfaceTintColor: Colors.transparent,
+  ),
+  popupMenuTheme: const PopupMenuThemeData(
+    color: Colors.black,
+    surfaceTintColor: Colors.transparent,
+    textStyle: TextStyle(color: Colors.white),
+  ),
+  menuBarTheme: MenuBarThemeData(
+    style: MenuStyle(
+      backgroundColor: WidgetStatePropertyAll(Colors.black),
+      surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+      shadowColor: WidgetStatePropertyAll(Colors.transparent),
+      elevation: WidgetStatePropertyAll(0),
+    ),
+  ),
+  menuTheme: MenuThemeData(
+    style: MenuStyle(
+      backgroundColor: WidgetStatePropertyAll(Colors.black),
+      surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+      shadowColor: WidgetStatePropertyAll(Colors.transparent),
+      elevation: WidgetStatePropertyAll(0),
+    ),
+  ),
+  dropdownMenuTheme: DropdownMenuThemeData(
+    menuStyle: MenuStyle(
+      backgroundColor: WidgetStatePropertyAll(Colors.black),
+      surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+      shadowColor: WidgetStatePropertyAll(Colors.transparent),
+      elevation: WidgetStatePropertyAll(0),
+    ),
+    inputDecorationTheme: const InputDecorationTheme(
+      fillColor: Colors.black,
+      filled: true,
+      border: OutlineInputBorder(borderRadius: borderRadiusMd),
+    ),
+  ),
+  snackBarTheme: const SnackBarThemeData(
+    backgroundColor: Colors.black,
+    contentTextStyle: TextStyle(color: Colors.white),
+    actionTextColor: Colors.white,
+    behavior: SnackBarBehavior.floating,
   ),
 
   // Extensiones
