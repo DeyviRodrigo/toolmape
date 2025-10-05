@@ -30,8 +30,8 @@ class PriceDatasource {
   Future<({Map<String, double?> data, DateTime? capturedAt})>
   fetchLatestGold() async {
     final row = await client
-        .from('stg_latest_ticks')
-        .select('captured_at, gold_price, lbma_gold_am, lbma_gold_pm')
+        .from('gold_price_combined_v')
+        .select('captured_at, gold_price, source')
         .order('captured_at', ascending: false)
         .limit(1)
         .maybeSingle();
@@ -42,8 +42,8 @@ class PriceDatasource {
 
     final data = <String, double?>{
       'gold_price': _toD(row?['gold_price']),
-      'lbma_gold_am': _toD(row?['lbma_gold_am']),
-      'lbma_gold_pm': _toD(row?['lbma_gold_pm']),
+      'lbma_gold_am': null,
+      'lbma_gold_pm': null,
     };
 
     return (data: data, capturedAt: capturedAt);

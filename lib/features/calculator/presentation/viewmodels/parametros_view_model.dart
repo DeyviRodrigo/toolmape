@@ -63,26 +63,24 @@ class ParametrosViewModel extends AsyncNotifier<ParametrosRecomendados> {
     try {
       final client = Supabase.instance.client;
 
-      final latestF = client
+      final rateF = client
           .from('stg_latest_ticks')
           .select('pen_usd')
           .order('captured_at', ascending: false)
           .limit(1)
           .maybeSingle();
 
-      final spotF = client
-          .from('stg_spot_ticks')
-          .select('price')
-          .filter('metal_code', 'in', '("XAU","xau","GOLD","Gold","gold")')
-          .ilike('currency', 'usd')
+      final goldF = client
+          .from('gold_price_combined_v')
+          .select('gold_price')
           .order('captured_at', ascending: false)
           .limit(1)
           .maybeSingle();
 
-      final results = await Future.wait([latestF, spotF]);
+      final results = await Future.wait([rateF, goldF]);
 
       final penUsd = (results[0]?['pen_usd'] as num?)?.toDouble() ?? 0.0;
-      final gold = (results[1]?['price'] as num?)?.toDouble() ?? 0.0;
+      final gold = (results[1]?['gold_price'] as num?)?.toDouble() ?? 0.0;
       final tipoCambio = penUsd;
 
       final data = ParametrosRecomendados.defaults().copyWith(

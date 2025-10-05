@@ -53,54 +53,70 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
   Future<GoldTrendState> _load() async {
     final client = Supabase.instance.client;
     final now = DateTime.now();
-    final pts = <GoldTrendPoint>[];
-    if (_range == TrendRange.diario || _range == TrendRange.semanal) {
-      final start = _range == TrendRange.diario
-          ? DateTime(now.year, now.month, now.day)
-          : now.subtract(const Duration(days: 7));
+    final rateRow = await client
+        .from('stg_latest_ticks')
+        .select('pen_usd')
+        .order('captured_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    final latestRate = (rateRow?['pen_usd'] as num?)?.toDouble();
 
+    Future<List<GoldTrendPoint>> loadPoints({
+      required DateTime start,
+      DateTime? end,
+      required bool bucketByDay,
+    }) async {
       var query = client
-          .from('stg_latest_ticks')
-          .select('captured_at, gold_price, pen_usd')
-          .gte('captured_at', start.toIso8601String());
+          .from('gold_price_combined_v')
+          .select('captured_at, gold_price')
+          .gte('captured_at', start.toUtc().toIso8601String());
 
-      if (_range == TrendRange.diario) {
-        query = query.lt(
-          'captured_at',
-          start.add(const Duration(days: 1)).toIso8601String(),
-        );
+      if (end != null) {
+        query = query.lt('captured_at', end.toUtc().toIso8601String());
       }
 
       final rows = await query.order('captured_at', ascending: true);
+      final dedup = <String, GoldTrendPoint>{};
+
       for (final r in rows) {
         final ts = DateTime.tryParse('${r['captured_at']}')?.toLocal();
         final gold = (r['gold_price'] as num?)?.toDouble();
-        final rate = (r['pen_usd'] as num?)?.toDouble();
         if (ts == null || gold == null) continue;
-        final price =
-            _currency == 'USD' ? gold : (rate == null ? null : gold * rate);
-        if (price != null) pts.add(GoldTrendPoint(ts, price));
+        final converted = _currency == 'USD'
+            ? gold
+            : (latestRate == null ? null : gold * latestRate);
+        if (converted == null) continue;
+
+        if (bucketByDay) {
+          final key =
+              '${ts.year.toString().padLeft(4, '0')}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}';
+          final existing = dedup[key];
+          if (existing == null || ts.isAfter(existing.time)) {
+            dedup[key] = GoldTrendPoint(ts, converted);
+          }
+        } else {
+          dedup[ts.toIso8601String()] = GoldTrendPoint(ts, converted);
+        }
       }
+
+      final pts = dedup.values.toList()
+        ..sort((a, b) => a.time.compareTo(b.time));
+      return pts;
+    }
+
+    late final List<GoldTrendPoint> pts;
+    if (_range == TrendRange.diario) {
+      final start = DateTime(now.year, now.month, now.day);
+      final end = start.add(const Duration(days: 1));
+      pts = await loadPoints(start: start, end: end, bucketByDay: false);
+    } else if (_range == TrendRange.semanal) {
+      final start = now.subtract(const Duration(days: 7));
+      pts = await loadPoints(start: start, bucketByDay: false);
     } else {
       final days = _range == TrendRange.mensual ? 30 : 365;
       final start = now.subtract(Duration(days: days));
-      final rows = await client
-          .from('fact_daily_summary')
-          .select('date_lima, avg_gold_spot_price, avg_pen_usd')
-          .gte('date_lima', start.toIso8601String().split('T').first)
-          .order('date_lima', ascending: true);
-      for (final r in rows) {
-        final ts = DateTime.tryParse('${r['date_lima']}')?.toLocal();
-        final gold = (r['avg_gold_spot_price'] as num?)?.toDouble();
-        final rate = (r['avg_pen_usd'] as num?)?.toDouble();
-        if (ts == null || gold == null) continue;
-        final price =
-            _currency == 'USD' ? gold : (rate == null ? null : gold * rate);
-        if (price != null) pts.add(GoldTrendPoint(ts, price));
-      }
+      pts = await loadPoints(start: start, bucketByDay: true);
     }
-
-    pts.sort((a, b) => a.time.compareTo(b.time));
 
     final spot = await client
         .from('stg_spot_ticks')
@@ -111,14 +127,6 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
         .limit(1)
         .maybeSingle();
 
-    final penRow = await client
-        .from('stg_latest_ticks')
-        .select('pen_usd')
-        .order('captured_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
-    final rate = (penRow?['pen_usd'] as num?)?.toDouble();
-
     final bidUsd = (spot?['bid'] as num?)?.toDouble();
     final askUsd = (spot?['ask'] as num?)?.toDouble();
     final changeAbs = (spot?['change_abs'] as num?)?.toDouble();
@@ -126,9 +134,9 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
 
     double? bid = bidUsd;
     double? ask = askUsd;
-    if (_currency == 'PEN' && rate != null) {
-      bid = bidUsd == null ? null : bidUsd * rate;
-      ask = askUsd == null ? null : askUsd * rate;
+    if (_currency == 'PEN' && latestRate != null) {
+      bid = bidUsd == null ? null : bidUsd * latestRate;
+      ask = askUsd == null ? null : askUsd * latestRate;
     }
 
     return GoldTrendState(
