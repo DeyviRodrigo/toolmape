@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-enum TrendRange { diario, semanal, mensual, anual }
+enum TrendRange { diario, semanal, mensual, anual, general }
 
 class GoldTrendPoint {
   final DateTime time;
@@ -61,10 +61,9 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
         .maybeSingle();
     final latestRate = (rateRow?['pen_usd'] as num?)?.toDouble();
 
-    Future<List<GoldTrendPoint>> loadPoints({
+    Future<List<GoldTrendPoint>> loadCombinedTicks({
       required DateTime start,
       DateTime? end,
-      required bool bucketByDay,
     }) async {
       var query = client
           .from('gold_price_combined_v')
@@ -82,21 +81,7 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
         final ts = DateTime.tryParse('${r['captured_at']}')?.toLocal();
         final gold = (r['gold_price'] as num?)?.toDouble();
         if (ts == null || gold == null) continue;
-        final converted = _currency == 'USD'
-            ? gold
-            : (latestRate == null ? null : gold * latestRate);
-        if (converted == null) continue;
-
-        if (bucketByDay) {
-          final key =
-              '${ts.year.toString().padLeft(4, '0')}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}';
-          final existing = dedup[key];
-          if (existing == null || ts.isAfter(existing.time)) {
-            dedup[key] = GoldTrendPoint(ts, converted);
-          }
-        } else {
-          dedup[ts.toIso8601String()] = GoldTrendPoint(ts, converted);
-        }
+        dedup[ts.toIso8601String()] = GoldTrendPoint(ts, gold);
       }
 
       final pts = dedup.values.toList()
@@ -104,19 +89,84 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
       return pts;
     }
 
+    Future<List<GoldTrendPoint>> loadLatestTicks({
+      required DateTime start,
+      DateTime? end,
+    }) async {
+      var query = client
+          .from('stg_latest_ticks')
+          .select('captured_at, gold_price, pen_usd')
+          .gte('captured_at', start.toUtc().toIso8601String());
+
+      if (end != null) {
+        query = query.lt('captured_at', end.toUtc().toIso8601String());
+      }
+
+      final rows = await query.order('captured_at', ascending: true);
+      final pts = <GoldTrendPoint>[];
+      for (final r in rows) {
+        final ts = DateTime.tryParse('${r['captured_at']}')?.toLocal();
+        final gold = (r['gold_price'] as num?)?.toDouble();
+        final rate = (r['pen_usd'] as num?)?.toDouble();
+        if (ts == null || gold == null || rate == null) continue;
+        pts.add(GoldTrendPoint(ts, gold * rate));
+      }
+      return pts;
+    }
+
+    Future<List<GoldTrendPoint>> loadDailySummary({DateTime? start}) async {
+      var query = client.from('fact_daily_summary').select(
+            'date_lima, avg_gold_usd_combined, avg_gold_pen_combined, avg_pen_usd, avg_gold_spot_price',
+          ).order('date_lima', ascending: true);
+
+      if (start != null) {
+        query = query.gte('date_lima', start.toIso8601String().split('T').first);
+      }
+
+      final rows = await query;
+      final pts = <GoldTrendPoint>[];
+
+      for (final r in rows) {
+        final ts = DateTime.tryParse('${r['date_lima']}')?.toLocal();
+        final usd = ((r['avg_gold_usd_combined'] as num?)?.toDouble()) ??
+            ((r['avg_gold_spot_price'] as num?)?.toDouble());
+        var pen = (r['avg_gold_pen_combined'] as num?)?.toDouble();
+        final rate = (r['avg_pen_usd'] as num?)?.toDouble();
+        if (pen == null && usd != null && rate != null) {
+          pen = usd * rate;
+        }
+
+        if (ts == null) continue;
+        final price = _currency == 'USD' ? usd : pen;
+        if (price != null) pts.add(GoldTrendPoint(ts, price));
+      }
+
+      return pts;
+    }
+
     late final List<GoldTrendPoint> pts;
     if (_range == TrendRange.diario) {
       final start = DateTime(now.year, now.month, now.day);
       final end = start.add(const Duration(days: 1));
-      pts = await loadPoints(start: start, end: end, bucketByDay: false);
+      pts = _currency == 'USD'
+          ? await loadCombinedTicks(start: start, end: end)
+          : await loadLatestTicks(start: start, end: end);
     } else if (_range == TrendRange.semanal) {
       final start = now.subtract(const Duration(days: 7));
-      pts = await loadPoints(start: start, bucketByDay: false);
+      pts = _currency == 'USD'
+          ? await loadCombinedTicks(start: start)
+          : await loadLatestTicks(start: start);
+    } else if (_range == TrendRange.mensual) {
+      final start = now.subtract(const Duration(days: 30));
+      pts = await loadDailySummary(start: start);
+    } else if (_range == TrendRange.anual) {
+      final start = now.subtract(const Duration(days: 365));
+      pts = await loadDailySummary(start: start);
     } else {
-      final days = _range == TrendRange.mensual ? 30 : 365;
-      final start = now.subtract(Duration(days: days));
-      pts = await loadPoints(start: start, bucketByDay: true);
+      pts = await loadDailySummary();
     }
+
+    pts.sort((a, b) => a.time.compareTo(b.time));
 
     final spot = await client
         .from('stg_spot_ticks')

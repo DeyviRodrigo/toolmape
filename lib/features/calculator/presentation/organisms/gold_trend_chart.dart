@@ -24,7 +24,9 @@ class GoldTrendChart extends ConsumerWidget {
             .toList();
         final dateFmt = state.range == TrendRange.diario
             ? DateFormat.Hm()
-            : DateFormat('dd/MM');
+            : state.range == TrendRange.anual || state.range == TrendRange.general
+                ? DateFormat('dd/MM/yyyy')
+                : DateFormat('dd/MM');
         final tooltipFmt =
             state.range == TrendRange.diario || state.range == TrendRange.semanal
                 ? DateFormat('dd/MM HH:mm')
@@ -106,6 +108,10 @@ class GoldTrendChart extends ConsumerWidget {
                         DropdownMenuItem(
                           value: TrendRange.anual,
                           child: Text('Anual'),
+                        ),
+                        DropdownMenuItem(
+                          value: TrendRange.general,
+                          child: Text('General'),
                         ),
                       ],
                     ),
