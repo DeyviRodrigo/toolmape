@@ -116,14 +116,13 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
 
     Future<List<GoldTrendPoint>> loadDailySummary({DateTime? start}) async {
       var query = client.from('fact_daily_summary').select(
-            'date_lima, avg_gold_usd_combined, avg_gold_pen_combined, avg_pen_usd, avg_gold_spot_price',
-          ).order('date_lima', ascending: true);
+          'date_lima, avg_gold_usd_combined, avg_gold_pen_combined, avg_pen_usd, avg_gold_spot_price');
 
       if (start != null) {
         query = query.gte('date_lima', start.toIso8601String().split('T').first);
       }
 
-      final rows = await query;
+      final rows = await query.order('date_lima', ascending: true);
       final pts = <GoldTrendPoint>[];
 
       for (final r in rows) {
