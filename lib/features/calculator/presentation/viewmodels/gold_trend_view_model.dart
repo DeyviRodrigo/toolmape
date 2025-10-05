@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum TrendRange { diario, semanal, mensual, anual, general }
 
+enum GoldUnit { toz, gram, kilogram }
+
 class GoldTrendPoint {
   final DateTime time;
   final double price;
@@ -12,6 +14,7 @@ class GoldTrendPoint {
 class GoldTrendState {
   final TrendRange range;
   final String currency;
+  final GoldUnit unit;
   final List<GoldTrendPoint> points;
   final double? bid;
   final double? ask;
@@ -20,6 +23,7 @@ class GoldTrendState {
   const GoldTrendState({
     required this.range,
     required this.currency,
+    required this.unit,
     required this.points,
     this.bid,
     this.ask,
@@ -34,6 +38,7 @@ class GoldTrendState {
 class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
   TrendRange _range = TrendRange.diario;
   String _currency = 'USD';
+  GoldUnit _unit = GoldUnit.toz;
 
   @override
   Future<GoldTrendState> build() => _load();
@@ -48,6 +53,24 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
     _currency = c;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_load);
+  }
+
+  Future<void> setUnit(GoldUnit unit) async {
+    _unit = unit;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(_load);
+  }
+
+  double _unitFactor(GoldUnit unit) {
+    const gramsPerTroyOunce = 31.1034768;
+    switch (unit) {
+      case GoldUnit.toz:
+        return 1.0;
+      case GoldUnit.gram:
+        return 1 / gramsPerTroyOunce;
+      case GoldUnit.kilogram:
+        return 1000 / gramsPerTroyOunce;
+    }
   }
 
   Future<GoldTrendState> _load() async {
@@ -188,13 +211,23 @@ class GoldTrendViewModel extends AsyncNotifier<GoldTrendState> {
       ask = askUsd == null ? null : askUsd * latestRate;
     }
 
+    final factor = _unitFactor(_unit);
+    final convertedPts = pts
+        .map((p) => GoldTrendPoint(p.time, p.price * factor))
+        .toList(growable: false);
+    bid = bid == null ? null : bid * factor;
+    ask = ask == null ? null : ask * factor;
+    final convertedChangeAbs =
+        changeAbs == null ? null : changeAbs * factor;
+
     return GoldTrendState(
       range: _range,
       currency: _currency,
-      points: pts,
+      unit: _unit,
+      points: convertedPts,
       bid: bid,
       ask: ask,
-      changeAbs: changeAbs,
+      changeAbs: convertedChangeAbs,
       changePct: changePct,
     );
   }

@@ -61,6 +61,17 @@ class GoldTrendChart extends ConsumerWidget {
           );
         }
 
+        String unitLabel(GoldUnit unit) {
+          switch (unit) {
+            case GoldUnit.toz:
+              return 'toz';
+            case GoldUnit.gram:
+              return 'g';
+            case GoldUnit.kilogram:
+              return 'kg';
+          }
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -123,6 +134,19 @@ class GoldTrendChart extends ConsumerWidget {
                         DropdownMenuItem(value: 'USD', child: Text('USD')),
                         DropdownMenuItem(value: 'PEN', child: Text('PEN')),
                       ],
+                    ),
+                    const SizedBox(width: 8),
+                    DropdownButton<GoldUnit>(
+                      value: state.unit,
+                      onChanged: (v) => v == null ? null : vm.setUnit(v),
+                      items: GoldUnit.values
+                          .map(
+                            (u) => DropdownMenuItem(
+                              value: u,
+                              child: Text(unitLabel(u)),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                 ),
