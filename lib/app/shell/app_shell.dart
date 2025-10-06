@@ -26,18 +26,9 @@ class AppShell extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       drawer: AppDrawer(
-        onGoToCalculadora: () {
-          Navigator.of(context).pop();
-          onGoToCalculadora();
-        },
-        onGoToCalendario: () {
-          Navigator.of(context).pop();
-          onGoToCalendario();
-        },
-        onGoToInformacion: () {
-          Navigator.of(context).pop();
-          onGoToInformacion();
-        },
+        onGoToCalculadora: onGoToCalculadora,
+        onGoToCalendario: onGoToCalendario,
+        onGoToInformacion: onGoToInformacion,
       ),
       appBar: AppBar(
         title: Text(title),
