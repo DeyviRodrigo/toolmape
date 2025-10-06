@@ -37,6 +37,18 @@ class GoldTrendChart extends ConsumerWidget {
             : '${rangeFmt.format(state.from!)} - ${rangeFmt.format(state.to!)}';
         final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
         final baseTextColor = isDarkTheme ? Colors.white : Colors.black;
+        final currencySymbol = state.currency == 'PEN' ? 'S/' : r'$';
+        final numberFormat = NumberFormat('#,##0.00', 'en_US');
+        String formatCurrency(num? value, {bool signed = false}) {
+          if (value == null) return '--';
+          final magnitude = numberFormat.format(value.abs());
+          final sign = value < 0
+              ? '-'
+              : signed && value > 0
+                  ? '+'
+                  : '';
+          return '$sign$currencySymbol $magnitude';
+        }
         Color chColor(double? v) => v == null
             ? Colors.black
             : (v >= 0 ? Colors.green : Colors.red);
@@ -45,10 +57,17 @@ class GoldTrendChart extends ConsumerWidget {
           double? value, {
           bool colored = false,
           Color? valueColor,
+          bool asCurrency = false,
+          bool signed = false,
+          String? suffix,
         }) {
           final numberColor =
               colored ? chColor(value) : valueColor ?? baseTextColor;
-          final txt = value == null ? '--' : value.toStringAsFixed(2);
+          final txt = value == null
+              ? '--'
+              : asCurrency
+                  ? formatCurrency(value, signed: signed)
+                  : '${value.toStringAsFixed(2)}${suffix ?? ''}';
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -87,13 +106,34 @@ class GoldTrendChart extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      metric('BID', state.bid, valueColor: baseTextColor),
+                      metric(
+                        'BID',
+                        state.bid,
+                        valueColor: baseTextColor,
+                        asCurrency: true,
+                      ),
                       const SizedBox(width: 8),
-                      metric('ASK', state.ask, valueColor: baseTextColor),
+                      metric(
+                        'ASK',
+                        state.ask,
+                        valueColor: baseTextColor,
+                        asCurrency: true,
+                      ),
                       const SizedBox(width: 8),
-                      metric('+/-', state.changeAbs, colored: true),
+                      metric(
+                        '+/-',
+                        state.changeAbs,
+                        colored: true,
+                        asCurrency: true,
+                        signed: true,
+                      ),
                       const SizedBox(width: 8),
-                      metric('%', state.changePct, colored: true),
+                      metric(
+                        '%',
+                        state.changePct,
+                        colored: true,
+                        suffix: '%',
+                      ),
                     ],
                   ),
                 ),
@@ -153,6 +193,17 @@ class GoldTrendChart extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Unidad: $currencySymbol / ${unitLabel(state.unit)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: baseTextColor.withOpacity(0.8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               height: 200,
               child: LineChart(
@@ -166,7 +217,8 @@ class GoldTrendChart extends ConsumerWidget {
                             idx >= 0 && idx < pts.length ? pts[idx].time : null;
                         final dateStr =
                             date == null ? '' : tooltipFmt.format(date);
-                        final price = e.y.toStringAsFixed(2);
+                        final price =
+                            '${formatCurrency(e.y)} ${unitLabel(state.unit)}';
                         final text = dateStr.isEmpty ? price : '$price\n$dateStr';
                         return LineTooltipItem(
                           text,
@@ -192,12 +244,23 @@ class GoldTrendChart extends ConsumerWidget {
                       ),
                     ),
                     leftTitles: AxisTitles(
+                      axisNameWidget: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Precio (${currencySymbol} / ${unitLabel(state.unit)})',
+                          style: TextStyle(fontSize: 12, color: baseTextColor),
+                        ),
+                      ),
+                      axisNameSize: 36,
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 56,
+                        reservedSize: 68,
                         getTitlesWidget: (value, meta) => Text(
-                          value.toStringAsFixed(2),
-                          style: const TextStyle(fontSize: 10),
+                          formatCurrency(value),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: baseTextColor.withOpacity(0.8),
+                          ),
                         ),
                       ),
                     ),
