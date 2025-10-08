@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:toolmape/app/router/routes.dart';
 import 'package:toolmape/app/shell/app_shell.dart';
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
+import 'package:toolmape/features/control_tiempos/infrastructure/datasources/volquetes_supabase_datasource.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
 
@@ -35,13 +37,27 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   final TextEditingController _searchController = TextEditingController();
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy – HH:mm');
 
-  late List<Volquete> _volquetes;
+  List<Volquete> _volquetes = const [];
+  VolquetesSupabaseDatasource? _datasource;
+  bool _isLoading = false;
+  bool _isOfflineMode = false;
+  String? _errorMessage;
   int _selectedBottomIndex = 0;
   String _searchTerm = '';
   Timer? _debounce;
 
-  VolqueteEquipo get _selectedEquipo =>
-      _tabController.index == 0 ? VolqueteEquipo.cargador : VolqueteEquipo.excavadora;
+  bool get _isVolqueteTab => _tabController.index == 0;
+
+  VolqueteEquipo? get _selectedEquipo {
+    switch (_tabController.index) {
+      case 1:
+        return VolqueteEquipo.cargador;
+      case 2:
+        return VolqueteEquipo.excavadora;
+      default:
+        return null;
+    }
+  }
 
   VolqueteTipo get _selectedTipo =>
       _selectedBottomIndex == 0 ? VolqueteTipo.carga : VolqueteTipo.descarga;
@@ -49,9 +65,10 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChanged);
-    _volquetes = _initialVolquetes;
+    _datasource = _maybeCreateDatasource();
+    _loadVolquetes();
   }
 
   @override
@@ -77,13 +94,152 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     });
   }
 
+  VolquetesSupabaseDatasource? _maybeCreateDatasource() {
+    try {
+      final client = Supabase.instance.client;
+      return VolquetesSupabaseDatasource(client);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _loadVolquetes() async {
+    _datasource ??= _maybeCreateDatasource();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final datasource = _datasource;
+
+    if (datasource == null) {
+      setState(() {
+        _volquetes = _initialVolquetes;
+        _isOfflineMode = true;
+        _errorMessage = 'Configura las credenciales de Supabase para sincronizar tus volquetes.';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final items = await datasource.fetchVolquetes();
+      if (!mounted) return;
+      setState(() {
+        _volquetes = items;
+        _isOfflineMode = false;
+        _errorMessage = null;
+      });
+    } on VolquetesDatasourceException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _volquetes = _initialVolquetes;
+        _isOfflineMode = true;
+        _errorMessage = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _volquetes = _initialVolquetes;
+        _isOfflineMode = true;
+        _errorMessage = 'Error inesperado al conectar con Supabase.';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveVolquete(Volquete volquete, {required bool isNew}) async {
+    _datasource ??= _maybeCreateDatasource();
+
+    var resolved = volquete;
+    var offline = false;
+    String? syncMessage;
+
+    try {
+      final datasource = _datasource;
+      if (datasource != null) {
+        resolved = await datasource.upsertVolquete(volquete);
+      } else {
+        offline = true;
+        syncMessage = 'Supabase no está configurado. Se guardó el registro localmente.';
+      }
+    } on VolquetesDatasourceException catch (error) {
+      offline = true;
+      syncMessage = error.message;
+    } catch (_) {
+      offline = true;
+      syncMessage = 'No se pudo sincronizar con Supabase. El registro se guardó de forma local.';
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isOfflineMode = offline;
+      _errorMessage = offline ? syncMessage : null;
+      final updatedList = _volquetes
+          .where((v) => v.id != volquete.id && v.id != resolved.id)
+          .toList()
+        ..add(resolved)
+        ..sort((a, b) => b.fecha.compareTo(a.fecha));
+      _volquetes = updatedList;
+    });
+
+    final message = offline
+        ? (isNew
+            ? 'Volquete registrado sin conexión.'
+            : 'Cambios guardados sin conexión.')
+        : (isNew ? 'Volquete registrado correctamente' : 'Volquete actualizado correctamente');
+
+    _showSnack(message);
+  }
+
+  Future<void> _deleteVolquete(String id) async {
+    _datasource ??= _maybeCreateDatasource();
+
+    var offline = false;
+    String? syncMessage;
+
+    try {
+      final datasource = _datasource;
+      if (datasource != null) {
+        await datasource.deleteVolquete(id);
+      } else {
+        offline = true;
+        syncMessage = 'Supabase no está configurado. Se eliminó el registro localmente.';
+      }
+    } on VolquetesDatasourceException catch (error) {
+      offline = true;
+      syncMessage = error.message;
+    } catch (_) {
+      offline = true;
+      syncMessage = 'No se pudo eliminar el volquete en Supabase.';
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _volquetes = _volquetes.where((v) => v.id != id).toList();
+      _isOfflineMode = offline;
+      _errorMessage = offline ? syncMessage : null;
+    });
+
+    _showSnack(offline ? 'Volquete eliminado sin conexión.' : 'Volquete eliminado');
+  }
+
   Future<void> _openForm({Volquete? initial}) async {
     final result = await Navigator.push<Volquete>(
       context,
       MaterialPageRoute(
         builder: (_) => VolqueteFormPage(
           initial: initial,
-          defaultTipo: _selectedTipo,
+          defaultTipo: _isVolqueteTab ? _selectedTipo : null,
           defaultEquipo: _selectedEquipo,
         ),
       ),
@@ -91,23 +247,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
     if (result == null) return;
 
-    setState(() {
-      final existingIndex = _volquetes.indexWhere((v) => v.id == result.id);
-      if (existingIndex >= 0) {
-        _volquetes[existingIndex] = result;
-      } else {
-        _volquetes = [..._volquetes, result];
-      }
-    });
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(initial == null
-            ? 'Volquete registrado correctamente'
-            : 'Volquete actualizado correctamente'),
-      ),
-    );
+    await _saveVolquete(result, isNew: initial == null);
   }
 
   Future<void> _openDetail(Volquete volquete) async {
@@ -121,29 +261,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     if (result == null) return;
 
     if (result.deletedVolqueteId != null) {
-      setState(() {
-        _volquetes =
-            _volquetes.where((v) => v.id != result.deletedVolqueteId).toList();
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Volquete eliminado')),
-      );
+      await _deleteVolquete(result.deletedVolqueteId!);
       return;
     }
 
     if (result.updatedVolquete != null) {
-      setState(() {
-        final index =
-        _volquetes.indexWhere((v) => v.id == result.updatedVolquete!.id);
-        if (index >= 0) {
-          _volquetes[index] = result.updatedVolquete!;
-        }
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Volquete actualizado')),
-      );
+      await _saveVolquete(result.updatedVolquete!, isNew: false);
     }
   }
 
@@ -153,9 +276,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   }
 
   List<Volquete> get _filteredVolquetes {
+    final equipoFilter = _selectedEquipo;
+    final tipoFilter = _isVolqueteTab ? _selectedTipo : null;
+
     final filtered = _volquetes.where((volquete) {
-      if (volquete.equipo != _selectedEquipo) return false;
-      if (volquete.tipo != _selectedTipo) return false;
+      if (equipoFilter != null && volquete.equipo != equipoFilter) return false;
+      if (tipoFilter != null && volquete.tipo != tipoFilter) return false;
       if (_searchTerm.isEmpty) return true;
 
       final term = _searchTerm;
@@ -185,44 +311,46 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _BottomNavToggleButton(
-                  label: 'Carga',
-                  asset: _iconExcavatorCarga,
-                  isSelected: _selectedBottomIndex == 0,
-                  onTap: () {
-                    if (_selectedBottomIndex != 0) {
-                      setState(() {
-                        _selectedBottomIndex = 0;
-                      });
-                    }
-                  },
+      bottomNavigationBar: _isVolqueteTab
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _BottomNavToggleButton(
+                        label: 'Carga',
+                        asset: _iconExcavatorCarga,
+                        isSelected: _selectedBottomIndex == 0,
+                        onTap: () {
+                          if (_selectedBottomIndex != 0) {
+                            setState(() {
+                              _selectedBottomIndex = 0;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _BottomNavToggleButton(
+                        label: 'Descarga',
+                        asset: _iconExcavatorDescarga,
+                        isSelected: _selectedBottomIndex == 1,
+                        onTap: () {
+                          if (_selectedBottomIndex != 1) {
+                            setState(() {
+                              _selectedBottomIndex = 1;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _BottomNavToggleButton(
-                  label: 'Descarga',
-                  asset: _iconExcavatorDescarga,
-                  isSelected: _selectedBottomIndex == 1,
-                  onTap: () {
-                    if (_selectedBottomIndex != 1) {
-                      setState(() {
-                        _selectedBottomIndex = 1;
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            )
+          : null,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -232,6 +360,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
               TabBar(
                 controller: _tabController,
                 tabs: const [
+                  Tab(
+                    child: _TabIconLabel(
+                      asset: _iconTruckLoaded,
+                      label: 'Volquete',
+                    ),
+                  ),
                   Tab(
                     child: _TabIconLabel(
                       asset: _iconLoaderTab,
@@ -265,28 +399,51 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                 ),
               ),
               const SizedBox(height: 16),
+              if (_isOfflineMode || _errorMessage != null) ...[
+                if (_isOfflineMode)
+                  const _StatusBanner(
+                    icon: Icons.cloud_off_outlined,
+                    message:
+                        'Operando sin conexión a Supabase. Los registros se guardarán de forma local.',
+                  ),
+                if (_errorMessage != null) ...[
+                  if (_isOfflineMode) const SizedBox(height: 8),
+                  _StatusBanner(
+                    icon: Icons.info_outline,
+                    message: _errorMessage!,
+                  ),
+                ],
+                const SizedBox(height: 16),
+              ],
               Expanded(
-                child: _filteredVolquetes.isEmpty
-                    ? const _EmptyVolquetesView()
-                    : ListView.separated(
-                  itemCount: _filteredVolquetes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) {
-                    final volquete = _filteredVolquetes[index];
-                    return _VolqueteCard(
-                      volquete: volquete,
-                      dateFormat: _dateFormat,
-                      onTap: () => _openDetail(volquete),
-                      onEdit: () => _openForm(initial: volquete),
-                      onViewDocument: () => _showSnack(
-                        'Documento ${volquete.documento ?? 'no disponible'}',
-                      ),
-                      onViewVolquete: () => _openDetail(volquete),
-                      onNavigate: () => _showSnack(
-                        'Navegando a ${volquete.destino}',
-                      ),
-                    );
-                  },
+                child: RefreshIndicator(
+                  onRefresh: _loadVolquetes,
+                  child: _isLoading
+                      ? const _LoadingVolquetesView()
+                      : _filteredVolquetes.isEmpty
+                          ? const _EmptyVolquetesView()
+                          : ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.only(bottom: 80),
+                              itemCount: _filteredVolquetes.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (_, index) {
+                                final volquete = _filteredVolquetes[index];
+                                return _VolqueteCard(
+                                  volquete: volquete,
+                                  dateFormat: _dateFormat,
+                                  onTap: () => _openDetail(volquete),
+                                  onEdit: () => _openForm(initial: volquete),
+                                  onViewDocument: () => _showSnack(
+                                    'Documento ${volquete.documento ?? 'no disponible'}',
+                                  ),
+                                  onViewVolquete: () => _openDetail(volquete),
+                                  onNavigate: () => _showSnack(
+                                    'Navegando a ${volquete.destino}',
+                                  ),
+                                );
+                              },
+                            ),
                 ),
               ),
             ],
@@ -392,21 +549,84 @@ class _EmptyVolquetesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 12),
-          const Text('No se encontraron registros'),
-          const SizedBox(height: 4),
-          Text(
+    final theme = Theme.of(context);
+    final subtle = theme.textTheme.bodyMedium?.copyWith(
+      color: Colors.grey.shade500,
+    );
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 48),
+        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+        const SizedBox(height: 12),
+        Text(
+          'No se encontraron registros',
+          style: theme.textTheme.titleMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
             'Ajusta los filtros o registra un nuevo volquete.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey.shade600),
+            style: subtle,
             textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 160),
+      ],
+    );
+  }
+}
+
+class _LoadingVolquetesView extends StatelessWidget {
+  const _LoadingVolquetesView();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: const [
+        SizedBox(height: 120),
+        Center(child: CircularProgressIndicator()),
+        SizedBox(height: 160),
+      ],
+    );
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final background = scheme.secondaryContainer.withOpacity(0.25);
+    final borderColor = scheme.outline.withOpacity(0.35);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: scheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium,
+            ),
           ),
         ],
       ),
