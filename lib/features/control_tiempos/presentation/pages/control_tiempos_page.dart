@@ -11,6 +11,7 @@ import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart'
 import 'package:toolmape/features/control_tiempos/infrastructure/datasources/volquetes_supabase_datasource.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+import 'package:toolmape/core/theme/extensions/app_colors.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
 const _iconEditPen = 'assets/icons/edit_pen.svg';
@@ -155,7 +156,11 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     }
   }
 
-  Future<void> _saveVolquete(Volquete volquete, {required bool isNew}) async {
+  Future<void> _saveVolquete(
+    Volquete volquete, {
+    required bool isNew,
+    String? successMessage,
+  }) async {
     _datasource ??= _maybeCreateDatasource();
 
     var resolved = volquete;
@@ -191,13 +196,47 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
       _volquetes = updatedList;
     });
 
-    final message = offline
-        ? (isNew
-            ? 'Volquete registrado sin conexión.'
-            : 'Cambios guardados sin conexión.')
-        : (isNew ? 'Volquete registrado correctamente' : 'Volquete actualizado correctamente');
+    final defaultOnline =
+        isNew ? 'Volquete registrado correctamente' : 'Volquete actualizado correctamente';
+    final defaultOffline =
+        isNew ? 'Volquete registrado sin conexión.' : 'Cambios guardados sin conexión.';
 
-    _showSnack(message);
+    final resolvedOnline = successMessage ?? defaultOnline;
+    final resolvedOffline = successMessage != null
+        ? '$successMessage (sin conexión)'
+        : defaultOffline;
+
+    _showSnack(offline ? resolvedOffline : resolvedOnline);
+  }
+
+  Future<void> _registerEvento(
+    Volquete original, {
+    required String titulo,
+    required String descripcion,
+    required String confirmationMessage,
+    VolqueteEstado? nuevoEstado,
+  }) async {
+    final now = DateTime.now();
+    final eventosActualizados = [
+      ...original.eventos,
+      VolqueteEvento(
+        titulo: titulo,
+        descripcion: descripcion,
+        fecha: now,
+      ),
+    ];
+
+    final actualizado = original.copyWith(
+      eventos: eventosActualizados,
+      estado: nuevoEstado ?? original.estado,
+      fecha: now,
+    );
+
+    await _saveVolquete(
+      actualizado,
+      isNew: false,
+      successMessage: confirmationMessage,
+    );
   }
 
   Future<void> _deleteVolquete(String id) async {
@@ -296,6 +335,10 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final appColors = theme.extension<AppColors>();
+
     return AppShell(
       title: 'Control de tiempos',
       onGoToCalculadora: () =>
@@ -359,6 +402,11 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
             children: [
               TabBar(
                 controller: _tabController,
+                dividerColor: Colors.transparent,
+                indicatorColor: scheme.primary,
+                indicatorWeight: 3,
+                labelColor: scheme.primary,
+                unselectedLabelColor: theme.textTheme.bodyMedium?.color,
                 tabs: const [
                   Tab(
                     child: _TabIconLabel(
@@ -429,18 +477,79 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                               separatorBuilder: (_, __) => const SizedBox(height: 12),
                               itemBuilder: (_, index) {
                                 final volquete = _filteredVolquetes[index];
+                                final isDescarga =
+                                    volquete.tipo == VolqueteTipo.descarga;
+
+                                late final VoidCallback primaryAction;
+                                late final VoidCallback secondaryAction;
+                                late final VoidCallback tertiaryAction;
+
+                                if (isDescarga) {
+                                  primaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Llegada al chute',
+                                        descripcion:
+                                            'El operador confirmó la llegada al punto de descarga.',
+                                        confirmationMessage:
+                                            'Llegada al chute registrada',
+                                        nuevoEstado: VolqueteEstado.enProceso,
+                                      );
+                                  secondaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Fin de descarga',
+                                        descripcion:
+                                            'Se finalizó la descarga del material en el destino asignado.',
+                                        confirmationMessage:
+                                            'Fin de descarga registrado',
+                                        nuevoEstado: VolqueteEstado.completo,
+                                      );
+                                  tertiaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Maniobra de salida',
+                                        descripcion:
+                                            'Se registró la maniobra de salida rumbo a la siguiente tarea.',
+                                        confirmationMessage:
+                                            'Maniobra de salida registrada',
+                                        nuevoEstado: VolqueteEstado.completo,
+                                      );
+                                } else {
+                                  primaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Inicio de maniobra',
+                                        descripcion:
+                                            'Se inició la maniobra previa a la carga en el frente asignado.',
+                                        confirmationMessage:
+                                            'Inicio de maniobra registrado',
+                                        nuevoEstado: VolqueteEstado.enProceso,
+                                      );
+                                  secondaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Inicio de carga',
+                                        descripcion:
+                                            'Se registró el inicio de carga con el ${volquete.equipo.label.toLowerCase()}.',
+                                        confirmationMessage:
+                                            'Inicio de carga registrado',
+                                        nuevoEstado: VolqueteEstado.enProceso,
+                                      );
+                                  tertiaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Final de carga',
+                                        descripcion:
+                                            'La carga fue completada y el volquete está listo para despacho.',
+                                        confirmationMessage:
+                                            'Final de carga registrado',
+                                        nuevoEstado: VolqueteEstado.completo,
+                                      );
+                                }
+
                                 return _VolqueteCard(
                                   volquete: volquete,
                                   dateFormat: _dateFormat,
                                   onTap: () => _openDetail(volquete),
                                   onEdit: () => _openForm(initial: volquete),
-                                  onViewDocument: () => _showSnack(
-                                    'Documento ${volquete.documento ?? 'no disponible'}',
-                                  ),
-                                  onViewVolquete: () => _openDetail(volquete),
-                                  onNavigate: () => _showSnack(
-                                    'Navegando a ${volquete.destino}',
-                                  ),
+                                  onPrimaryAction: primaryAction,
+                                  onSecondaryAction: secondaryAction,
+                                  onTertiaryAction: tertiaryAction,
                                 );
                               },
                             ),
@@ -475,9 +584,10 @@ class _BottomNavToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color selectedBackground = Color(0xFFF97316);
-    const Color unselectedBackground = Color(0xFF1F2937);
-    final Color background = isSelected ? selectedBackground : unselectedBackground;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color background = isSelected ? scheme.primary : scheme.surfaceVariant;
+    final Color foreground = isSelected ? scheme.onPrimary : scheme.onSurfaceVariant;
 
     return Material(
       color: background,
@@ -485,6 +595,7 @@ class _BottomNavToggleButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
+        splashColor: foreground.withOpacity(0.12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
           child: Column(
@@ -494,13 +605,13 @@ class _BottomNavToggleButton extends StatelessWidget {
                 asset,
                 width: 28,
                 height: 28,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(foreground, BlendMode.srcIn),
               ),
               const SizedBox(height: 8),
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: foreground,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -551,14 +662,18 @@ class _EmptyVolquetesView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final subtle = theme.textTheme.bodyMedium?.copyWith(
-      color: Colors.grey.shade500,
+      color: theme.colorScheme.onSurfaceVariant,
     );
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const SizedBox(height: 48),
-        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+        Icon(
+          Icons.inbox_outlined,
+          size: 64,
+          color: theme.colorScheme.outline,
+        ),
         const SizedBox(height: 12),
         Text(
           'No se encontraron registros',
@@ -640,23 +755,27 @@ class _VolqueteCard extends StatelessWidget {
     required this.dateFormat,
     required this.onTap,
     required this.onEdit,
-    required this.onViewDocument,
-    required this.onViewVolquete,
-    required this.onNavigate,
+    required this.onPrimaryAction,
+    required this.onSecondaryAction,
+    required this.onTertiaryAction,
   });
 
   final Volquete volquete;
   final DateFormat dateFormat;
   final VoidCallback onTap;
   final VoidCallback onEdit;
-  final VoidCallback onViewDocument;
-  final VoidCallback onViewVolquete;
-  final VoidCallback onNavigate;
+  final VoidCallback onPrimaryAction;
+  final VoidCallback onSecondaryAction;
+  final VoidCallback onTertiaryAction;
 
   @override
   Widget build(BuildContext context) {
-    final Color iconColor =
-        Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color iconColor = theme.iconTheme.color ?? scheme.onSurface;
+    final subtleTextStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
     final bool isDescarga = volquete.tipo == VolqueteTipo.descarga;
 
     final List<_VolqueteCardAction> actions = isDescarga
@@ -664,17 +783,17 @@ class _VolqueteCard extends StatelessWidget {
             _VolqueteCardAction(
               tooltip: 'Llegada al chute',
               asset: _iconTruckLoaded,
-              onPressed: onViewVolquete,
+              onPressed: onPrimaryAction,
             ),
             _VolqueteCardAction(
               tooltip: 'Fin de descarga',
               asset: _iconTruckEmpty,
-              onPressed: onViewDocument,
+              onPressed: onSecondaryAction,
             ),
             _VolqueteCardAction(
               tooltip: 'Maniobra de salida',
               asset: _iconArrowRight,
-              onPressed: onNavigate,
+              onPressed: onTertiaryAction,
             ),
             _VolqueteCardAction(
               tooltip: 'Editar',
@@ -686,17 +805,17 @@ class _VolqueteCard extends StatelessWidget {
             _VolqueteCardAction(
               tooltip: 'Inicio de maniobra',
               asset: _iconArrowRight,
-              onPressed: onViewVolquete,
+              onPressed: onPrimaryAction,
             ),
             _VolqueteCardAction(
               tooltip: 'Inicio de carga',
               asset: _iconExcavatorCarga,
-              onPressed: onViewDocument,
+              onPressed: onSecondaryAction,
             ),
             _VolqueteCardAction(
               tooltip: 'Final de carga',
               asset: _iconExcavatorDescarga,
-              onPressed: onNavigate,
+              onPressed: onTertiaryAction,
             ),
             _VolqueteCardAction(
               tooltip: 'Editar',
@@ -733,11 +852,11 @@ class _VolqueteCard extends StatelessWidget {
       Color estadoColor() {
         switch (volquete.estado) {
           case VolqueteEstado.completo:
-            return Colors.green.shade600;
+            return appColors?.success ?? scheme.tertiary;
           case VolqueteEstado.enProceso:
-            return Colors.orange.shade600;
+            return appColors?.warning ?? scheme.secondary;
           case VolqueteEstado.pausado:
-            return Colors.blueGrey.shade600;
+            return scheme.primary;
         }
       }
 
@@ -799,18 +918,12 @@ class _VolqueteCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       dateFormat.format(volquete.fecha),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
+                      style: subtleTextStyle,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Destino: ${volquete.destino}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
+                      style: subtleTextStyle,
                     ),
                   ],
                 ),
@@ -842,42 +955,37 @@ class _EstadoChip extends StatelessWidget {
 
   final VolqueteEstado estado;
 
-  Color _backgroundColor(BuildContext context) {
-    switch (estado) {
-      case VolqueteEstado.completo:
-        return Colors.green.shade100;
-      case VolqueteEstado.enProceso:
-        return Colors.orange.shade100;
-      case VolqueteEstado.pausado:
-        return Colors.blueGrey.shade100;
-    }
-  }
-
-  Color _textColor() {
-    switch (estado) {
-      case VolqueteEstado.completo:
-        return Colors.green.shade800;
-      case VolqueteEstado.enProceso:
-        return Colors.orange.shade800;
-      case VolqueteEstado.pausado:
-        return Colors.blueGrey.shade800;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final appColors = theme.extension<AppColors>();
+
+    Color baseColor;
+    switch (estado) {
+      case VolqueteEstado.completo:
+        baseColor = appColors?.success ?? scheme.tertiary;
+        break;
+      case VolqueteEstado.enProceso:
+        baseColor = appColors?.warning ?? scheme.secondary;
+        break;
+      case VolqueteEstado.pausado:
+        baseColor = scheme.primary;
+        break;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: _backgroundColor(context),
+        color: baseColor.withOpacity(0.16),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         estado.label,
-        style: Theme.of(context)
+        style: theme
             .textTheme
             .labelSmall
-            ?.copyWith(fontWeight: FontWeight.w600, color: _textColor()),
+            ?.copyWith(fontWeight: FontWeight.w600, color: baseColor),
       ),
     );
   }
