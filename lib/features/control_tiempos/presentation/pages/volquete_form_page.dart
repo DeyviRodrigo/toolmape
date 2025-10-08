@@ -105,7 +105,7 @@ class _VolqueteFormPageState extends State<VolqueteFormPage> {
         ];
 
     final volquete = Volquete(
-      id: widget.initial?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.initial?.id ?? 'local-${DateTime.now().millisecondsSinceEpoch}',
       codigo: _codigoController.text.trim(),
       placa: _placaController.text.trim(),
       operador: _operadorController.text.trim(),
