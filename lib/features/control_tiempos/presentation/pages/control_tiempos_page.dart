@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:toolmape/app/router/routes.dart';
 import 'package:toolmape/app/shell/app_shell.dart';
 import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart';
+import 'package:toolmape/features/control_tiempos/infrastructure/datasources/volquetes_supabase_datasource.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+import 'package:toolmape/core/theme/extensions/app_colors.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
 const _iconEditPen = 'assets/icons/edit_pen.svg';
@@ -33,15 +36,30 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
-  final DateFormat _dateFormat = DateFormat('dd/MM/yyyy – HH:mm');
+  final ScrollController _scrollController = ScrollController();
+  final DateFormat _dateFormat = DateFormat('d/M/yyyy H:mm:ss');
 
-  late List<Volquete> _volquetes;
+  List<Volquete> _volquetes = const [];
+  VolquetesSupabaseDatasource? _datasource;
+  bool _isLoading = false;
+  bool _isOfflineMode = false;
+  String? _errorMessage;
   int _selectedBottomIndex = 0;
   String _searchTerm = '';
   Timer? _debounce;
 
-  VolqueteEquipo get _selectedEquipo =>
-      _tabController.index == 0 ? VolqueteEquipo.cargador : VolqueteEquipo.excavadora;
+  bool get _isVolqueteTab => _tabController.index == 0;
+
+  VolqueteEquipo? get _selectedEquipo {
+    switch (_tabController.index) {
+      case 1:
+        return VolqueteEquipo.cargador;
+      case 2:
+        return VolqueteEquipo.excavadora;
+      default:
+        return null;
+    }
+  }
 
   VolqueteTipo get _selectedTipo =>
       _selectedBottomIndex == 0 ? VolqueteTipo.carga : VolqueteTipo.descarga;
@@ -49,9 +67,10 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChanged);
-    _volquetes = _initialVolquetes;
+    _datasource = _maybeCreateDatasource();
+    _loadVolquetes();
   }
 
   @override
@@ -59,6 +78,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     _tabController.removeListener(_handleTabChanged);
     _tabController.dispose();
     _searchController.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -77,13 +97,201 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     });
   }
 
+  VolquetesSupabaseDatasource? _maybeCreateDatasource() {
+    try {
+      final client = Supabase.instance.client;
+      return VolquetesSupabaseDatasource(client);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _loadVolquetes() async {
+    _datasource ??= _maybeCreateDatasource();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final datasource = _datasource;
+
+    if (datasource == null) {
+      setState(() {
+        _volquetes = _sortedVolquetes(_initialVolquetes);
+        _isOfflineMode = true;
+        _errorMessage = 'Configura las credenciales de Supabase para sincronizar tus volquetes.';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final items = await datasource.fetchVolquetes();
+      if (!mounted) return;
+      setState(() {
+        _volquetes = _sortedVolquetes(items);
+        _isOfflineMode = false;
+        _errorMessage = null;
+      });
+    } on VolquetesDatasourceException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _volquetes = _sortedVolquetes(_initialVolquetes);
+        _isOfflineMode = true;
+        _errorMessage = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _volquetes = _sortedVolquetes(_initialVolquetes);
+        _isOfflineMode = true;
+        _errorMessage = 'Error inesperado al conectar con Supabase.';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveVolquete(
+    Volquete volquete, {
+    required bool isNew,
+    String? successMessage,
+  }) async {
+    _datasource ??= _maybeCreateDatasource();
+
+    var resolved = volquete;
+    var offline = false;
+    String? syncMessage;
+
+    try {
+      final datasource = _datasource;
+      if (datasource != null) {
+        resolved = await datasource.upsertVolquete(volquete);
+      } else {
+        offline = true;
+        syncMessage = 'Supabase no está configurado. Se guardó el registro localmente.';
+      }
+    } on VolquetesDatasourceException catch (error) {
+      offline = true;
+      syncMessage = error.message;
+    } catch (_) {
+      offline = true;
+      syncMessage = 'No se pudo sincronizar con Supabase. El registro se guardó de forma local.';
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isOfflineMode = offline;
+      _errorMessage = offline ? syncMessage : null;
+      final updatedList = _volquetes
+          .where((v) => v.id != volquete.id && v.id != resolved.id)
+          .toList()
+        ..add(resolved);
+      _volquetes = _sortedVolquetes(updatedList);
+    });
+
+    final defaultOnline =
+        isNew ? 'Volquete registrado correctamente' : 'Volquete actualizado correctamente';
+    final defaultOffline =
+        isNew ? 'Volquete registrado sin conexión.' : 'Cambios guardados sin conexión.';
+
+    final resolvedOnline = successMessage ?? defaultOnline;
+    final resolvedOffline = successMessage != null
+        ? '$successMessage (sin conexión)'
+        : defaultOffline;
+
+    _showSnack(offline ? resolvedOffline : resolvedOnline);
+
+    if (isNew) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _registerEvento(
+    Volquete original, {
+    required String titulo,
+    required String descripcion,
+    required String confirmationMessage,
+    VolqueteEstado? nuevoEstado,
+  }) async {
+    final now = DateTime.now();
+    final eventosActualizados = [
+      ...original.eventos,
+      VolqueteEvento(
+        titulo: titulo,
+        descripcion: descripcion,
+        fecha: now,
+      ),
+    ];
+
+    final actualizado = original.copyWith(
+      eventos: eventosActualizados,
+      estado: nuevoEstado ?? original.estado,
+      fecha: now,
+    );
+
+    await _saveVolquete(
+      actualizado,
+      isNew: false,
+      successMessage: confirmationMessage,
+    );
+  }
+
+  Future<void> _deleteVolquete(String id) async {
+    _datasource ??= _maybeCreateDatasource();
+
+    var offline = false;
+    String? syncMessage;
+
+    try {
+      final datasource = _datasource;
+      if (datasource != null) {
+        await datasource.deleteVolquete(id);
+      } else {
+        offline = true;
+        syncMessage = 'Supabase no está configurado. Se eliminó el registro localmente.';
+      }
+    } on VolquetesDatasourceException catch (error) {
+      offline = true;
+      syncMessage = error.message;
+    } catch (_) {
+      offline = true;
+      syncMessage = 'No se pudo eliminar el volquete en Supabase.';
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _volquetes = _volquetes.where((v) => v.id != id).toList();
+      _isOfflineMode = offline;
+      _errorMessage = offline ? syncMessage : null;
+    });
+
+    _showSnack(offline ? 'Volquete eliminado sin conexión.' : 'Volquete eliminado');
+  }
+
   Future<void> _openForm({Volquete? initial}) async {
     final result = await Navigator.push<Volquete>(
       context,
       MaterialPageRoute(
         builder: (_) => VolqueteFormPage(
           initial: initial,
-          defaultTipo: _selectedTipo,
+          defaultTipo: _isVolqueteTab ? _selectedTipo : null,
           defaultEquipo: _selectedEquipo,
         ),
       ),
@@ -91,23 +299,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
     if (result == null) return;
 
-    setState(() {
-      final existingIndex = _volquetes.indexWhere((v) => v.id == result.id);
-      if (existingIndex >= 0) {
-        _volquetes[existingIndex] = result;
-      } else {
-        _volquetes = [..._volquetes, result];
-      }
-    });
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(initial == null
-            ? 'Volquete registrado correctamente'
-            : 'Volquete actualizado correctamente'),
-      ),
-    );
+    await _saveVolquete(result, isNew: initial == null);
   }
 
   Future<void> _openDetail(Volquete volquete) async {
@@ -121,29 +313,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     if (result == null) return;
 
     if (result.deletedVolqueteId != null) {
-      setState(() {
-        _volquetes =
-            _volquetes.where((v) => v.id != result.deletedVolqueteId).toList();
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Volquete eliminado')),
-      );
+      await _deleteVolquete(result.deletedVolqueteId!);
       return;
     }
 
     if (result.updatedVolquete != null) {
-      setState(() {
-        final index =
-        _volquetes.indexWhere((v) => v.id == result.updatedVolquete!.id);
-        if (index >= 0) {
-          _volquetes[index] = result.updatedVolquete!;
-        }
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Volquete actualizado')),
-      );
+      await _saveVolquete(result.updatedVolquete!, isNew: false);
     }
   }
 
@@ -153,9 +328,12 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   }
 
   List<Volquete> get _filteredVolquetes {
+    final equipoFilter = _selectedEquipo;
+    final tipoFilter = _isVolqueteTab ? _selectedTipo : null;
+
     final filtered = _volquetes.where((volquete) {
-      if (volquete.equipo != _selectedEquipo) return false;
-      if (volquete.tipo != _selectedTipo) return false;
+      if (equipoFilter != null && volquete.equipo != equipoFilter) return false;
+      if (tipoFilter != null && volquete.tipo != tipoFilter) return false;
       if (_searchTerm.isEmpty) return true;
 
       final term = _searchTerm;
@@ -164,12 +342,21 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
           volquete.operador.toLowerCase().contains(term);
     }).toList();
 
-    filtered.sort((a, b) => b.fecha.compareTo(a.fecha));
-    return filtered;
+    return _sortedVolquetes(filtered);
+  }
+
+  List<Volquete> _sortedVolquetes(Iterable<Volquete> volquetes) {
+    final sorted = volquetes.toList()
+      ..sort((a, b) => b.fecha.compareTo(a.fecha));
+    return sorted;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final appColors = theme.extension<AppColors>();
+
     return AppShell(
       title: 'Control de tiempos',
       onGoToCalculadora: () =>
@@ -185,44 +372,46 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _BottomNavToggleButton(
-                  label: 'Carga',
-                  asset: _iconExcavatorCarga,
-                  isSelected: _selectedBottomIndex == 0,
-                  onTap: () {
-                    if (_selectedBottomIndex != 0) {
-                      setState(() {
-                        _selectedBottomIndex = 0;
-                      });
-                    }
-                  },
+      bottomNavigationBar: _isVolqueteTab
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _BottomNavToggleButton(
+                        label: 'Carga',
+                        asset: _iconExcavatorCarga,
+                        isSelected: _selectedBottomIndex == 0,
+                        onTap: () {
+                          if (_selectedBottomIndex != 0) {
+                            setState(() {
+                              _selectedBottomIndex = 0;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _BottomNavToggleButton(
+                        label: 'Descarga',
+                        asset: _iconExcavatorDescarga,
+                        isSelected: _selectedBottomIndex == 1,
+                        onTap: () {
+                          if (_selectedBottomIndex != 1) {
+                            setState(() {
+                              _selectedBottomIndex = 1;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _BottomNavToggleButton(
-                  label: 'Descarga',
-                  asset: _iconExcavatorDescarga,
-                  isSelected: _selectedBottomIndex == 1,
-                  onTap: () {
-                    if (_selectedBottomIndex != 1) {
-                      setState(() {
-                        _selectedBottomIndex = 1;
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            )
+          : null,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -231,7 +420,18 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
             children: [
               TabBar(
                 controller: _tabController,
+                dividerColor: Colors.transparent,
+                indicatorColor: scheme.primary,
+                indicatorWeight: 3,
+                labelColor: scheme.primary,
+                unselectedLabelColor: theme.textTheme.bodyMedium?.color,
                 tabs: const [
+                  Tab(
+                    child: _TabIconLabel(
+                      asset: _iconTruckLoaded,
+                      label: 'Volquete',
+                    ),
+                  ),
                   Tab(
                     child: _TabIconLabel(
                       asset: _iconLoaderTab,
@@ -265,28 +465,113 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                 ),
               ),
               const SizedBox(height: 16),
+              if (_isOfflineMode || _errorMessage != null) ...[
+                if (_isOfflineMode)
+                  const _StatusBanner(
+                    icon: Icons.cloud_off_outlined,
+                    message:
+                        'Operando sin conexión a Supabase. Los registros se guardarán de forma local.',
+                  ),
+                if (_errorMessage != null) ...[
+                  if (_isOfflineMode) const SizedBox(height: 8),
+                  _StatusBanner(
+                    icon: Icons.info_outline,
+                    message: _errorMessage!,
+                  ),
+                ],
+                const SizedBox(height: 16),
+              ],
               Expanded(
-                child: _filteredVolquetes.isEmpty
-                    ? const _EmptyVolquetesView()
-                    : ListView.separated(
-                  itemCount: _filteredVolquetes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) {
-                    final volquete = _filteredVolquetes[index];
-                    return _VolqueteCard(
-                      volquete: volquete,
-                      dateFormat: _dateFormat,
-                      onTap: () => _openDetail(volquete),
-                      onEdit: () => _openForm(initial: volquete),
-                      onViewDocument: () => _showSnack(
-                        'Documento ${volquete.documento ?? 'no disponible'}',
-                      ),
-                      onViewVolquete: () => _openDetail(volquete),
-                      onNavigate: () => _showSnack(
-                        'Navegando a ${volquete.destino}',
-                      ),
-                    );
-                  },
+                child: RefreshIndicator(
+                  onRefresh: _loadVolquetes,
+                  child: _isLoading
+                      ? const _LoadingVolquetesView()
+                      : _filteredVolquetes.isEmpty
+                          ? const _EmptyVolquetesView()
+                          : ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              controller: _scrollController,
+                              padding: const EdgeInsets.only(bottom: 80),
+                              itemCount: _filteredVolquetes.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (_, index) {
+                                final volquete = _filteredVolquetes[index];
+                                final isDescarga =
+                                    volquete.tipo == VolqueteTipo.descarga;
+
+                                late final VoidCallback primaryAction;
+                                late final VoidCallback secondaryAction;
+                                late final VoidCallback tertiaryAction;
+
+                                if (isDescarga) {
+                                  primaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Llegada al chute',
+                                        descripcion:
+                                            'El operador confirmó la llegada al punto de descarga.',
+                                        confirmationMessage:
+                                            'Llegada al chute registrada',
+                                        nuevoEstado: VolqueteEstado.enProceso,
+                                      );
+                                  secondaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Fin de descarga',
+                                        descripcion:
+                                            'Se finalizó la descarga del material en el destino asignado.',
+                                        confirmationMessage:
+                                            'Fin de descarga registrado',
+                                        nuevoEstado: VolqueteEstado.completo,
+                                      );
+                                  tertiaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Maniobra de salida',
+                                        descripcion:
+                                            'Se registró la maniobra de salida rumbo a la siguiente tarea.',
+                                        confirmationMessage:
+                                            'Maniobra de salida registrada',
+                                        nuevoEstado: VolqueteEstado.completo,
+                                      );
+                                } else {
+                                  primaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Inicio de maniobra',
+                                        descripcion:
+                                            'Se inició la maniobra previa a la carga en el frente asignado.',
+                                        confirmationMessage:
+                                            'Inicio de maniobra registrado',
+                                        nuevoEstado: VolqueteEstado.enProceso,
+                                      );
+                                  secondaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Inicio de carga',
+                                        descripcion:
+                                            'Se registró el inicio de carga con el ${volquete.equipo.label.toLowerCase()}.',
+                                        confirmationMessage:
+                                            'Inicio de carga registrado',
+                                        nuevoEstado: VolqueteEstado.enProceso,
+                                      );
+                                  tertiaryAction = () => _registerEvento(
+                                        volquete,
+                                        titulo: 'Final de carga',
+                                        descripcion:
+                                            'La carga fue completada y el volquete está listo para despacho.',
+                                        confirmationMessage:
+                                            'Final de carga registrado',
+                                        nuevoEstado: VolqueteEstado.completo,
+                                      );
+                                }
+
+                                return _VolqueteCard(
+                                  volquete: volquete,
+                                  dateFormat: _dateFormat,
+                                  onTap: () => _openDetail(volquete),
+                                  onEdit: () => _openForm(initial: volquete),
+                                  onPrimaryAction: primaryAction,
+                                  onSecondaryAction: secondaryAction,
+                                  onTertiaryAction: tertiaryAction,
+                                );
+                              },
+                            ),
                 ),
               ),
             ],
@@ -318,9 +603,10 @@ class _BottomNavToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color selectedBackground = Color(0xFFF97316);
-    const Color unselectedBackground = Color(0xFF1F2937);
-    final Color background = isSelected ? selectedBackground : unselectedBackground;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color background = isSelected ? scheme.primary : scheme.surfaceVariant;
+    final Color foreground = isSelected ? scheme.onPrimary : scheme.onSurfaceVariant;
 
     return Material(
       color: background,
@@ -328,6 +614,7 @@ class _BottomNavToggleButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
+        splashColor: foreground.withOpacity(0.12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
           child: Column(
@@ -337,13 +624,13 @@ class _BottomNavToggleButton extends StatelessWidget {
                 asset,
                 width: 28,
                 height: 28,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(foreground, BlendMode.srcIn),
               ),
               const SizedBox(height: 8),
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: foreground,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -392,21 +679,88 @@ class _EmptyVolquetesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 12),
-          const Text('No se encontraron registros'),
-          const SizedBox(height: 4),
-          Text(
+    final theme = Theme.of(context);
+    final subtle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 48),
+        Icon(
+          Icons.inbox_outlined,
+          size: 64,
+          color: theme.colorScheme.outline,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'No se encontraron registros',
+          style: theme.textTheme.titleMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
             'Ajusta los filtros o registra un nuevo volquete.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey.shade600),
+            style: subtle,
             textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 160),
+      ],
+    );
+  }
+}
+
+class _LoadingVolquetesView extends StatelessWidget {
+  const _LoadingVolquetesView();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: const [
+        SizedBox(height: 120),
+        Center(child: CircularProgressIndicator()),
+        SizedBox(height: 160),
+      ],
+    );
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final background = scheme.secondaryContainer.withOpacity(0.25);
+    final borderColor = scheme.outline.withOpacity(0.35);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: scheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium,
+            ),
           ),
         ],
       ),
@@ -420,131 +774,159 @@ class _VolqueteCard extends StatelessWidget {
     required this.dateFormat,
     required this.onTap,
     required this.onEdit,
-    required this.onViewDocument,
-    required this.onViewVolquete,
-    required this.onNavigate,
+    required this.onPrimaryAction,
+    required this.onSecondaryAction,
+    required this.onTertiaryAction,
   });
 
   final Volquete volquete;
   final DateFormat dateFormat;
   final VoidCallback onTap;
   final VoidCallback onEdit;
-  final VoidCallback onViewDocument;
-  final VoidCallback onViewVolquete;
-  final VoidCallback onNavigate;
+  final VoidCallback onPrimaryAction;
+  final VoidCallback onSecondaryAction;
+  final VoidCallback onTertiaryAction;
 
   @override
   Widget build(BuildContext context) {
-    final Color iconColor =
-        Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color iconColor = theme.iconTheme.color ?? scheme.onSurface;
+    final subtleTextStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
+    final appColors = theme.extension<AppColors>();
     final bool isDescarga = volquete.tipo == VolqueteTipo.descarga;
+
+    bool hasEvento(String titulo) =>
+        volquete.eventos.any((evento) => evento.titulo.toLowerCase() == titulo.toLowerCase());
 
     final List<_VolqueteCardAction> actions = isDescarga
         ? [
             _VolqueteCardAction(
               tooltip: 'Llegada al chute',
               asset: _iconTruckLoaded,
-              onPressed: onViewVolquete,
+              onPressed: onPrimaryAction,
+              isCompleted: hasEvento('Llegada al chute'),
             ),
             _VolqueteCardAction(
               tooltip: 'Fin de descarga',
               asset: _iconTruckEmpty,
-              onPressed: onViewDocument,
+              onPressed: onSecondaryAction,
+              isCompleted: hasEvento('Fin de descarga'),
             ),
             _VolqueteCardAction(
               tooltip: 'Maniobra de salida',
               asset: _iconArrowRight,
-              onPressed: onNavigate,
+              onPressed: onTertiaryAction,
+              isCompleted: hasEvento('Maniobra de salida'),
             ),
             _VolqueteCardAction(
               tooltip: 'Editar',
               asset: _iconEditPen,
               onPressed: onEdit,
+              isCompleted: false,
             ),
           ]
         : [
             _VolqueteCardAction(
               tooltip: 'Inicio de maniobra',
               asset: _iconArrowRight,
-              onPressed: onViewVolquete,
+              onPressed: onPrimaryAction,
+              isCompleted: hasEvento('Inicio de maniobra'),
             ),
             _VolqueteCardAction(
               tooltip: 'Inicio de carga',
               asset: _iconExcavatorCarga,
-              onPressed: onViewDocument,
+              onPressed: onSecondaryAction,
+              isCompleted: hasEvento('Inicio de carga'),
             ),
             _VolqueteCardAction(
               tooltip: 'Final de carga',
               asset: _iconExcavatorDescarga,
-              onPressed: onNavigate,
+              onPressed: onTertiaryAction,
+              isCompleted: hasEvento('Final de carga'),
             ),
             _VolqueteCardAction(
               tooltip: 'Editar',
               asset: _iconEditPen,
               onPressed: onEdit,
+              isCompleted: false,
             ),
           ];
 
     Widget buildActionButton(_VolqueteCardAction action) {
-      return IconButton(
+      return _VolqueteActionButton(
         tooltip: action.tooltip,
+        asset: action.asset,
         onPressed: action.onPressed,
-        icon: SvgPicture.asset(
-          action.asset,
-          width: 24,
-          height: 24,
-          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-        ),
+        iconColor: iconColor,
+        isCompleted: action.isCompleted,
+      );
+    }
+
+    String estadoLabel() {
+      switch (volquete.estado) {
+        case VolqueteEstado.completo:
+          return 'Completo';
+        case VolqueteEstado.enProceso:
+          return 'Incompleto';
+        case VolqueteEstado.pausado:
+          return 'Pausado';
+      }
+    }
+
+    Color estadoColor() {
+      switch (volquete.estado) {
+        case VolqueteEstado.completo:
+          return appColors?.success ?? scheme.tertiary;
+        case VolqueteEstado.enProceso:
+          return appColors?.warning ?? scheme.secondary;
+        case VolqueteEstado.pausado:
+          return scheme.primary;
+      }
+    }
+
+    Widget buildActions() {
+      return Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        alignment: WrapAlignment.end,
+        children: actions.map(buildActionButton).toList(),
       );
     }
 
     Widget buildTrailing() {
-      if (!isDescarga) {
-        return Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: actions.map(buildActionButton).toList(),
-        );
-      }
-
-      final String estadoLabel =
-          volquete.estado == VolqueteEstado.completo ? 'Completo' : 'Incompleto';
-
-      Color estadoColor() {
-        switch (volquete.estado) {
-          case VolqueteEstado.completo:
-            return Colors.green.shade600;
-          case VolqueteEstado.enProceso:
-            return Colors.orange.shade600;
-          case VolqueteEstado.pausado:
-            return Colors.blueGrey.shade600;
-        }
-      }
-
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            estadoLabel,
+            estadoLabel(),
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: estadoColor(),
                 ),
           ),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: actions.map(buildActionButton).toList(),
-          ),
+          buildActions(),
         ],
       );
     }
 
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color cardColor =
+        Color.lerp(scheme.surface, scheme.surfaceVariant, isDark ? 0.7 : 0.2)!;
+    final Color borderColor =
+        scheme.outline.withOpacity(isDark ? 0.5 : 0.2);
+
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
@@ -557,19 +939,12 @@ class _VolqueteCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            volquete.codigo,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        if (!isDescarga) ...[
-                          const SizedBox(width: 12),
-                          _EstadoChip(estado: volquete.estado),
-                        ],
-                      ],
+                    Text(
+                      volquete.codigo,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -579,18 +954,12 @@ class _VolqueteCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       dateFormat.format(volquete.fecha),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
+                      style: subtleTextStyle,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Destino: ${volquete.destino}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
+                      style: subtleTextStyle,
                     ),
                   ],
                 ),
@@ -610,54 +979,70 @@ class _VolqueteCardAction {
     required this.tooltip,
     required this.asset,
     required this.onPressed,
+    required this.isCompleted,
   });
 
   final String tooltip;
   final String asset;
   final VoidCallback onPressed;
+  final bool isCompleted;
 }
 
-class _EstadoChip extends StatelessWidget {
-  const _EstadoChip({required this.estado});
+class _VolqueteActionButton extends StatelessWidget {
+  const _VolqueteActionButton({
+    required this.tooltip,
+    required this.asset,
+    required this.onPressed,
+    required this.iconColor,
+    required this.isCompleted,
+  });
 
-  final VolqueteEstado estado;
-
-  Color _backgroundColor(BuildContext context) {
-    switch (estado) {
-      case VolqueteEstado.completo:
-        return Colors.green.shade100;
-      case VolqueteEstado.enProceso:
-        return Colors.orange.shade100;
-      case VolqueteEstado.pausado:
-        return Colors.blueGrey.shade100;
-    }
-  }
-
-  Color _textColor() {
-    switch (estado) {
-      case VolqueteEstado.completo:
-        return Colors.green.shade800;
-      case VolqueteEstado.enProceso:
-        return Colors.orange.shade800;
-      case VolqueteEstado.pausado:
-        return Colors.blueGrey.shade800;
-    }
-  }
+  final String tooltip;
+  final String asset;
+  final VoidCallback onPressed;
+  final Color iconColor;
+  final bool isCompleted;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _backgroundColor(context),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        estado.label,
-        style: Theme.of(context)
-            .textTheme
-            .labelSmall
-            ?.copyWith(fontWeight: FontWeight.w600, color: _textColor()),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final Color background =
+        isCompleted ? scheme.primaryContainer : Colors.transparent;
+    final Color borderColor = isCompleted
+        ? scheme.primary
+        : theme.dividerColor.withOpacity(0.4);
+    final Color resolvedIconColor =
+        isCompleted ? scheme.onPrimaryContainer : iconColor;
+
+    final borderRadius = BorderRadius.circular(12);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
+        child: InkWell(
+          borderRadius: borderRadius,
+          onTap: onPressed,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: borderRadius,
+              border: Border.all(color: borderColor),
+            ),
+            child: SvgPicture.asset(
+              asset,
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(
+                resolvedIconColor,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
