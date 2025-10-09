@@ -11,6 +11,7 @@ import 'package:toolmape/features/control_tiempos/domain/entities/volquete.dart'
 import 'package:toolmape/features/control_tiempos/infrastructure/datasources/volquetes_supabase_datasource.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_detail_page.dart';
 import 'package:toolmape/features/control_tiempos/presentation/pages/volquete_form_page.dart';
+import 'package:toolmape/features/general/presentation/atoms/menu_option.dart';
 import 'package:toolmape/core/theme/extensions/app_colors.dart';
 
 const _iconArrowRight = 'assets/icons/arrow_right.svg';
@@ -37,6 +38,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   late final TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _searchFocusNode = FocusNode();
   final DateFormat _dateFormat = DateFormat('d/M/yyyy H:mm:ss');
 
   List<Volquete> _volquetes = const [];
@@ -47,6 +49,8 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
   int _selectedBottomIndex = 0;
   String _searchTerm = '';
   Timer? _debounce;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedVolquetes = <String>{};
 
   bool get _isVolqueteTab => _tabController.index == 0;
 
@@ -78,6 +82,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     _tabController.removeListener(_handleTabChanged);
     _tabController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
@@ -327,6 +332,41 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
     _onSearchChanged('');
   }
 
+  void _focusSearchField() {
+    FocusScope.of(context).requestFocus(_searchFocusNode);
+  }
+
+  void _toggleSelectionMode() {
+    setState(() {
+      if (_isSelectionMode) {
+        _isSelectionMode = false;
+        _selectedVolquetes.clear();
+      } else {
+        _isSelectionMode = true;
+      }
+    });
+  }
+
+  void _startSelectionModeWith(Volquete volquete) {
+    if (_isSelectionMode) return;
+    setState(() {
+      _isSelectionMode = true;
+      _selectedVolquetes
+        ..clear()
+        ..add(volquete.id);
+    });
+  }
+
+  void _toggleVolqueteSelection(Volquete volquete) {
+    setState(() {
+      if (_selectedVolquetes.contains(volquete.id)) {
+        _selectedVolquetes.remove(volquete.id);
+      } else {
+        _selectedVolquetes.add(volquete.id);
+      }
+    });
+  }
+
   List<Volquete> get _filteredVolquetes {
     final equipoFilter = _selectedEquipo;
     final tipoFilter = _isVolqueteTab ? _selectedTipo : null;
@@ -359,6 +399,23 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
 
     return AppShell(
       title: 'Control de tiempos',
+      actions: [
+        MenuOption<VoidCallback>(
+          value: _toggleSelectionMode,
+          label: _isSelectionMode ? 'Cancelar selección' : 'Seleccionar',
+          icon: _isSelectionMode ? Icons.close : Icons.select_all,
+        ),
+        MenuOption<VoidCallback>(
+          value: _focusSearchField,
+          label: 'Buscar',
+          icon: Icons.search,
+        ),
+        MenuOption<VoidCallback>(
+          value: () => _loadVolquetes(),
+          label: 'Refrescar',
+          icon: Icons.refresh,
+        ),
+      ],
       onGoToCalculadora: () =>
           Navigator.pushReplacementNamed(context, routeCalculadora),
       onGoToCalendario: () =>
@@ -450,6 +507,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
               TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
+                focusNode: _searchFocusNode,
                 decoration: InputDecoration(
                   hintText: 'Buscar volquete…',
                   prefixIcon: const Icon(Icons.search),
@@ -498,6 +556,8 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                                 final volquete = _filteredVolquetes[index];
                                 final isDescarga =
                                     volquete.tipo == VolqueteTipo.descarga;
+                                final isSelected =
+                                    _selectedVolquetes.contains(volquete.id);
 
                                 late final VoidCallback primaryAction;
                                 late final VoidCallback secondaryAction;
@@ -561,14 +621,33 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                                       );
                                 }
 
+                                VoidCallback cardTapCallback;
+                                VoidCallback? longPressCallback;
+
+                                if (_isSelectionMode) {
+                                  cardTapCallback =
+                                      () => _toggleVolqueteSelection(volquete);
+                                } else {
+                                  cardTapCallback =
+                                      () => _openDetail(volquete);
+                                  longPressCallback =
+                                      () => _startSelectionModeWith(volquete);
+                                }
+
                                 return _VolqueteCard(
                                   volquete: volquete,
                                   dateFormat: _dateFormat,
-                                  onTap: () => _openDetail(volquete),
+                                  onTap: cardTapCallback,
+                                  onLongPress: longPressCallback,
                                   onEdit: () => _openForm(initial: volquete),
                                   onPrimaryAction: primaryAction,
                                   onSecondaryAction: secondaryAction,
                                   onTertiaryAction: tertiaryAction,
+                                  isSelectionMode: _isSelectionMode,
+                                  isSelected: isSelected,
+                                  onSelectionToggle: () =>
+                                      _toggleVolqueteSelection(volquete),
+                                  actionsEnabled: !_isSelectionMode,
                                 );
                               },
                             ),
@@ -773,19 +852,29 @@ class _VolqueteCard extends StatelessWidget {
     required this.volquete,
     required this.dateFormat,
     required this.onTap,
+    this.onLongPress,
     required this.onEdit,
     required this.onPrimaryAction,
     required this.onSecondaryAction,
     required this.onTertiaryAction,
+    required this.isSelectionMode,
+    required this.isSelected,
+    required this.onSelectionToggle,
+    required this.actionsEnabled,
   });
 
   final Volquete volquete;
   final DateFormat dateFormat;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback onEdit;
   final VoidCallback onPrimaryAction;
   final VoidCallback onSecondaryAction;
   final VoidCallback onTertiaryAction;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback onSelectionToggle;
+  final bool actionsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -862,6 +951,7 @@ class _VolqueteCard extends StatelessWidget {
         onPressed: action.onPressed,
         iconColor: iconColor,
         isCompleted: action.isCompleted,
+        enabled: actionsEnabled,
       );
     }
 
@@ -888,11 +978,14 @@ class _VolqueteCard extends StatelessWidget {
     }
 
     Widget buildActions() {
-      return Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        alignment: WrapAlignment.end,
-        children: actions.map(buildActionButton).toList(),
+      return Opacity(
+        opacity: actionsEnabled ? 1 : 0.5,
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          alignment: WrapAlignment.end,
+          children: actions.map(buildActionButton).toList(),
+        ),
       );
     }
 
@@ -930,11 +1023,21 @@ class _VolqueteCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (isSelectionMode) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 12, top: 4),
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onSelectionToggle(),
+                  ),
+                ),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -995,6 +1098,7 @@ class _VolqueteActionButton extends StatelessWidget {
     required this.onPressed,
     required this.iconColor,
     required this.isCompleted,
+    required this.enabled,
   });
 
   final String tooltip;
@@ -1002,18 +1106,16 @@ class _VolqueteActionButton extends StatelessWidget {
   final VoidCallback onPressed;
   final Color iconColor;
   final bool isCompleted;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final Color background =
-        isCompleted ? scheme.primaryContainer : Colors.transparent;
-    final Color borderColor = isCompleted
-        ? scheme.primary
-        : theme.dividerColor.withOpacity(0.4);
+    final Color borderColor =
+        isCompleted ? scheme.primary : theme.dividerColor.withOpacity(0.4);
     final Color resolvedIconColor =
-        isCompleted ? scheme.onPrimaryContainer : iconColor;
+        isCompleted ? scheme.primary : iconColor;
 
     final borderRadius = BorderRadius.circular(12);
 
@@ -1024,11 +1126,13 @@ class _VolqueteActionButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: borderRadius),
         child: InkWell(
           borderRadius: borderRadius,
-          onTap: onPressed,
+          onTap: enabled ? onPressed : null,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          hoverColor: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: background,
               borderRadius: borderRadius,
               border: Border.all(color: borderColor),
             ),
@@ -1037,7 +1141,9 @@ class _VolqueteActionButton extends StatelessWidget {
               width: 20,
               height: 20,
               colorFilter: ColorFilter.mode(
-                resolvedIconColor,
+                enabled
+                    ? resolvedIconColor
+                    : resolvedIconColor.withOpacity(0.4),
                 BlendMode.srcIn,
               ),
             ),
