@@ -1029,15 +1029,14 @@ class _VolqueteCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isSelectionMode) ...[
+              if (isSelectionMode)
                 Padding(
                   padding: const EdgeInsets.only(right: 12, top: 4),
-                  child: Checkbox(
-                    value: isSelected,
-                    onChanged: (_) => onSelectionToggle(),
+                  child: _SelectionIndicator(
+                    selected: isSelected,
+                    onTap: onSelectionToggle,
                   ),
                 ),
-              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1071,6 +1070,59 @@ class _VolqueteCard extends StatelessWidget {
               buildTrailing(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectionIndicator extends StatelessWidget {
+  const _SelectionIndicator({
+    required this.selected,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final appColors = theme.extension<AppColors>();
+
+    final Color activeColor = appColors?.success ?? scheme.primary;
+    final Color borderColor = selected
+        ? activeColor
+        : scheme.outline.withOpacity(theme.brightness == Brightness.dark ? 0.6 : 0.4);
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: borderColor, width: 1.6),
+            color: Colors.transparent,
+          ),
+          child: selected
+              ? Center(
+                  child: Icon(
+                    Icons.check,
+                    size: 16,
+                    color: activeColor,
+                  ),
+                )
+              : null,
         ),
       ),
     );
