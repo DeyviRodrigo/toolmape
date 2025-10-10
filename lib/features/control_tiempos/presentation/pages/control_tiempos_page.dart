@@ -643,10 +643,7 @@ class _ControlTiemposPageState extends State<ControlTiemposPage>
                                   onPrimaryAction: primaryAction,
                                   onSecondaryAction: secondaryAction,
                                   onTertiaryAction: tertiaryAction,
-                                  isSelectionMode: _isSelectionMode,
                                   isSelected: isSelected,
-                                  onSelectionToggle: () =>
-                                      _toggleVolqueteSelection(volquete),
                                   actionsEnabled: !_isSelectionMode,
                                 );
                               },
@@ -857,9 +854,7 @@ class _VolqueteCard extends StatelessWidget {
     required this.onPrimaryAction,
     required this.onSecondaryAction,
     required this.onTertiaryAction,
-    required this.isSelectionMode,
     required this.isSelected,
-    required this.onSelectionToggle,
     required this.actionsEnabled,
   });
 
@@ -871,9 +866,7 @@ class _VolqueteCard extends StatelessWidget {
   final VoidCallback onPrimaryAction;
   final VoidCallback onSecondaryAction;
   final VoidCallback onTertiaryAction;
-  final bool isSelectionMode;
   final bool isSelected;
-  final VoidCallback onSelectionToggle;
   final bool actionsEnabled;
 
   @override
@@ -1008,127 +1001,76 @@ class _VolqueteCard extends StatelessWidget {
     }
 
     final bool isDark = theme.brightness == Brightness.dark;
-    final Color cardColor =
+    final borderRadius = BorderRadius.circular(16);
+    final Color baseCardColor =
         Color.lerp(scheme.surface, scheme.surfaceVariant, isDark ? 0.7 : 0.2)!;
-    final Color borderColor =
+    final Color selectedOverlay =
+        scheme.primary.withOpacity(isDark ? 0.24 : 0.12);
+    final Color cardColor = isSelected
+        ? Color.lerp(baseCardColor, selectedOverlay, isDark ? 0.6 : 0.5)!
+        : baseCardColor;
+    final Color baseBorderColor =
         scheme.outline.withOpacity(isDark ? 0.5 : 0.2);
+    final Color borderColor = isSelected ? scheme.primary : baseBorderColor;
 
-    return Card(
-      elevation: 0,
-      color: cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: borderColor),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: borderRadius,
+        border: Border.all(color: borderColor),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        onLongPress: onLongPress,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isSelectionMode)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12, top: 4),
-                  child: _SelectionIndicator(
-                    selected: isSelected,
-                    onTap: onSelectionToggle,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: borderRadius,
+        child: InkWell(
+          borderRadius: borderRadius,
+          onTap: onTap,
+          onLongPress: onLongPress,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          hoverColor: Colors.transparent,
+          focusColor: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        volquete.codigo,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${volquete.placa} • ${volquete.operador}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        dateFormat.format(volquete.fecha),
+                        style: subtleTextStyle,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Destino: ${volquete.destino}',
+                        style: subtleTextStyle,
+                      ),
+                    ],
                   ),
                 ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      volquete.codigo,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${volquete.placa} • ${volquete.operador}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dateFormat.format(volquete.fecha),
-                      style: subtleTextStyle,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Destino: ${volquete.destino}',
-                      style: subtleTextStyle,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              buildTrailing(),
-            ],
+                const SizedBox(width: 12),
+                buildTrailing(),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SelectionIndicator extends StatelessWidget {
-  const _SelectionIndicator({
-    required this.selected,
-    required this.onTap,
-  });
-
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final appColors = theme.extension<AppColors>();
-
-    final Color activeColor = appColors?.success ?? scheme.primary;
-    final Color borderColor = selected
-        ? activeColor
-        : scheme.outline.withOpacity(theme.brightness == Brightness.dark ? 0.6 : 0.4);
-
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: borderColor, width: 1.6),
-            color: Colors.transparent,
-          ),
-          child: selected
-              ? Center(
-                  child: Icon(
-                    Icons.check,
-                    size: 16,
-                    color: activeColor,
-                  ),
-                )
-              : null,
         ),
       ),
     );
